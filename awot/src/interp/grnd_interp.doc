@@ -1,0 +1,22 @@
+Use grnd_interp to interpolate ground-based radar data to a Cartesian grid:
+
+grnd_interp grnd_interp.prm file.UF ysmsds hsmsss yemede hemese
+
+where:
+  grnd_interp.prm is the parameter file
+  file.UF is the full path name to the UF file
+  ysmsds - start year, start month, & start day
+  hsmsss - start hour, start minute, & start second
+  yemede - end year, end month, & end day
+  hemese - end hour, end minute, & end second
+
+the parameters: ysmsds hsmsss yemede hemese are optional and if omitted the entire UF file is read
+(i.e., no start and end times)
+
+the format of grnd_interp.prm
+grnd_interp                       ! Program ID - must be this to work
+NSSL/ERIN                         ! Project name (16 chars max)
+100,100,30,1.5,1.5,0.5,0.5        ! Imax,Jmax,Kmax,Sx,Sy,Sz,Z0
+1 39.750 -85.200 030705 003000 +14.72 -2.60  ! Nmosm,Olat,Olon,T0 (yymmdd hhmmss),Su,Sv
+370                               ! MSL of radar
+1.0 1.0 0.25                      ! Horiz influ, Vert int, slope

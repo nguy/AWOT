@@ -1,0 +1,52 @@
+      Subroutine POLFT(X,Y,Npts,NTERMS,A)
+
+C LEAST-SQUARES FIT TO A POLYNOMIAL FROM 'DATA REDUCTION AND ERROR
+C   ANALYSIS FOR THE PHYSICAL SCIENCES BY PHILIP R. BEVINGTON.
+C   COPYRIGHT 1969 MC GRAW-HILL INC. PP 140-142, 294.
+C***********************************************************************
+C    MAXIMUM NUMBER OF TERMS=20
+
+      DOUBLE PRECISION SumX,SumY,XTERM,YTERM,ARRAY
+      Dimension X(Npts),Y(Npts),A(NTERMS)
+      Dimension SumX(29),SumY(20),ARRAY(20,20)
+
+C ACCUMULATE WEIGHTED SumS.
+
+      WEIGHT=1
+11    NMAX=NTERMS*2-1
+      DO 13 N=1,NMAX
+13    SumX(N)=0.
+      DO 15 J=1,NTERMS
+15    SumY(J)=0.
+21    DO 50 I=1,Npts
+      XI=X(I)
+      YI=Y(I)
+      XTERM=WEIGHT
+      DO 44 N = 1,NMAX
+      SumX(N) = SumX(N) +XTERM
+44    XTERM=XTERM*XI
+45    YTERM=YI
+      DO 48 N=1,NTERMS
+      SumY(N) = SumY(N) +YTERM
+48    YTERM=YTERM*XI
+50    Continue
+C CONSTRUCT MATRICES AND CALCULATE COEFFICIENTS.
+51    DO 54 J=1,NTERMS
+      DO 54 K=1,NTERMS
+      N=J+K-1
+54    ARRAY(J,K)=SumX(N)
+      DELTA=DETRM(ARRAY,NTERMS)
+      If (DELTA)61,57,61
+57    CHISQR = 0.
+      DO 59 J=1,NTERMS
+59    A(J)=0.
+      Go To 80
+61    DO 70 L=1,NTERMS
+62    DO 66 J=1,NTERMS
+      DO 65 K=1,NTERMS
+      N=J+K-1
+65    ARRAY(J,K)=SumX(N)
+66    ARRAY(J,L)=SumY(J)
+70    A(L)=DETRM(ARRAY,NTERMS)/DELTA
+80    Return
+      End

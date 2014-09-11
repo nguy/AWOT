@@ -1,0 +1,1032 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module windsyn ! in 
+    interface  ! in :windsyn
+        subroutine windsyn(imax,jmax,kmax,nrdrs) ! in :windsyn:windsyn.f
+            integer :: imax
+            integer :: jmax
+            integer :: kmax
+            integer :: nrdrs
+            real :: zsfc
+            integer :: iters
+            integer :: kup
+            integer :: klim
+            real :: top_hgt
+            integer :: iw_at_top
+            integer :: i_w_0
+            integer :: max_cons_unoccupied_octants
+            integer :: max_search_radius
+            integer :: min_values_per_octant
+            integer :: max_values_per_octant
+            integer :: idebug
+            integer :: ix1
+            integer :: ix2
+            integer :: jy1
+            integer :: jy2
+            integer :: lumes
+            real :: z1
+            real :: tv1
+            real :: z2
+            real :: tv2
+            real :: z3
+            real :: rho3
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer :: nflds
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /limits/ zsfc,iters,kup,klim,top_hgt
+            common /w_techniques/ iw_at_top,i_w_0
+            common /holefillparms/ max_cons_unoccupied_octants,max_search_radius,min_values_per_octant,max_values_per_octant
+            common /debug/ idebug,ix1,ix2,jy1,jy2
+            common /print/ lumes
+            common /sounding/ z1,tv1,z2,tv2,z3,rho3
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine windsyn
+        subroutine wrpln(synthdat) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            integer :: lumes
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer :: nrdrs
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine wrpln
+        subroutine ldpln(lu,radar,n) ! in :windsyn:windsyn.f
+            integer :: lu
+            real dimension(6,imax,jmax,kmax,nrdrs) :: radar
+            integer :: n
+            integer :: lumes
+            integer, optional,check(shape(radar,1)==imax),depend(radar) :: imax=shape(radar,1)
+            integer, optional,check(shape(radar,2)==jmax),depend(radar) :: jmax=shape(radar,2)
+            integer, optional,check(shape(radar,3)==kmax),depend(radar) :: kmax=shape(radar,3)
+            integer, optional,check(shape(radar,4)==nrdrs),depend(radar) :: nrdrs=shape(radar,4)
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer :: nflds
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine ldpln
+        subroutine chooz(synthdat,radar) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            real dimension(6,imax,jmax,kmax,nrdrs),depend(imax,jmax,kmax) :: radar
+            integer :: lumes
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer, optional,check(shape(radar,4)==nrdrs),depend(radar) :: nrdrs=shape(radar,4)
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine chooz
+        subroutine delta_time(synthdat,radar) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            real dimension(6,imax,jmax,kmax,nrdrs),depend(imax,jmax,kmax) :: radar
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer, optional,check(shape(radar,4)==nrdrs),depend(radar) :: nrdrs=shape(radar,4)
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine delta_time
+        subroutine comp_wind(synthdat,radar,type_bn) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            real dimension(6,imax,jmax,kmax,nrdrs),depend(imax,jmax,kmax) :: radar
+            character dimension(nrdrs,3),intent(c),depend(nrdrs) :: type_bn
+            integer :: lumes
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer, optional,check(shape(radar,4)==nrdrs),depend(radar) :: nrdrs=shape(radar,4)
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine comp_wind
+        subroutine over_det_sol(synthdat,radar,type_bn,i,j,k,w) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            real dimension(6,imax,jmax,kmax,nrdrs),depend(imax,jmax,kmax) :: radar
+            character dimension(nrdrs,3),intent(c),depend(nrdrs) :: type_bn
+            integer :: i
+            integer :: j
+            integer :: k
+            real :: w
+            integer :: idebug
+            integer :: ix1
+            integer :: ix2
+            integer :: jy1
+            integer :: jy2
+            integer :: lumes
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer, optional,check(shape(radar,4)==nrdrs),depend(radar) :: nrdrs=shape(radar,4)
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /debug/ idebug,ix1,ix2,jy1,jy2
+            common /print/ lumes
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine over_det_sol
+        subroutine p3_p3(synthdat,radar,i,j,k,w) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            real dimension(6,imax,jmax,kmax,nrdrs),depend(imax,jmax,kmax) :: radar
+            integer :: i
+            integer :: j
+            integer :: k
+            real :: w
+            integer :: lumes
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer, optional,check(shape(radar,4)==nrdrs),depend(radar) :: nrdrs=shape(radar,4)
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine p3_p3
+        subroutine grnd_grnd(synthdat,radar,i,j,k,w) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            real dimension(6,imax,jmax,kmax,nrdrs),depend(imax,jmax,kmax) :: radar
+            integer :: i
+            integer :: j
+            integer :: k
+            real :: w
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer, optional,check(shape(radar,4)==nrdrs),depend(radar) :: nrdrs=shape(radar,4)
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine grnd_grnd
+        subroutine grnd_p3(synthdat,radar,i,j,k,w) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            real dimension(6,imax,jmax,kmax,nrdrs),depend(imax,jmax,kmax) :: radar
+            integer :: i
+            integer :: j
+            integer :: k
+            real :: w
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer, optional,check(shape(radar,4)==nrdrs),depend(radar) :: nrdrs=shape(radar,4)
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine grnd_p3
+        subroutine calc_divergence(synthdat) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            integer :: lumes
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer :: nrdrs
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine calc_divergence
+        subroutine synthesis_new(synthdat,radar,type_bn) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            real dimension(6,imax,jmax,kmax,nrdrs),depend(imax,jmax,kmax) :: radar
+            character dimension(nrdrs,3),intent(c),depend(nrdrs) :: type_bn
+            real :: zsfc
+            integer :: iters
+            integer :: kup
+            integer :: klim
+            real :: top_hgt
+            integer :: iw_at_top
+            integer :: i_w_0
+            integer :: idebug
+            integer :: ix1
+            integer :: ix2
+            integer :: jy1
+            integer :: jy2
+            integer :: lumes
+            real :: z1
+            real :: tv1
+            real :: z2
+            real :: tv2
+            real :: z3
+            real :: rho3
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer, optional,check(shape(radar,4)==nrdrs),depend(radar) :: nrdrs=shape(radar,4)
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /limits/ zsfc,iters,kup,klim,top_hgt
+            common /w_techniques/ iw_at_top,i_w_0
+            common /debug/ idebug,ix1,ix2,jy1,jy2
+            common /print/ lumes
+            common /sounding/ z1,tv1,z2,tv2,z3,rho3
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine synthesis_new
+        subroutine var_adjust_col(i,j,synthdat,success,ireason) ! in :windsyn:windsyn.f
+            integer :: i
+            integer :: j
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            logical :: success
+            integer :: ireason
+            integer :: lumes
+            integer :: idebug
+            integer :: ix1
+            integer :: ix2
+            integer :: jy1
+            integer :: jy2
+            real :: z1
+            real :: tv1
+            real :: z2
+            real :: tv2
+            real :: z3
+            real :: rho3
+            real :: zsfc
+            integer :: iters
+            integer :: kup
+            integer :: klim
+            real :: top_hgt
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer :: nrdrs
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /debug/ idebug,ix1,ix2,jy1,jy2
+            common /sounding/ z1,tv1,z2,tv2,z3,rho3
+            common /limits/ zsfc,iters,kup,klim,top_hgt
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine var_adjust_col
+        subroutine w_calc_obrien(i,j,synthdat,success,ireason,use_top_w) ! in :windsyn:windsyn.f
+            integer :: i
+            integer :: j
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            logical :: success
+            integer :: ireason
+            logical :: use_top_w
+            integer :: lumes
+            integer :: idebug
+            integer :: ix1
+            integer :: ix2
+            integer :: jy1
+            integer :: jy2
+            real :: z1
+            real :: tv1
+            real :: z2
+            real :: tv2
+            real :: z3
+            real :: rho3
+            real :: zsfc
+            integer :: iters
+            integer :: kup
+            integer :: klim
+            real :: top_hgt
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer :: nrdrs
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /debug/ idebug,ix1,ix2,jy1,jy2
+            common /sounding/ z1,tv1,z2,tv2,z3,rho3
+            common /limits/ zsfc,iters,kup,klim,top_hgt
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine w_calc_obrien
+        subroutine w_calc_unadjusted(i,j,synthdat,success,ireason,use_top_w) ! in :windsyn:windsyn.f
+            integer :: i
+            integer :: j
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            logical :: success
+            integer :: ireason
+            logical :: use_top_w
+            integer :: lumes
+            integer :: idebug
+            integer :: ix1
+            integer :: ix2
+            integer :: jy1
+            integer :: jy2
+            real :: z1
+            real :: tv1
+            real :: z2
+            real :: tv2
+            real :: z3
+            real :: rho3
+            real :: zsfc
+            integer :: iters
+            integer :: kup
+            integer :: klim
+            real :: top_hgt
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer :: nrdrs
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /debug/ idebug,ix1,ix2,jy1,jy2
+            common /sounding/ z1,tv1,z2,tv2,z3,rho3
+            common /limits/ zsfc,iters,kup,klim,top_hgt
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine w_calc_unadjusted
+        subroutine synthesis(synthdat,radar,type_bn) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            real dimension(6,imax,jmax,kmax,nrdrs),depend(imax,jmax,kmax) :: radar
+            character dimension(nrdrs,3),intent(c),depend(nrdrs) :: type_bn
+            integer :: lumes
+            integer :: ifirst
+            integer :: last
+            real :: szm
+            real :: z0m
+            real :: zsfc
+            integer :: main_loop_max
+            integer :: kup
+            integer :: klim
+            real :: top_hgt
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer, optional,check(shape(radar,4)==nrdrs),depend(radar) :: nrdrs=shape(radar,4)
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /vert/ ifirst,last,szm,z0m
+            common /limits/ zsfc,main_loop_max,kup,klim,top_hgt
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine synthesis
+        subroutine w_calc(synthdat,i,j,k,wl,w) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            integer :: i
+            integer :: j
+            integer :: k
+            real :: wl
+            real :: w
+            integer :: ifirst
+            integer :: last
+            real :: szm
+            real :: z0m
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer :: nrdrs
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /vert/ ifirst,last,szm,z0m
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine w_calc
+        subroutine triple(synthdat,radar,type_bn) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            real dimension(6,imax,jmax,kmax,nrdrs),depend(imax,jmax,kmax) :: radar
+            character dimension(nrdrs,3),intent(c),depend(nrdrs) :: type_bn
+            integer :: lumes
+            real :: zsfc
+            integer :: iters
+            integer :: kup
+            integer :: klim
+            real :: top_hgt
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer, optional,check(shape(radar,4)==nrdrs),depend(radar) :: nrdrs=shape(radar,4)
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /limits/ zsfc,iters,kup,klim,top_hgt
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine triple
+        subroutine init_field(synthdat) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer :: nrdrs
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine init_field
+        subroutine examine_column(x,itop,itop_miss,ibot_miss) ! in :windsyn:windsyn.f
+            real dimension(*) :: x
+            integer :: itop
+            integer :: itop_miss
+            integer :: ibot_miss
+            integer :: lumes
+            integer :: imax
+            integer :: jmax
+            integer :: kmax
+            integer :: nrdrs
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer :: nflds
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine examine_column
+        subroutine hole_fill(synthdat,iprint) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            integer :: iprint
+            integer :: lumes
+            integer :: max_cons_unoccupied_octants
+            integer :: max_search_radius
+            integer :: min_values_per_octant
+            integer :: max_values_per_octant
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer :: nrdrs
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /holefillparms/ max_cons_unoccupied_octants,max_search_radius,min_values_per_octant,max_values_per_octant
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine hole_fill
+        subroutine vfill(synthdat,n,ngaps) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            integer :: n
+            integer :: ngaps
+            real :: zsfc
+            integer :: iters
+            integer :: kup
+            integer :: klim
+            real :: top_hgt
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer :: nrdrs
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /limits/ zsfc,iters,kup,klim,top_hgt
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine vfill
+        subroutine smooth_it(synthdat) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            integer :: lumes
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer :: nrdrs
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine smooth_it
+        subroutine calc_vt(i,j,k,synthdat) ! in :windsyn:windsyn.f
+            integer :: i
+            integer :: j
+            integer :: k
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            integer :: lumes
+            real :: z1
+            real :: tv1
+            real :: z2
+            real :: tv2
+            real :: z3
+            real :: rho3
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer :: nrdrs
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /sounding/ z1,tv1,z2,tv2,z3,rho3
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine calc_vt
+        function hgt_of_level(z0,k,sz) ! in :windsyn:windsyn.f
+            real :: z0
+            integer :: k
+            real :: sz
+            real :: hgt_of_level
+        end function hgt_of_level
+        subroutine adj_winds_from_div(synthdat) ! in :windsyn:windsyn.f
+            real dimension(imax,jmax,kmax,nflds) :: synthdat
+            integer :: lumes
+            integer :: max_cons_unoccupied_octants
+            integer :: max_search_radius
+            integer :: min_values_per_octant
+            integer :: max_values_per_octant
+            integer, optional,check(shape(synthdat,0)==imax),depend(synthdat) :: imax=shape(synthdat,0)
+            integer, optional,check(shape(synthdat,1)==jmax),depend(synthdat) :: jmax=shape(synthdat,1)
+            integer, optional,check(shape(synthdat,2)==kmax),depend(synthdat) :: kmax=shape(synthdat,2)
+            integer :: nrdrs
+            integer :: istyle
+            real :: ctr
+            real :: thresh
+            integer, optional,check(shape(synthdat,3)==nflds),depend(synthdat) :: nflds=shape(synthdat,3)
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer :: nsmth
+            integer :: ismtyp
+            integer :: iobr
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer :: idbz_parm
+            integer :: idir_int
+            real :: vt_snow
+            real :: vt_rain
+            real :: baddata
+            common /print/ lumes
+            common /holefillparms/ max_cons_unoccupied_octants,max_search_radius,min_values_per_octant,max_values_per_octant
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end subroutine adj_winds_from_div
+        block data  ! in :windsyn:windsyn.f
+            integer :: ifirst
+            integer :: last
+            real :: szm
+            real :: z0m
+            real :: zsfc
+            integer, optional :: iters=1
+            integer, optional :: kup=1
+            integer, optional :: klim=1
+            real, optional :: top_hgt=0.6
+            integer, optional :: iw_at_top=1
+            integer, optional :: i_w_0=1
+            integer :: max_cons_unoccupied_octants
+            integer :: max_search_radius
+            integer :: min_values_per_octant
+            integer :: max_values_per_octant
+            integer, optional :: idebug=0
+            integer, optional :: ix1=-1
+            integer, optional :: ix2=-1
+            integer, optional :: jy1=-1
+            integer, optional :: jy2=-1
+            integer, optional :: lumes=60
+            real :: z1
+            real :: tv1
+            real :: z2
+            real :: tv2
+            real :: z3
+            real :: rho3
+            integer :: imax
+            integer :: jmax
+            integer :: kmax
+            integer :: nrdrs
+            integer :: istyle
+            real, optional :: ctr=0.01745329
+            real :: thresh
+            integer :: nflds
+            real :: thresv
+            real :: sx
+            real :: sy
+            real :: sz
+            real :: z0
+            integer, optional :: nsmth=0
+            integer, optional :: ismtyp=0
+            integer, optional :: iobr=1
+            integer :: ihole_fill
+            real :: su
+            real :: sv
+            integer, optional :: idbz_parm=-1
+            integer, optional :: idir_int=-99
+            real :: vt_snow
+            real :: vt_rain
+            real, optional :: baddata=-999.0
+            common /vert/ ifirst,last,szm,z0m
+            common /limits/ zsfc,iters,kup,klim,top_hgt
+            common /w_techniques/ iw_at_top,i_w_0
+            common /holefillparms/ max_cons_unoccupied_octants,max_search_radius,min_values_per_octant,max_values_per_octant
+            common /debug/ idebug,ix1,ix2,jy1,jy2
+            common /print/ lumes
+            common /sounding/ z1,tv1,z2,tv2,z3,rho3
+            common /size/ imax,jmax,kmax,nrdrs,istyle,ctr,thresh,nflds,thresv,sx,sy,sz,z0,nsmth,ismtyp,iobr,ihole_fill,su,sv,idbz_parm,idir_int,vt_snow,vt_rain,baddata
+        end block data 
+    end interface 
+end python module windsyn
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/

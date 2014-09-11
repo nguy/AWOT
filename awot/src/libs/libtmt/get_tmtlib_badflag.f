@@ -1,0 +1,10 @@
+      REAL FUNCTION GET_TMTLIB_BADFLAG()
+
+C  Thomas Matejka NOAA/NSSL 17 June 1993
+
+      IMPLICIT NONE
+      INCLUDE 'tmtlib.inc'
+
+      GET_TMTLIB_BADFLAG=TMTLIB_BADFLAG
+      RETURN
+      END

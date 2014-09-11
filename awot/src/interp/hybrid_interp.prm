@@ -1,0 +1,13 @@
+hybrid_interp                            ! Program ID - must be this to work
+HMT-05/06 IOP7                           ! Project name (16 chars max)
+/Users/davej/projects/hmt/hmt_data/HMT_SR1_Hybrid_Scan.dat  ! Hybrid scan file
+201,201,0.5,0.5                          ! Imax,Jmax,Sx,Sy
+0 38.670 -121.250 060227 023500 0.0 0.0  ! Nmosm,Olat,Olon,T0 (yymmdd hhmmss),Su,Sv
+971 -5.61 1                              ! MSL of radar, dbz offset, VPR corr
+1.50 4.5                       ! DelZ1, tanb (ice slope)
+/Users/davej/projects/hmt/hmt_data/topoe.prm    ! topo .prm file
+1.0 4 1                        ! Horiz influ, # of Elev Offsets, dbz flag (0:DZ 1:ZT)
+312.5 359.9 2 6                 ! start azm, end azm, Elev step increase, max step
+000.0 090.0 2 6                 ! start azm, end azm, Elev step increase, max step
+312.5 317.5 3 6                 ! start azm, end azm, Elev, step increase, max step
+001.5 004.5 3 6                 ! start azm, end azm, Elev, step increase, max step

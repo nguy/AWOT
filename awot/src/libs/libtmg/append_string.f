@@ -1,0 +1,32 @@
+      SUBROUTINE APPEND_STRING(NBLANKS,INSTRING,OUTSTRING)
+
+C  Thomas Matejka NOAA/NSSL 26 March 1993
+
+C  This subroutine writes NBLANKS blanks and the string INSTRING to the
+C  last non-blank character left justified into the string OUTSTRING
+C  starting after the last non-blank character. The rest of OUTSTRING is
+C  filled with blanks.
+
+      IMPLICIT NONE
+      INCLUDE 'tmmlib.inc'
+      INTEGER,EXTERNAL::S_L
+      CHARACTER(LEN=*)::INSTRING,OUTSTRING
+      INTEGER::NBLANKS,INEND,OUTSTART,OUTEND
+
+      INEND=S_L(INSTRING)
+      OUTSTART=S_L(OUTSTRING)+1
+      OUTEND=LEN(OUTSTRING)
+      IF(OUTSTART+NBLANKS+INEND-1.GT.OUTEND)THEN
+         WRITE(TMMLIB_MESSAGE_UNIT,*)'APPEND_STRING: OUTSTRING IS TOO ',
+     $   'SHORT.'
+         STOP
+      ENDIF
+      IF(OUTSTART.LE.OUTEND)THEN
+         OUTSTRING(OUTSTART:OUTEND)=''
+      ENDIF
+      IF(INEND.GE.1)THEN
+         OUTSTRING(OUTSTART+NBLANKS:OUTSTART+NBLANKS+INEND-1)=
+     $   INSTRING(1:INEND)
+      ENDIF
+
+      END SUBROUTINE APPEND_STRING

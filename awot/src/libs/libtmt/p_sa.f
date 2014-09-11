@@ -1,0 +1,21 @@
+      REAL FUNCTION P_SA(Z)
+
+C  Thomas Matejka NOAA/NSSL 18 November 1997
+
+      IMPLICIT NONE
+      INCLUDE 'include_constants.inc'
+      INCLUDE 'tmtlib.inc'
+      REAL,EXTERNAL::PCLR
+      REAL::Z,P_TROP_SA
+      REAL,PARAMETER::DEL_Z=1000.
+
+      IF(Z.LE.Z_TROP_SA)THEN
+         P_SA=PCLR(Z0_SA,T0_SA,Z0_SA+DEL_Z,T0_SA+GAMMA_TROP_SA*DEL_Z,
+     $   Z0_SA,P0_SA,Z)
+      ELSE
+         P_TROP_SA=PCLR(Z0_SA,T0_SA,Z0_SA+DEL_Z,
+     $   T0_SA+GAMMA_TROP_SA*DEL_Z,Z0_SA,P0_SA,Z_TROP_SA)
+         P_SA=PCLR(Z_TROP_SA,T_TROP_SA,Z_TROP_SA+DEL_Z,
+     $   T_TROP_SA+GAMMA_STRAT_SA*DEL_Z,Z_TROP_SA,P_TROP_SA,Z)
+      ENDIF         
+      END FUNCTION P_SA

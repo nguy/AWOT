@@ -1,0 +1,54 @@
+      REAL FUNCTION EQPOTT(T,TD,P)
+
+C  Thomas Matejka NOAA/NSSL 10 March 1993
+
+      IMPLICIT NONE
+      INCLUDE 'include_constants.inc'
+      INCLUDE 'tmtlib.inc'
+      REAL POTTD,ALHVAP,AMIXS
+      LOGICAL AGAIN
+      INTEGER NINC
+      REAL T,TD,P,SUM,TLCL,PLCL,THETAD,ALVLCL,WSLCL,T2,P2,WS2,T1,P1,WS1,
+     $TAVE,PAVE,DTDPP,DQSDTP,DQSDPP,WSAVE,DELT
+
+      DELT=-DELTA_T
+      SUM=0.
+      CALL LCL(T,TD,P,TLCL,PLCL)
+      THETAD=POTTD(TLCL,TLCL,PLCL)
+      ALVLCL=ALHVAP(TLCL)
+      WSLCL=AMIXS(TLCL,PLCL)
+      T2=TLCL
+      P2=PLCL
+      WS2=WSLCL
+      AGAIN=.TRUE.
+      NINC=0
+      DOWHILE(AGAIN)
+         NINC=NINC+1
+         IF(NINC.GT.MAX_INCS)THEN
+            WRITE(TMTLIB_MESSAGE_UNIT,*)'EQPOTT:  EXCEEDED MAXIMUM ',
+     $      'INCREMENTS.'
+            STOP
+         ENDIF
+         T1=T2
+         P1=P2
+         WS1=WS2
+         DOWHILE(T1+DELT.LE.0.)
+            DELT=DELT/2.
+         ENDDO
+         T2=T1+DELT
+         TAVE=(T1+T2)/2.
+         CALL PSEUDO(TAVE,P1,DTDPP,DQSDTP,DQSDPP)
+         P2=P1+DELT/DTDPP
+         PAVE=(P1+P2)/2.
+         CALL PSEUDO(TAVE,PAVE,DTDPP,DQSDTP,DQSDPP)
+         P2=P1+DELT/DTDPP
+         WS2=AMIXS(T2,P2)
+         WSAVE=(WS1+WS2)/2.
+         SUM=SUM+WSAVE*C_WAT*ALOG(T2/T1)/CP_DRY
+         IF(WS2.LE.WTOL)THEN
+            AGAIN=.FALSE.
+         ENDIF
+      ENDDO
+      EQPOTT=THETAD*EXP(ALVLCL*WSLCL/TLCL/CP_DRY-SUM)
+      RETURN
+      END

@@ -1,0 +1,50 @@
+      SUBROUTINE LLS_DATA_COEFFS(NDATA,X,X_DIM_1,DATA_COEFF,SUCCESS)
+
+      IMPLICIT NONE
+
+      LOGICAL,PARAMETER::CHECK_SINGULAR=.FALSE.
+      REAL,PARAMETER::SINGULAR_THRESHOLD=0.001
+
+      LOGICAL::SUCCESS,INVERSE_SUCCESS
+      INTEGER::NDATA,IDATA,IPARAM,JPARAM,X_DIM_1
+      REAL,DIMENSION(NDATA)::DATA_COEFF
+      REAL,DIMENSION(X_DIM_1,4)::X
+      REAL,DIMENSION(4,4)::A,A_INV
+
+C  Calculate A, the matrix of the sum of products of the predictor
+C  variable data.
+      DO IPARAM=1,4
+         DO JPARAM=1,IPARAM
+            A(IPARAM,JPARAM)=0.
+            DO IDATA=1,NDATA
+               A(IPARAM,JPARAM)=A(IPARAM,JPARAM)+X(IDATA,IPARAM)*
+     $         X(IDATA,JPARAM)
+            ENDDO
+         ENDDO
+      ENDDO
+      DO IPARAM=2,4
+         DO JPARAM=1,IPARAM-1
+            A(JPARAM,IPARAM)=A(IPARAM,JPARAM)
+         ENDDO
+      ENDDO
+
+C  Find the inverse of A.
+      CALL MAT_INV(A,4,4,A_INV,4,CHECK_SINGULAR,SINGULAR_THRESHOLD,0,
+     $INVERSE_SUCCESS)
+      IF(.NOT.INVERSE_SUCCESS)THEN
+         SUCCESS=.FALSE.
+         RETURN
+      ENDIF
+
+C  Calculate the coefficient for each datum.
+      DO IDATA=1,NDATA
+         DATA_COEFF(IDATA)=0.
+         DO IPARAM=1,4
+            DATA_COEFF(IDATA)=DATA_COEFF(IDATA)+
+     $      A_INV(1,IPARAM)*X(IDATA,IPARAM)
+         ENDDO
+      ENDDO
+
+C  Done.
+      SUCCESS=.TRUE.
+      END

@@ -1,0 +1,5 @@
+gage_interp
+38.67 -121.25 201 201 0.5 0.5                 ! Corner Lat,Long Imax, Jmax, Resx, Resy
+051129 000000 060306 234500                 ! start & end times (yymmdd hhmmss)
+total_rain.dat          ! output file name
+/Users/davej/projects/hmt/hmt_data/Raingages.txt           ! File of the locations of ALERT gages

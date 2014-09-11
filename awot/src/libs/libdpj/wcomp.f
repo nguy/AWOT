@@ -1,0 +1,10 @@
+      Function WCOMP(U,V,DIR)
+
+C   Returns THE WIND COMPONENT ALONG A GIVEN CARDINAL DIRECTION
+C      U,V WIND COMPONENTS ALONG EASTERLY,NORTHERLY DIRECTIONS
+C      DIR = CARIDINAL DIRECTION                               (DEG)
+
+       ANG = ANGLE(DIR) * 0.0174532925
+       WCOMP = U * Cos(ANG) + V * SIN(ANG)
+       Return
+       End

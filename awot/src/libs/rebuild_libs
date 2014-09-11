@@ -1,0 +1,7 @@
+f2py -c -m libdpj libdpj/*.f --fcompiler=gfortran --opt=-O --f77flags=-ffixed-line-length-132
+
+f2py -c -m libtmg libtmg/*.f --fcompiler=gfortran --opt=-O --f77flags=-ffixed-line-length-132
+
+f2py -c -m libtmr libtmr/*.f --fcompiler=gfortran --opt=-O --f77flags=-ffixed-line-length-132
+
+f2py -c -m libtmt libtmt/*.f --fcompiler=gfortran --opt=-O --f77flags=-ffixed-line-length-132

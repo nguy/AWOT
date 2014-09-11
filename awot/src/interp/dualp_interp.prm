@@ -1,0 +1,10 @@
+dualp_interp                              ! Program ID - must be this to work
+debris-09 IOP4                             ! Project name (16 chars max)
+/Users/davej/projects/debris/debris-09/Hybrid_Scan_Burbank.dat                ! Hybrid scan file
+175,175,0.075,0.075                        ! Imax,Jmax,Sx,Sy
+0 34.1833 -118.3167 090101 000000 0.0 0.0  ! Nmosm,Olat,Olon,T0 (yymmdd hhmmss),Su,Sv
+217 1.32 0 1                               ! MSL of radar, dbz offset, VPR corr, atten corr
+1.0 0 0                                    ! Horiz influ, # of Elev Offsets, dbz flag (0:DZ 1:ZT)
+
+
+0.000 359.9 2 11                           ! number of elevation angle steps to add, max elev step

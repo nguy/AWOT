@@ -1,0 +1,8 @@
+grnd_interp                       ! Program ID - must be this to work
+NSSL/ERIN                         ! Project name (16 chars max)
+/Volumes/Data/Doppler/erin/KOUN_UF/ufd.1070819130829.KOUN.0.tape    ! Input File Name
+/Volumes/Data/Doppler/erin/analysis/grd_KOUN_0708191308.dat                                ! Output File Name
+130,130,30,1.0,1.0,0.5,0.5        ! Imax,Jmax,Kmax,Sx,Sy,Sz,Z0
+0 34.78 -98.00 070819 131000 +14.72 -2.60  ! Nmosm,Olat,Olon,T0 (yymmdd hhmmss),Su,Sv
+370.0 DZ VE 1.0 1.0 0.25          ! MSL of radar, Ref Field Name, Vel Field name, Horiz influ, Vert int, slope
+070819 000000 070819 235959       ! Start time, End time (000000-235959 for all of volumn scan)
