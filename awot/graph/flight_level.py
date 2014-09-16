@@ -56,6 +56,9 @@ class FlightLevel(object):
             self.basemap = airborne.basemap
         except:
             print "Warning: No basemap instance"
+            
+        # Calculate x,y map position coordinates
+        self.x, self.y = self.basemap(self.longitude, self.latitude)        
        
     ###############
     # Track plots #
@@ -141,16 +144,29 @@ class FlightLevel(object):
         if max_altitude is None:
             max_altitude = self.altitude.max()
             
-        # Calculate x,y map position coordinates
-        self.x, self.y = self.basemap(self.longitude, self.latitude)
+        # Get start and end times (this deals with subsets)
+        dt_start = self._get_start_datetime(start_time)
+        dt_end = self._get_end_datetime(end_time)
+        
+        # Subset the data (will use min/max if None given)
+        xSub, ySub = self._get_x_y_time_subset(start_time, end_time, return_time=False)
+        lonSub, latSub = self._get_lon_lat_time_subset(start_time, end_time)
+        timeSub, VarSub = self._get_time_var_time_subset('altitude', start_time, end_time)
+        
+        # Clean up the masked data for plotting
+        all_mask = latSub.mask + lonSub.mask + VarSub.mask
+        lonmask = np.ma.array(lonSub, mask=all_mask).compressed()
+        latmask = np.ma.array(latSub, mask=all_mask).compressed()
+        varmask = np.ma.array(VarSub, mask=all_mask).compressed()
+        
+        xmask, ymask = self.basemap(lonmask, latmask)
 
         # Plot the track either coloring by altitude or as single color  
         if color_by_altitude:
-            lc = self._colorline(cmap=track_cmap, linewidth=track_lw, alpha=alpha,
-                            vmin=min_altitude, vmax=max_altitude,
-                            start_time=start_time, end_time=end_time)
+            lc = self._colorline(xmask, ymask, z=varmask,
+                            cmap=track_cmap, linewidth=track_lw, alpha=alpha,
+                            vmin=min_altitude, vmax=max_altitude)
     
-##            self.basemap.ax.add_collection(lc)
             ax.add_collection(lc)
                             
             if add_cb:
@@ -158,10 +174,7 @@ class FlightLevel(object):
                 cb.set_label('Altitude (m)')
     
         else:
-##            self.basemap.plot(self.longitude, self.latitude, latlon=True,
-##                   color=track_color, lw=track_lw, alpha=alpha, ax=ax, label=legLab)
-            xSub, ySub = self._get_x_y_time_subset(start_time=start_time, end_time=end_time)
-            p = ax.plot(xSub, ySub,
+            p = ax.plot(xmask, ymask,
                    color=track_color, lw=track_lw, alpha=alpha, label=legLab)
                    
         if addlegend:
@@ -245,29 +258,42 @@ class FlightLevel(object):
         # Pull out the variable to plot
         if field is None:
             field = 'temperature'
-        Var = self.flight_data[field]
         
         # parse parameters
         ax, fig = self._parse_ax_fig(ax, fig)
+            
+        # Get start and end times (this deals with subsets)
+        dt_start = self._get_start_datetime(start_time)
+        dt_end = self._get_end_datetime(end_time)
+        
+        # Subset the data (will use min/max if None given)
+        xSub, ySub = self._get_x_y_time_subset(start_time, end_time, return_time=False)
+        lonSub, latSub = self._get_lon_lat_time_subset(start_time, end_time)
+        timeSub, VarSub = self._get_time_var_time_subset(field, start_time, end_time)
+        
+        # Clean up the masked data for plotting
+        all_mask = latSub.mask + lonSub.mask + VarSub.mask
+        lonmask = np.ma.array(lonSub, mask=all_mask).compressed()
+        latmask = np.ma.array(latSub, mask=all_mask).compressed()
+        varmask = np.ma.array(VarSub, mask=all_mask).compressed()
+        
+        xmask, ymask = self.basemap(lonmask, latmask)
         
         # Check inputs
-            
         if min_value is None:
-            min_value = Var.min()
+            min_value = varmask.min()
          
         if max_value is None:
-            max_value = Var.max()
+            max_value = varmask.max()
         
         if legLab is None:
             legLab = self.flight_number
-            
-        self.x, self.y = self.basemap(self.longitude, self.latitude)
            
-        # Plot the track    
-        lc = self._colorline(z=Var, cmap=track_cmap, 
+        # Plot the track
+        lc = self._colorline(xmask, ymask, z=varmask, cmap=track_cmap,
+#        lc = self._colorline(z=varm, cmap=track_cmap, 
                         linewidth=track_lw, alpha=alpha,
-                        vmin=min_value, vmax=max_value,
-                        start_time=start_time, end_time=end_time)
+                        vmin=min_value, vmax=max_value)
     
         ax.add_collection(lc)
         
@@ -282,7 +308,7 @@ class FlightLevel(object):
         if addtitle:
             if title is None:
                 title = self.project +' '+self.platform
-            self.basemap.ax.set_title(title)
+            ax.set_title(title)
             
     ##########################
     # Basemap add-on methods #
@@ -577,10 +603,10 @@ class FlightLevel(object):
     ######################
     # Original Multiline color plotting found at 
     # http://nbviewer.ipython.org/github/dpsanders/matplotlib-examples/blob/master/colorline.ipynb
-    # Modified for this class
+    # Modified for this class# 
     
-    def _colorline(self,  z=None, cmap=None, norm=None, linewidth=1.5, alpha=0.5,
-                   vmin=None, vmax=None, start_time=None, end_time=None):
+    def _colorline(self, x, y, z=None, cmap=None, norm=None, linewidth=1.5, alpha=0.5,
+                   vmin=None, vmax=None):
         '''
         Plot a colored line with coordinates x and y
         Optionally specify colors in the array z
@@ -588,6 +614,10 @@ class FlightLevel(object):
 
         Parameters::
         ----------
+        x : float array
+            X coordinates to map
+        Y : float array
+            Y coordinates to map
         z : float array
             Variable data to plot
         cmap : str
@@ -602,12 +632,6 @@ class FlightLevel(object):
             Sets the minimum to scale colormap luminance
         vmax : float
             Sets the maximum to scale colormap luminance
-        start_time : str
-            Start time of line segment in datetime format, use to subset
-            e.g. '2014-08-20 12:30:00'
-        end_time : str
-            End time of line segment in datetime format, use to subset
-            e.g. '2014-08-20 12:30:00'
         '''
                           
         # Get the colormap to work with
@@ -625,16 +649,8 @@ class FlightLevel(object):
         
         if vmax is None:
             vmax = data.max()
-            
-        # Get start and end times (this deals with subsets)
-        dt_start = self._get_start_datetime(start_time)
-        dt_end = self._get_end_datetime(end_time)
-   
-        x = self.x[(self.time >= dt_start) & (self.time <= dt_end)]
-        y = self.y[(self.time >= dt_start) & (self.time <= dt_end)]
-        dataSub = data[(self.time >= dt_start) & (self.time <= dt_end)]
         
-        dataSub = np.ma.masked_outside(dataSub, vmin, vmax)
+        data = np.ma.masked_outside(data, vmin, vmax)
            
         # Set the normalization to the min and max
         if norm is None:
@@ -648,7 +664,7 @@ class FlightLevel(object):
         
         lc = LineCollection(segments, cmap=cmap, norm=norm, 
                             linewidth=linewidth, alpha=alpha)
-        lc.set_array(dataSub)
+        lc.set_array(data)
 
         return lc
         
@@ -729,7 +745,7 @@ class FlightLevel(object):
         '''
         Get a start time as datetime instance for subsetting.
         '''
-        
+        #Check to see if the time is subsetted
         if end_time is None:
             dt_end = self.time.max()
         else:
@@ -745,72 +761,45 @@ class FlightLevel(object):
                     
         return dt_end
                       
-    def _get_x_y_time_subset(self, start_time, end_time):
+    def _get_x_y_time_subset(self, start_time, end_time, return_time=False):
         '''
         Get a subsetted X and Y to control track length if input by user.
         '''
         # Check to see if time is subsetted
-        if start_time is None:
-            dt_start = self.time.min()
-        else:
-            startStr = [start_time[0:4],start_time[5:7],start_time[8:10],
-                        start_time[11:13],start_time[14:16],start_time[17:19],'0']
-            startInt = [ int(s) for s in startStr ]
-            try:
-                dt_start = datetime(startInt[0],startInt[1],startInt[2],startInt[3],
-                                    startInt[4],startInt[5],startInt[6])
-            except:
-                print "Check the format of date string (e.g. '2014-08-20 12:30:00')"
-                return
-        
-        if end_time is None:
-            dt_end = self.time.max()
-        else:
-            endStr = [end_time[0:4],end_time[5:7],end_time[8:10],
-                        end_time[11:13],end_time[14:16],end_time[17:19],'0']
-            endInt = [ int(s) for s in endStr ]           
-            try:
-                dt_end = datetime(endInt[0],endInt[1],endInt[2],endInt[3],
-                                    endInt[4],endInt[5],endInt[6])
-            except:
-                print "Check the format of date string (e.g. '2014-08-20 12:30:00')"
-                return
+        dt_start = self._get_start_datetime(start_time)
+        dt_end = self._get_end_datetime(end_time)
         
         x = self.x[(self.time >= dt_start) & (self.time <= dt_end)]
         y = self.y[(self.time >= dt_start) & (self.time <= dt_end)]
         
-        return x, y
+        if return_time:
+            time = self.time[(self.time >= dt_start) & (self.time <= dt_end)]
+            
+            return x, y, time
+        else:
+        
+            return x, y
+                      
+    def _get_lon_lat_time_subset(self, start_time, end_time):
+        '''
+        Get a subsetted Lon and Lat to control track length if input by user.
+        '''
+        # Check to see if time is subsetted
+        dt_start = self._get_start_datetime(start_time)
+        dt_end = self._get_end_datetime(end_time)
+        
+        lon = self.longitude[(self.time >= dt_start) & (self.time <= dt_end)]
+        lat = self.latitude[(self.time >= dt_start) & (self.time <= dt_end)]
+        
+        return lon, lat
         
     def _get_time_var_time_subset(self, field, start_time, end_time):
         '''
-        Get a subsetted X and Y to control track length if input by user.
+        Get a subsetted time and Variable to control track length if input by user.
         '''
         # Check to see if time is subsetted
-        if start_time is None:
-            dt_start = self.time.min()
-        else:
-            startStr = [start_time[0:4],start_time[5:7],start_time[8:10],
-                        start_time[11:13],start_time[14:16],start_time[17:19],'0']
-            startInt = [ int(s) for s in startStr ]
-            try:
-                dt_start = datetime(startInt[0],startInt[1],startInt[2],startInt[3],
-                                    startInt[4],startInt[5],startInt[6])
-            except:
-                print "Check the format of date string (e.g. '2014-08-20 12:30:00')"
-                return
-        
-        if end_time is None:
-            dt_end = self.time.max()
-        else:
-            endStr = [end_time[0:4],end_time[5:7],end_time[8:10],
-                        end_time[11:13],end_time[14:16],end_time[17:19],'0']
-            endInt = [ int(s) for s in endStr ]           
-            try:
-                dt_end = datetime(endInt[0],endInt[1],endInt[2],endInt[3],
-                                    endInt[4],endInt[5],endInt[6])
-            except:
-                print "Check the format of date string (e.g. '2014-08-20 12:30:00')"
-                return
+        dt_start = self._get_start_datetime(start_time)
+        dt_end = self._get_end_datetime(end_time)
         
         tsub = self.time[(self.time >= dt_start) & (self.time <= dt_end)]
         var = self.flight_data[field]

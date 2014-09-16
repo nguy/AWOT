@@ -106,14 +106,13 @@ def flight_data(fname):
     comments = NA_dict['SCOM']
     missingData = NA_dict['VMISS']
     scaleFactor = NA_dict['VSCAL']
-    
     hdr_row_length = NA_dict['NLHEAD']
-    
+
     # Now add a value to beginning of missing data scale factor arrays
     # to account for time column
     missingData.insert(0, -99.)
     scaleFactor.insert(0, 1.)
-    
+
     # Get the data columns
     junk = np.genfromtxt(fname, skiprows=hdr_row_length, 
                           missing_values=missingData, filling_values=np.nan)
@@ -122,33 +121,56 @@ def flight_data(fname):
     # This assumes that there are 4 lines of normal comments and that the 
     VarNames = NA_dict['NCOM'][2].split()
     
-    # Pull out each variable
-    Lat = junk[:,(VarNames == "POS_Lat")]
-    Lon = junk[:,(VarNames == "POS_Lon")]
-    Alt = junk[:,(VarNames == "POS_Alt")]
-    PAlt = junk[:,(VarNames == "Press_Alt")]
-    heading = junk[:,(VarNames == "POS_Head")]
-    track =junk[:,(VarNames == "POS_Trk")]
-    vert_vel = junk[:,(VarNames == "Wind_Z")]
-    temp = junk[:,(VarNames == "Air_Temp")]
-    temp_dew = junk[:,(VarNames == "DEWPT")]
-    theta = junk[:,(VarNames == "Pot_Temp_T1")]
-    wSpd = junk[:,(VarNames == "Wind_M")]
-    wDir = junk[:,(VarNames == "Wind_D")]
-    mixing_ratio = junk[:,(VarNames == "MixingRatio")]
-    TfrostPt= junk[:,(VarNames == "FrostPoint")]
-    Turb = junk[:,(VarNames == "TURB")]
-    LWC_King = junk[:,(VarNames == "King_LWC_ad")]
-    TWC_Nev = junk[:,(VarNames == "CDP_TWC")]
-    LWC_Nev = junk[:,(VarNames == "CDP_LWC")]
-    Nt_2DC = junk[:,(VarNames == "2-DC_Conc")]
-    Dmean_2DC = junk[:,(VarNames == "2-DC_MenD")]
-    Dvol_2DC = junk[:,(VarNames == "2-DC_VolDia")]
-    Deff_2DC = junk[:,(VarNames == "2-DC_EffRad")]
-    Nt_CPC = junk[:,(VarNames == "CPCConc")]
+    # Pull out each variable data and multiply by scale factor
+    Lat = np.array(junk[:,VarNames.index("POS_Lat")] \
+               * scaleFactor[VarNames.index("POS_Lat")])
+    Lon = np.array(junk[:,VarNames.index("POS_Lon")] \
+                * scaleFactor[VarNames.index("POS_Lon")])
+    Alt = np.array(junk[:,VarNames.index("POS_Alt")] \
+                * scaleFactor[VarNames.index("POS_Alt")])
+    PAlt = np.array(junk[:,VarNames.index("Press_Alt")] \
+                * scaleFactor[VarNames.index("Press_Alt")])
+    heading = np.array(junk[:,VarNames.index("POS_Head")] \
+                * scaleFactor[VarNames.index("POS_Head")])
+    track =np.array(junk[:,VarNames.index("POS_Trk")] \
+                * scaleFactor[VarNames.index("POS_Trk")])
+    vert_vel = np.array(junk[:,VarNames.index("Wind_Z")] \
+                * scaleFactor[VarNames.index("Wind_Z")])
+    temp = np.array(junk[:,VarNames.index("Air_Temp")] \
+                * scaleFactor[VarNames.index("Air_Temp")])
+    temp_dew = np.array(junk[:,VarNames.index("DEWPT")] \
+                * scaleFactor[VarNames.index("DEWPT")])
+    theta = np.array(junk[:,VarNames.index("Pot_Temp_T1")] \
+                * scaleFactor[VarNames.index("Pot_Temp_T1")])
+    wSpd = np.array(junk[:,VarNames.index("Wind_M")] \
+                * scaleFactor[VarNames.index("Wind_M")])
+    wDir = np.array(junk[:,VarNames.index("Wind_D")] \
+                * scaleFactor[VarNames.index("Wind_D")])
+    mixing_ratio = np.array(junk[:,VarNames.index("MixingRatio")] \
+                * scaleFactor[VarNames.index("MixingRatio")])
+    TfrostPt= np.array(junk[:,VarNames.index("FrostPoint")] \
+                * scaleFactor[VarNames.index("FrostPoint")])
+    Turb = np.array(junk[:,VarNames.index("TURB")] \
+                * scaleFactor[VarNames.index("TURB")])
+    LWC_King = np.array(junk[:,VarNames.index("King_LWC_ad")] \
+                * scaleFactor[VarNames.index("King_LWC_ad")])
+    TWC_Nev = np.array(junk[:,VarNames.index("Nev_TWC")] \
+                * scaleFactor[VarNames.index("Nev_TWC")])
+    LWC_CDP = np.array(junk[:,VarNames.index("CDP_LWC")] \
+                * scaleFactor[VarNames.index("CDP_LWC")])
+    Nt_2DC = np.array(junk[:,VarNames.index("2-DC_Conc")] \
+                * scaleFactor[VarNames.index("2-DC_Conc")])
+    Dmean_2DC = np.array(junk[:,VarNames.index("2-DC_MenD")] \
+                * scaleFactor[VarNames.index("2-DC_MenD")])
+    Dvol_2DC = np.array(junk[:,VarNames.index("2-DC_VolDia")] \
+                * scaleFactor[VarNames.index("2-DC_VolDia")])
+    Deff_2DC = np.array(junk[:,VarNames.index("2-DC_EffRad")] \
+                * scaleFactor[VarNames.index("2-DC_EffRad")])
+    Nt_CPC = np.array(junk[:,VarNames.index("CPCConc")] \
+                * scaleFactor[VarNames.index("CPCConc")])
     
     # Create a time array 
-    TimeSec = junk[:,(VarNames == "Time")]
+    TimeSec = junk[:,VarNames.index("Time")]
     
     # Get the date
     Date = NA_dict['DATE']
@@ -156,38 +178,38 @@ def flight_data(fname):
     
     # Create a datetime instance from file
     Time_dt = num2date(TimeSec, 'seconds since '+DateStr+' 00:00:00+0:00')
-    
+
     # Now move this back into number format
     TimeNum = date2num(Time_dt, 'seconds since 1970-1-1 00:00:00+0:00')
     
     # Finally convert this back to a standard used by this package (Epoch)
-    Time_unaware = num2date(TimeSec,'seconds since 1970-1-1 00:00:00+0:00')
+    Time_unaware = num2date(TimeNum,'seconds since 1970-1-1 00:00:00+0:00')
     Time = Time_unaware#.replace(tzinfo=pytz.UTC)
-    
+
     # Now mask missing values
-    np.ma.masked_invalid(Lat)
-    np.ma.masked_invalid(Lon)
-    np.ma.masked_invalid(Alt)
-    np.ma.masked_invalid(PAlt)
-    np.ma.masked_invalid(heading)
-    np.ma.masked_invalid(track)
-    np.ma.masked_invalid(vert_vel)
-    np.ma.masked_invalid(temp)
-    np.ma.masked_invalid(temp_dew)
-    np.ma.masked_invalid(theta)
-    np.ma.masked_invalid(wSpd)
-    np.ma.masked_invalid(wDir)
-    np.ma.masked_invalid(mixing_ratio)
-    np.ma.masked_invalid(TfrostPt)
-    np.ma.masked_invalid(Turb)
-    np.ma.masked_invalid(LWC_King)
-    np.ma.masked_invalid(TWC_Nev)
-    np.ma.masked_invalid(LWC_Nev)
-    np.ma.masked_invalid(Nt_2DC)
-    np.ma.masked_invalid(Dmean_2DC)
-    np.ma.masked_invalid(Dvol_2DC)
-    np.ma.masked_invalid(Deff_2DC)
-    np.ma.masked_invalid(Nt_CPC)
+    Lat = np.ma.masked_values(Lat, missingData[VarNames.index("POS_Lat")])
+    Lon = np.ma.masked_values(Lon, missingData[VarNames.index("POS_Lon")])
+    Alt = np.ma.masked_values(Alt, missingData[VarNames.index("POS_Alt")])
+    PAlt = np.ma.masked_values(PAlt, missingData[VarNames.index("Press_Alt")])
+    heading = np.ma.masked_values(heading, missingData[VarNames.index("POS_Head")])
+    track = np.ma.masked_values(track, missingData[VarNames.index("POS_Trk")])
+    vert_vel = np.ma.masked_values(vert_vel, missingData[VarNames.index("Wind_Z")])
+    temp = np.ma.masked_values(temp, missingData[VarNames.index("Air_Temp")])
+    temp_dew = np.ma.masked_values(temp_dew, missingData[VarNames.index("DEWPT")])
+    theta = np.ma.masked_values(theta, missingData[VarNames.index("Pot_Temp_T1")])
+    wSpd = np.ma.masked_values(wSpd, missingData[VarNames.index("Wind_M")])
+    wDir = np.ma.masked_values(wDir, missingData[VarNames.index("Wind_D")])
+    mixing_ratio = np.ma.masked_values(mixing_ratio, missingData[VarNames.index("MixingRatio")])
+    TfrostPt = np.ma.masked_values(TfrostPt, missingData[VarNames.index("FrostPoint")])
+    Turb = np.ma.masked_values(Turb, missingData[VarNames.index("TURB")])
+    LWC_King = np.ma.masked_values(LWC_King, missingData[VarNames.index("King_LWC_ad")])
+    TWC_Nev = np.ma.masked_values(TWC_Nev, missingData[VarNames.index("Nev_TWC")])
+    LWC_CDP = np.ma.masked_values(LWC_CDP, missingData[VarNames.index("CDP_LWC")])
+    Nt_2DC = np.ma.masked_values(Nt_2DC, missingData[VarNames.index("2-DC_Conc")])
+    Dmean_2DC = np.ma.masked_values(Dmean_2DC, missingData[VarNames.index("2-DC_MenD")])
+    Dvol_2DC = np.ma.masked_values(Dvol_2DC, missingData[VarNames.index("2-DC_VolDia")])
+    Deff_2DC = np.ma.masked_values(Deff_2DC, missingData[VarNames.index("2-DC_EffRad")])
+    Nt_CPC = np.ma.masked_values(Nt_CPC, missingData[VarNames.index("CPCConc")])
 
     # Create a dictionary to transfer the data
     data = {'latitude': Lat,
@@ -208,7 +230,7 @@ def flight_data(fname):
             'turbulence_parameter': Turb,
             'LWC_king': LWC_King,
             'TWC_Nevzorov': TWC_Nev,
-            'LWC_Nevzorov': LWC_Nev,
+            'LWC_CDP': LWC_CDP,
             'total_conc_2DC': Nt_2DC,
             'drop_diam_mean_2DC': Dmean_2DC,
             'drop_diam_mean_vol_2DC': Dvol_2DC,
@@ -220,7 +242,7 @@ def flight_data(fname):
             }
             
     FileIn.close()
-    
+
     return data 
     
 #**====================================================
@@ -251,13 +273,13 @@ def flight_track(fname):
     ncFile = Dataset(fname,'r')
     
     # Pull out each variable
-    Lat = junk[:,(VarNames == "POS_Lat")]
-    Lon = junk[:,(VarNames == "POS_Lon")]
-    Alt = junk[:,(VarNames == "POS_Alt")]
-    PAlt = junk[:,(VarNames == "Press_Alt")]
+    Lat = np.array(junk[:,VarNames.index("POS_Lat")])
+    Lon = np.array(junk[:,VarNames.index("POS_Lon")])
+    Alt = np.array(junk[:,VarNames.index("POS_Alt")])
+    PAlt = np.array(junk[:,VarNames.index("Press_Alt")])
     
     # Create a time array 
-    TimeSec = junk[:,(VarNames == "Time")]
+    TimeSec = junk[:,VarNames.index("Time")]
     
     # Get the date
     Date = NA_dict['DATE']

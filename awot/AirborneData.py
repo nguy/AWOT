@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-FlightLevel.py - Class for flight level observations
+Airborne.py - Class for airborne observations
 """
 
 from .graph.common import create_basemap_instance
@@ -24,7 +24,7 @@ class AirborneData(object):
     Can be returned from a reader object (e.g. FlightDataFile or RadarDataFile) 
     
     e.g.
-    Data = AirborneData(reader=FlightDataFile)
+    Data = AirborneData(reader=FlightDataFile or RadarDataFile)
     
     or 
     
@@ -169,6 +169,7 @@ class AirborneData(object):
         plt.gca()
         plt.gcf()
         plt.savefig(figName+'.'+figType, format=figType)
+        print "Saved figure: " + figName+'.'+figType
         
         # Now close the plot to make sure matplotlib is happy
         plt.close()
