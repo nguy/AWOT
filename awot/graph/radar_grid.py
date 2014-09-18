@@ -142,12 +142,12 @@ class RadarGridPlot(object):
     
         # Find the closest vertical point 
         Zind = find_nearest_indices(self.height['data'][:], ppi_height)
-                
+        
         # Convert lats/lons to 2D grid
         Lon2D, Lat2D = np.meshgrid(self.longitude['data'][:], self.latitude['data'][:])
         # Convert lats/lons to map projection coordinates
         x, y = self.basemap(Lon2D, Lat2D)
-    
+        
         #Plot the contours
 #    cs = m.contourf(x,y,Z[Zind,:,:],cmap=cm.s3pcpn)#clevs=clevels,
 #    cs = m.contourf(x,y,Z[Zind,:,:],clevels,vmin=vmin,vmax=vmax,cmap=cmap)

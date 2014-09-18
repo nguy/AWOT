@@ -2,7 +2,6 @@
 """
 FlightDataFile.py - Class for reading Data from file
 """
-#import io.read_p3_2dimage_probe as ReadData
 import os
 
 #from ..AirborneData import AirborneData

@@ -32,8 +32,9 @@ This package is currently divided as follows:
 
 io - Input and output of specific data files
 Currently supported:
-	NOAA P-3 tail Doppler and lower fuselage radar
-	NOAA P-3 and UND flight level data
+	NOAA P-3 tail Doppler and lower fuselage radar native radar coordinates.
+	NOAA P-3 tail Doppler and lower fuselage radar gridded coordinates, specifically produced by the windysn program.
+	NOAA P-3 and UND flight level data.
 
 graph - Produces plots.  Horizontal plots are overlaid on a basemap instance 
 and vertical plots are regular 2D plots.
