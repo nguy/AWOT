@@ -261,7 +261,7 @@ def read_windsyn_binary(fname, platform=None, instrument=None, radar_num=None):
     Imax = hdr_dict['Imax']
     Jmax = hdr_dict['Jmax']
     Kmax = hdr_dict['Kmax']
-    
+    print hdr_dict['Imax'],hdr_dict['Sx']
     ##########
     
     # Retrieve data from the .dpw file
@@ -521,10 +521,10 @@ def _get_height_from_header(hdr):
     
 def _get_x_y_from_header(hdr):
     """Calculated the X and Y arrays given windsyn binary header"""
-    X = {'data': np.arange(0., hdr['Imax'], hdr['Sx']),
+    X = {'data': np.arange(0., hdr['Imax'] * hdr['Sx'], hdr['Sx']),
         'units': 'km',
         'long_name': 'East-West Distance'}
-    Y = {'data': np.arange(0., hdr['Jmax'], hdr['Sy']),
+    Y = {'data': np.arange(0., hdr['Jmax'] * hdr['Sy'], hdr['Sy']),
         'units': 'km',
         'long_name': 'North-South Distance'}
     
