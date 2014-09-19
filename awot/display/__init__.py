@@ -1,12 +1,12 @@
 """
 awot - Airborne Weather Observations Toolkit
 ================================================
-Probe Subpackage (:mod:'awot.graph)
+Probe Subpackage (:mod:'awot.display)
 ================================================
 
-.. currentmodule:: awot.graph
+.. currentmodule:: awot.display
 """
 
-import p3tv
+import py3tv
 import rtd
 __all__ = [s for s in dir() if not s.startswith('_')]

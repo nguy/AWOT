@@ -17,7 +17,6 @@ Created by Nick Guy.
 # Load the needed packages
 from netCDF4 import Dataset
 import numpy as np
-from Nio import open_file
 import pytz
 from datetime import datetime
 import pyart.io as pio
@@ -268,21 +267,21 @@ def read_windsyn_binary(fname, platform=None, instrument=None, radar_num=None):
     fi = open(fname+'.dpw', 'rb')
     
     U = np.fromfile(fi, dtype='>f', 
-        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)#.transpose(0, 2, 1)
+        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax
     V = np.fromfile(fi, dtype='>f', 
-        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)#.transpose(0, 2, 1)
+        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)
     W = np.fromfile(fi, dtype='>f', 
-        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)#.transpose(0, 2, 1)
+        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)
     Div = np.fromfile(fi, dtype='>f', 
-        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)#.transpose(0, 2, 1)
+        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)
     dBZ = np.fromfile(fi, dtype='>f', 
-        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)#.transpose(0, 2, 1)
+        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)
     Vt = np.fromfile(fi, dtype='>f', 
-        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)#.transpose(0, 2, 1)
+        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)
     Tdif = np.fromfile(fi ,dtype='>f', 
-        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)#.transpose(0, 2, 1)
+        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)
     Tave = np.fromfile(fi ,dtype='>f', 
-        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)#.transpose(0, 2, 1)
+        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)
     
     fi.close()
     
