@@ -267,7 +267,7 @@ def read_windsyn_binary(fname, platform=None, instrument=None, radar_num=None):
     fi = open(fname+'.dpw', 'rb')
     
     U = np.fromfile(fi, dtype='>f', 
-        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax
+        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)
     V = np.fromfile(fi, dtype='>f', 
         count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)
     W = np.fromfile(fi, dtype='>f', 
