@@ -155,7 +155,7 @@ class AirborneData(object):
         
     #########################
     
-    def save_figure(self, figName='awot_plot', figType="png"):
+    def save_figure(self, figName='awot_plot', figType="png", **kwargs):
         '''Save the current plot
         
         Parameters::

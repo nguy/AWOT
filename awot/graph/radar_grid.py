@@ -47,7 +47,8 @@ class RadarGridPlot(object):
         elif instrument == 'lf':
             radar_data = airborne.lf_radar_data
         elif instrument == 'ground':
-            print "Currently not supported.  Use PyArt to connect here"
+            print "Connected using PyArt"
+            radar_data = airborne.ground_radar_data
             return
         elif instrument == 'tdr_sweep':
             print "Use the radar_sweep library (RadarSweepPlot class)"

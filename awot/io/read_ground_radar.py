@@ -17,20 +17,31 @@ import pyart.io as pio
 #===============================================================
 # BEGIN FUNCTIONS
 #===============================================================
-def read_radar(fname):
+def read_radar(fname, instrument=None, platform=''):
     """Read in data using the pyart reader.
     PARAMETERS::
     ----------
         fname : string
             Filename [string]
     """
+    if instrument is None:
+        instrument = 'ground'
+    
     rad = pio.read(fname)
     
-        # Create a dictionary to transfer the data
-    data = {'latitude': rad.latitude,
+    # build the fields dictionary
+    fields = {}
+    for fldName in rad.fields:
+        fields[fldName] = rad.fields[fldName]
+
+    # Create a dictionary to transfer the data
+    data = {'metadata': rad.metadata,
             'longitude': rad.longitude,
+            'latitude': rad.latitude,
             'height': rad.altitude,
-            'fields': rad.fields
+            'fields': fields,
+            'platform': rad.metadata['instrument_name'],
+            'instrument': instrument
             }
             
     return data

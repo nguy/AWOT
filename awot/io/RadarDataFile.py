@@ -14,7 +14,7 @@ from ..io.read_p3_radar import read_tdr_sweep, read_windsyn_binary
 ########################
 
 def read_radar(filename=None, platform='p3', file_format='netcdf', instrument=None,
-               data_format='grid', initialize=False ):
+               initialize=False ):
     '''
     Takes a filename pointing to a aircraft radar data file
      and returns a RadarData object.
@@ -102,7 +102,7 @@ class FileReader(object):
                print "Need to supply instrument type"
                return
             if instrument.lower() == 'ground':
-                radar = read_ground_polar(filename)
+                radar = read_ground_radar(filename)
             elif instrument.lower() == 'lf':
                 if (platform.upper() == 'P3') or (platform.upper() == 'P-3'):
                     radar = read_lf_grid(filename)
@@ -116,7 +116,8 @@ class FileReader(object):
                     
             elif instrument.lower() == 'tdr_sweep':
                 if (platform.upper() == 'P3') or (platform.upper() == 'P-3'):
-                    if file_format.lower() =='netcdf':
+                    if (file_format.lower() =='netcdf') or \
+                       (file_format.lower() =='sigmet'):
                         radar = read_tdr_sweep(filename)
             else:
                 print "Check the supported instrument list"
