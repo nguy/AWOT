@@ -74,7 +74,8 @@ class RadarGridPlot(object):
     def plot_ppi(self, field, ppi_height=2., mask_procedure=None, mask_tuple=None, 
                 cminmax=(0.,60.), clevs=25, vmin=15., vmax=60., clabel='dBZ',
                 title=" ", title_size=20, 
-                cmap='gist_ncar', color_bar=True, cb_pad="5%", cb_loc='right',
+                cmap='gist_ncar',
+                color_bar=True, cb_pad="5%", cb_loc='right', cb_tick_int=2,
                 ax=None, fig=None):
         """Produce a CAPPI (constant altitude plan position indicator) plot
         using the Tail Doppler Radar data.
@@ -117,6 +118,8 @@ class RadarGridPlot(object):
         cb_loc : str
             Location of colorbar, default is 'right', also available: 
             'bottom', 'top', 'left'
+        cb_tick_int : int
+            Interval to use for colorbar tick labels, higher number "thins" labels
                 
         ax : Axis
             Axis to plot on. None will use the current axis.
@@ -150,7 +153,6 @@ class RadarGridPlot(object):
         x, y = self.basemap(Lon2D, Lat2D)
         
         #Plot the contours
-#    cs = m.contourf(x,y,Z[Zind,:,:],cmap=cm.s3pcpn)#clevs=clevels,
 #    cs = m.contourf(x,y,Z[Zind,:,:],clevels,vmin=vmin,vmax=vmax,cmap=cmap)
         cs = self.basemap.pcolormesh(x, y, Data[Zind,:,:], 
                                      vmin=vmin, vmax=vmax, cmap=cmap)
@@ -162,7 +164,8 @@ class RadarGridPlot(object):
             cb = self.basemap.colorbar(cs, location=cb_loc, pad=cb_pad)#,ticks=clevels)
             cb.set_label(cbStr)
             # Set the number of ticks in the colorbar based upon number of contours
-            tick_locator = ticker.MaxNLocator(nbins=int(clevs/2))
+            # and the tick interval selected
+            tick_locator = ticker.MaxNLocator(nbins=int(clevs/cb_tick_int))
             cb.locator = tick_locator
             cb.update_ticks()
     
@@ -240,7 +243,7 @@ class RadarGridPlot(object):
     def plot_lf(self, field=None, mask_procedure=None, mask_tuple=None, 
                 cminmax=(0.,60.), clevs=25, vmin=15., vmax=60., clabel='dBZ',
                 title=" ", title_size=20, cmap='gist_ncar',
-                color_bar=True, cb_pad="5%", cb_loc='right',
+                color_bar=True, cb_pad="5%", cb_loc='right', cb_tick_int=2,
                 ax=None, fig=None):
         """Produce a CAPPI (constant altitude plan position indicator) plot
         using the Tail Doppler Radar data.
@@ -280,6 +283,8 @@ class RadarGridPlot(object):
         cb_loc : str
             Location of colorbar, default is 'right', also available: 
             'bottom', 'top', 'left'
+        cb_tick_int : int
+            Interval to use for colorbar tick labels, higher number "thins" labels
                 
         ax : Axis
             Axis to plot on. None will use the current axis.
@@ -319,7 +324,7 @@ class RadarGridPlot(object):
             cb = self.basemap.colorbar(p, location=cb_loc, pad=cb_pad)#,ticks=clevels)
             cb.set_label(cbStr)
             # Set the number of ticks in the colorbar based upon number of contours
-            tick_locator = ticker.MaxNLocator(nbins=int(clevs/2))
+            tick_locator = ticker.MaxNLocator(nbins=int(clevs/cb_tick_int))
             cb.locator = tick_locator
             cb.update_ticks()
     

@@ -260,7 +260,6 @@ def read_windsyn_binary(fname, platform=None, instrument=None, radar_num=None):
     Imax = hdr_dict['Imax']
     Jmax = hdr_dict['Jmax']
     Kmax = hdr_dict['Kmax']
-    print hdr_dict['Imax'],hdr_dict['Sx']
     ##########
     
     # Retrieve data from the .dpw file

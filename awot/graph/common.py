@@ -82,9 +82,9 @@ def create_basemap_instance(corners=None, proj=None, resolution='l', area_thresh
                    
     # Check the customizations for the basemap
     if meridians:
-        bm.drawmeridians(np.arange(corners[0], corners[2], dLon), labels=[1,1,0,1])           
+        bm.drawmeridians(np.arange(corners[0], corners[2], dLon), labels=[1,0,0,1])           
     if parallels:
-        bm.drawparallels(np.arange(corners[1], corners[3], dLat), labels=[1,1,0,1])             
+        bm.drawparallels(np.arange(corners[1], corners[3], dLat), labels=[1,0,0,1])             
     if countries:
         bm.drawcountries()
     if coastlines:
