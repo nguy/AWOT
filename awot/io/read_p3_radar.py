@@ -508,7 +508,8 @@ def read_lf_sweep(fname):
 
 def _get_height_from_header(hdr):
     """Calculated the height array given windsyn binary header"""
-    Height = {'data': np.arange(hdr['Z0'], hdr['Kmax'], hdr['Sz']),
+#    Height = {'data': np.arange(hdr['Z0'], hdr['Kmax'], hdr['Sz']),
+    Height = {'data': np.arange(0, hdr['Kmax'] * hdr['Sz'], hdr['Sz']),
               'units': 'km',
               'long_name': 'Altitude'}
     if np.isscalar(Height['data']):

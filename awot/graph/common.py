@@ -15,7 +15,8 @@ Created by Nick Guy.
 import numpy as np
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
-from  matplotlib.dates import DateFormatter, SecondLocator, MinuteLocator, HourLocator, DayLocator
+from  matplotlib.dates import DateFormatter
+from  matplotlib.dates import SecondLocator, MinuteLocator, HourLocator, DayLocator
 from matplotlib import ticker as mtic
 
 #######################

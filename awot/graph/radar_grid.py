@@ -18,11 +18,13 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 from matplotlib import ticker
 import numpy as np
+import scipy.ndimage as scim
 
 from .common import find_nearest_indices, get_masked_data
 #import general.gplot as gp
 
 # Define various constants that may be used for calculations
+RE = 6371.  # Earth radius (average)
 #===============================================================
 # BEGIN FUNCTIONS
 #===============================================================
@@ -330,8 +332,94 @@ class RadarGridPlot(object):
     
         # Add title
         ax.set_title(title, fontsize=title_size)
+    
+    ###############
+    
+    def plot_point(self, lon, lat, symbol='ro', label_text=None,
+                   label_offset=(None, None), **kwargs):
+        """
+        Plot a point on the current map.
 
-    ##########
+        Additional arguments are passed to basemap.plot.
+
+        Parameters::
+        ----------
+        lon : float
+            Longitude of point to plot.
+        lat : float
+            Latitude of point to plot.
+        symbol : str
+            Matplotlib compatible string which specified the symbol of the
+            point.
+        label_text : str, optional.
+            Text to label symbol with.  If None no label will be added.
+        label_offset : [float, float]
+            Offset in lon, lat degrees for the bottom left corner of the label
+            text relative to the point. A value of None will use 0.01 default.
+        """
+        
+        lon_offset, lat_offset = label_offset
+        if lon_offset is None:
+            lon_offset = 0.01
+        if lat_offset is None:
+            lat_offset = 0.01
+            
+        # Plot the symbol
+        self.basemap.plot(lon, lat, symbol, latlon=True, **kwargs)
+        # Attach the text
+        if label_text is not None:
+            # basemap does not have a text method so we must determine
+            # the x and y points and plot them on the basemap's axis.
+            x_text, y_text = self.basemap(lon + lon_offset,
+                                          lat + lat_offset)
+            self.basemap.ax.text(x_text, y_text, label_text)
+            
+    def plot_line_geo(self, line_lons, line_lats,
+                      line_style='r-', lw=3, alpha=0.2,
+                      label0=True, label_offset = (0.01, 0.01),
+                      ax=None, fig=None, **kwargs):
+        """
+        Plot a line segments on the current map given values in lat and lon.
+
+        Additional arguments are passed to basemap.plot.
+
+        Parameters::
+        ----------
+        line_lons : array
+            Longitude of line segment to plot.
+        line_lats : array
+            Latitude of line segment to plot.
+        line_style : str
+            Matplotlib compatible string which specifies the line style.
+        lw : int
+            LInewidth
+        alpha : float
+            Transparency, 0: transparent, 1: opaque
+        label0 : boolean
+            True to label the starting point of line, False is no label
+        label_offset : [float, float]
+            Offset in lon, lat degrees for the bottom left corner of the label
+            text relative to the point. A value of None will use 0.01 default.
+        ax : Axis
+            Axis to plot on. None will use the current axis.
+        fig : Figure
+            Figure to add the plot to. None will use the current figure.
+        """
+        # parse parameters
+        if ax is None:
+            ax = self._parse_ax(ax)
+        
+        x, y = self.basemap(line_lons, line_lats)
+        self.basemap.plot(x, y, line_style, lw=lw, alpha=alpha, ax=ax)
+                          
+        # Overplot the 0 point
+        if label0:
+            self.plot_point(line_lons[0], line_lats[0], 'ko',
+                            label_text='0', label_offset=label_offset, markersize=0.5)
+    
+    #########################
+    # 3-D plot methods #
+    #########################
     
     def DPJgrid_3d(self, surf_field,
                surf_min=-5., surf_max=5., surf_cmap='RdBu_r',
@@ -344,6 +432,7 @@ class RadarGridPlot(object):
         """Read in data from NetCDF file containing P3 flight level data created
         by NOAA AOC.  The NetCDF should be read in the main program and passed
         to this function.
+        
         Parameters::
         ----------
         surf_field : string
@@ -449,6 +538,139 @@ class RadarGridPlot(object):
 
         return
     
+    #########################
+    # Vertical plot methods #
+    #########################
+    def plot_cross_section(self, field, start_pt, end_pt, xs_length=500,
+                           mask_procedure=None, mask_tuple=None,
+                           title=" ", title_size=20,
+                           cminmax=(0.,60.), clevs=25, vmin=15., vmax=60.,
+                           cmap='gist_ncar', clabel='dBZ',
+                           color_bar=True, cb_pad=.05, cb_orient='vertical', cb_tick_int=2,
+                           ax=None, fig=None):
+        '''
+        Plot a cross-section between two points
+        
+        Parameters::
+        ----------
+        field : str
+            3-D variable (e.g. Reflectivity [dBZ]) to use in plot
+        start_pt, end_pt : tuple
+            (lat, lon) Tuple of start, end points for cross-section
+        xs_length : int
+            Number of to use for the cross section
+        mask_procedure : str
+            String indicating how to apply mask via numpy, possibilities are:
+            'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'
+        mask_tuple : (str, float[, float])
+            Tuple containing the field name and value(s) below which to mask
+            field prior to plotting, for example to mask all data where
+        cminmax : tuple
+            (min,max) values for controur levels
+        clevs : integer
+            Number of contour levels
+        vmin : float
+            Minimum contour value to display
+        vmax : float
+            Maximum contour value to display
+        clabel : string
+            Label for colorbar (e.g. units 'dBZ')
+
+        title : string
+            Plot title
+        title_size : int
+            Font size of title to display
+            
+        cmap : string
+            Matplotlib color map to use
+        color_bar : boolean
+            True to add colorbar, False does not
+        cb_pad : str
+            Pad to move colorbar, in the form "5%", pos is to right for righthand location
+        cb_loc : str
+            Location of colorbar, default is 'right', also available: 
+            'bottom', 'top', 'left'
+        cb_tick_int : int
+            Interval to use for colorbar tick labels, higher number "thins" labels
+                
+        ax : Axis
+            Axis to plot on. None will use the current axis.
+        fig : Figure
+            Figure to add the plot to. None will use the current figure.
+        '''
+        # parse parameters
+        ax, fig = self._parse_ax_fig(ax, fig)
+            
+        # Return masked or unmasked variable
+        Var, Data = self._get_variable_dict_data(field)
+        if mask_procedure != None:
+            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            
+        # Create contour level array
+        clevels = np.linspace(cminmax[0], cminmax[1], clevs)
+        
+        # Create lon and lat arrays for display
+        xslon = np.linspace(start_pt[0], end_pt[0], xs_length)
+        xslat = np.linspace(start_pt[1], end_pt[1], xs_length)
+        
+        # Create an array to hold the interpolated cross-section
+        xs_data = np.empty([xs_length, len(self.height['data'][:])])
+        
+        # Create arrays for cross-section lon-lat points
+        startloclon = self._get_lon_index(start_pt[0])
+        startloclat = self._get_lat_index(start_pt[1])
+        endloclon = self._get_lon_index(end_pt[0])
+        endloclat = self._get_lat_index(end_pt[1])
+        
+        xsY = np.linspace(startloclat, endloclat, xs_length)
+        xsX = np.linspace(startloclon, endloclon, xs_length)
+        
+        # Loop through each level to create cross-section and stack them
+        for nlev in range(len(self.height['data'][:])):
+            # Extract the values along the line, using cubic interpolation
+            xs_data[:,nlev] = scim.map_coordinates(Data[nlev,:,:],
+                                                  np.vstack((xsY, xsX)),
+                                                  prefilter=False)#, mode='nearest')
+            
+        # Calculate the distance array along the cross-section
+        Xdist = np.absolute((np.pi * RE / 180.) * (xslon - xslon[0]))
+        Ydist = np.absolute((np.pi * RE / 180.) * (xslat - xslat[0]))
+        xsDist = np.sqrt(Xdist**2 + Ydist**2)
+
+        # Define the angle of the cross-secton
+        Dlon = (start_pt[1] - end_pt[1])
+        Dlat = (start_pt[0] - end_pt[0])
+        Ang = np.arctan2(Dlat, Dlon)
+        if Ang < 0:
+            AngNref = 2 * np.pi + Ang
+        else:
+            AngNref = Ang
+           
+        # Convert Height, distance arrays to 2D 
+        Ht2D, Dist2D = np.meshgrid(self.height['data'][:], xsDist)
+        
+        p = ax.pcolormesh(Dist2D, Ht2D, np.ma.masked_less_equal(xs_data, -800.), 
+                          vmin=vmin, vmax=vmax, cmap=cmap)
+                          
+        ax.set_xlabel('Distance along track (km)')
+        ax.set_ylabel(' Altitude (km)')
+        
+        # Add title
+        ax.set_title(title, fontsize=title_size)
+
+        # Add Colorbar
+        if color_bar:
+            cbStr = Var['long_name'] +' ('+ Var['units'] +')'
+            cb = fig.colorbar(p, orientation=cb_orient, pad=cb_pad)#,ticks=clevels)
+            cb.set_label(cbStr)
+            # Set the number of ticks in the colorbar based upon number of contours
+            tick_locator = ticker.MaxNLocator(nbins=int(clevs/cb_tick_int))
+            cb.locator = tick_locator
+            cb.update_ticks()
+    
+        # Add title
+        ax.set_title(title, fontsize=title_size)
+    
     ####################
     # Get methods #
     #################### 
@@ -464,6 +686,26 @@ class RadarGridPlot(object):
         Var, data = self.fields[field], self.fields[field]['data'][:]
        
         return Var, data
+        
+    def _get_lat_index(self, value):
+        '''Calculate the exact index position within latitude array'''
+        # Find the spacing
+        dp = self.latitude['data'][1] - self.latitude['data'][0]
+        
+        # Calculate the relative position 
+        pos = (value - self.latitude['data'][0]) / dp
+        
+        return pos
+        
+    def _get_lon_index(self, value):
+        '''Calculate the exact index position within latitude array'''
+        # Find the spacing
+        dp = self.longitude['data'][1] - self.longitude['data'][0]
+        
+        # Calculate the relative position 
+        pos = (value - self.longitude['data'][0]) / dp
+        
+        return pos
 
     ####################
     # Parseing methods #

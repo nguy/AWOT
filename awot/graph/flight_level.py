@@ -20,9 +20,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from matplotlib.colors import Normalize
+from  matplotlib.dates import DateFormatter, date2num
+from  matplotlib.dates import SecondLocator, MinuteLocator, HourLocator, DayLocator
 from datetime import datetime
+import scipy.ndimage as scim
 
 from .common import plot_date_ts
+
+# Define various constants that may be used for calculations
+RE = 6371.  # Earth radius (average)
 #===============================================================
 # BEGIN FUNCTIONS
 #===============================================================
@@ -309,6 +315,188 @@ class FlightLevel(object):
             if title is None:
                 title = self.project +' '+self.platform
             ax.set_title(title)
+            
+    ##########
+    
+    def plot_radar_cross_section(self, radar, field,
+                           mask_procedure=None, mask_tuple=None,
+                           start_time=None, end_time=None,
+                           title=" ", title_size=20,
+                           cminmax=(0.,60.), clevs=25, vmin=15., vmax=60.,
+                           cmap='gist_ncar', clabel='dBZ',
+                           color_bar=True, cb_orient='vertical',
+                           cb_pad=.05, cb_tick_int=2,
+                           x_axis_array='distance',
+                           dForm='%H:%M',tz=None, 
+                           date_MinTicker='minute',
+                           ax=None, fig=None):
+        '''
+        Plot a cross-section between two points
+        
+        Parameters::
+        ----------
+        radar : object
+            RadarGridPlot object 
+        field : str
+            3-D variable inf RadarGridPlot object (e.g. Reflectivity ['dBZ'])
+            to use in plot
+        start_pt, end_pt : tuple
+            (lat, lon) Tuple of start, end points for cross-section
+        xs_length : int
+            Number of 
+        start_time : string
+            UTC time to use as start time for subsetting in datetime format
+            (e.g. 2014-08-20 12:30:00)
+        end_time : string
+            UTC time to use as an end time for subsetting in datetime format
+            (e.g. 2014-08-20 16:30:00)
+        mask_procedure : str
+            String indicating how to apply mask via numpy, possibilities are:
+            'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'
+        mask_tuple : (str, float[, float])
+            Tuple containing the field name and value(s) below which to mask
+            field prior to plotting, for example to mask all data where
+        cminmax : tuple
+            (min,max) values for controur levels
+        clevs : integer
+            Number of contour levels
+        vmin : float
+            Minimum contour value to display
+        vmax : float
+            Maximum contour value to display
+        clabel : string
+            Label for colorbar (e.g. units 'dBZ')
+
+        title : string
+            Plot title
+        title_size : int
+            Font size of title to display
+            
+        cmap : string
+            Matplotlib color map to use
+        color_bar : boolean
+            True to add colorbar, False does not
+        cb_pad : str
+            Pad to move colorbar, in the form "5%", pos is to right for righthand location
+        cb_loc : str
+            Location of colorbar, default is 'right', also available: 
+            'bottom', 'top', 'left'
+        cb_tick_int : int
+            Interval to use for colorbar tick labels, higher number "thins" labels
+            
+        x_axis_array: str
+            X-axis array to plot against either 'distance' [default] or 'time'
+        dForm : str
+            Format of the time string for x-axis labels
+        tz : str
+            Time zone info to use when creating axis labels (see datetime)
+        date_MinTicker : str
+            Sting to set minor ticks of date axis,
+            'second','minute','hour','day' supported
+                
+        ax : Axis
+            Axis to plot on. None will use the current axis.
+        fig : Figure
+            Figure to add the plot to. None will use the current figure.
+        '''
+        # parse parameters
+        ax, fig = self._parse_ax_fig(ax, fig)
+            
+        # Get start and end times (this deals with subsets)
+        dt_start = self._get_start_datetime(start_time)
+        dt_end = self._get_end_datetime(end_time)
+        
+        # Subset the data (will use min/max if None given)
+        xSub, ySub = self._get_x_y_time_subset(start_time, end_time, return_time=False)
+        lonSub, latSub = self._get_lon_lat_time_subset(start_time, end_time)
+        timeSub = self._get_time_subset(start_time, end_time)
+            
+        # Return masked or unmasked variable
+        Data = radar.fields[field]['data'][:]
+        if mask_procedure != None:
+            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            
+        # Create contour level array
+        clevels = np.linspace(cminmax[0], cminmax[1], clevs)
+        
+        # Create an array to hold the interpolated cross-section
+        xs_data = np.empty([len(lonSub), len(radar.height['data'][:])])
+        
+        # Create arrays for cross-section lon-lat index points
+        xsY = np.empty(len(lonSub))
+        xsX = np.empty(len(lonSub))
+        Xdist = np.empty(len(lonSub))
+        Ydist = np.empty(len(lonSub))
+        xsDist = np.empty(len(lonSub))
+        
+        for ii in range(len(lonSub)):
+            xsX[ii] = self._get_lon_index(lonSub[ii], radar)
+            xsY[ii] = self._get_lat_index(latSub[ii], radar)
+            
+             # Calculate the distance array along the cross-section
+             # Need to keep a running tally moving through track array
+            if ii == 0:
+                Xdist[ii] = 0.
+                Ydist[ii] = 0.
+                xsDist[ii] = 0.
+            else:
+                Xdist[ii] = np.absolute((np.pi * RE / 180.) * (lonSub[ii] - lonSub[ii-1]))
+                Ydist[ii] = np.absolute((np.pi * RE / 180.) * (latSub[ii] - latSub[ii-1]))
+                xsDist[ii] = (np.sqrt(Xdist[ii]**2 + Ydist[ii]**2)) + xsDist[ii-1]
+        
+        # Loop through each level to create cross-section and stack them
+        for nlev in range(len(radar.height['data'][:])):
+            # Extract the values along the line, using cubic interpolation
+            xs_data[:,nlev] = scim.map_coordinates(Data[nlev,:,:],
+                                                  np.vstack((xsY, xsX)),
+                                                  prefilter=False)#, mode='nearest')
+            
+        # Calculate the distance array along the cross-section
+        if x_axis_array == 'distance':
+            Xax = xsDist
+        elif x_axis_array == 'time':
+            Xax = date2num(timeSub)
+         
+        # Convert Height, distance arrays to 2D 
+        Ht2D, Xax2D = np.meshgrid(radar.height['data'][:], Xax)
+        
+        p = ax.pcolormesh(Xax2D, Ht2D, np.ma.masked_less_equal(xs_data, -800.), 
+                          vmin=vmin, vmax=vmax, cmap=cmap)
+                          
+        ax.set_ylabel(' Altitude (km)')
+        if x_axis_array == 'distance':
+            ax.set_xlabel('Distance along track (km)')
+        elif x_axis_array == 'time':
+            ax.xaxis_date()
+            # Set the date format
+            date_Fmt = DateFormatter(dForm,tz=tz)
+            # Set the x-axis date format and ticks
+            ax.xaxis.set_major_formatter(date_Fmt)
+            if date_MinTicker == 'second':
+                ax.xaxis.set_minor_locator(SecondLocator()) 
+            elif date_MinTicker == 'minute':
+                ax.xaxis.set_minor_locator(MinuteLocator()) 
+            elif date_MinTicker == 'hour':
+                ax.xaxis.set_minor_locator(HourLocator())
+            elif date_MinTicker == 'day':
+                ax.xaxis.set_minor_locator(DayLocator())
+        
+        # Add title
+        ax.set_title(title, fontsize=title_size)
+
+        # Add Colorbar
+        if color_bar:
+            cbStr = Var['long_name'] +' ('+ Var['units'] +')'
+            cb = fig.colorbar(p, orientation=cb_orient, pad=cb_pad)#,ticks=clevels)
+            cb.set_label(cbStr)
+            # Set the number of ticks in the colorbar based upon number of contours
+            tick_locator = ticker.MaxNLocator(nbins=int(clevs/cb_tick_int))
+            cb.locator = tick_locator
+            cb.update_ticks()
+    
+        # Add title
+        ax.set_title(title, fontsize=title_size)
+    
             
     ##########################
     # Basemap add-on methods #
@@ -806,6 +994,39 @@ class FlightLevel(object):
         vsub = var[(self.time >= dt_start) & (self.time <= dt_end)]
         
         return tsub, vsub
+        
+    def _get_time_subset(self, start_time, end_time):
+        '''
+        Get a subsetted time to control track length if input by user.
+        '''
+        # Check to see if time is subsetted
+        dt_start = self._get_start_datetime(start_time)
+        dt_end = self._get_end_datetime(end_time)
+        
+        tsub = self.time[(self.time >= dt_start) & (self.time <= dt_end)]
+        
+        return tsub
+        
+    def _get_lat_index(self, value, radar):
+        '''Calculate the exact index position within latitude array'''
+        # Find the spacing
+        dp = radar.latitude['data'][1] - radar.latitude['data'][0]
+        
+        # Calculate the relative position 
+        pos = (value - radar.latitude['data'][0]) / dp
+        
+        return pos
+        
+    def _get_lon_index(self, value, radar):
+        '''Calculate the exact index position within latitude array'''
+        # Find the spacing
+        dp = radar.longitude['data'][1] - radar.longitude['data'][0]
+        
+        # Calculate the relative position 
+        pos = (value - radar.longitude['data'][0]) / dp
+        
+        return pos
+        
         
         
     ####################
