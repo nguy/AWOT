@@ -569,7 +569,9 @@ class FlightLevel(object):
                                   **kwargs)
     
     def draw_barbs(self, barbspacing=10, barbcolor='k', flagcolor='k', 
-                   blength=8, lw=0.5, **kwargs):
+                   blength=8, lw=0.5, 
+                   start_time=None, end_time=None, 
+                   **kwargs):
         """
         Draw a reference scale on the map
         Parameters::
@@ -578,12 +580,26 @@ class FlightLevel(object):
            Plot every nth via the barbspacing provided.
         See basemap documentation
         """
-                           
+            
+        # Get start and end times (this deals with subsets)
+        dt_start = self._get_start_datetime(start_time)
+        dt_end = self._get_end_datetime(end_time)
+   
+        # Subset the data
+        X = self.x[(self.time >= dt_start) & (self.time <= dt_end)]
+        Y = self.y[(self.time >= dt_start) & (self.time <= dt_end)]
+        Uwnd = self.Uwind[(self.time >= dt_start) & (self.time <= dt_end)]
+        Vwnd = self.Vwind[(self.time >= dt_start) & (self.time <= dt_end)]
+        
         # Only plot every nth barb from the barbspacing parameter
-        self.basemap.barbs(self.longitude[::barbspacing], self.latitude[::barbspacing],
-                           self.Uwind[::barbspacing], self.Vwind[::barbspacing],  
-                           latlon=True, barbcolor=barbcolor, flagcolor=flagcolor, 
+        self.basemap.barbs(X[::barbspacing], Y[::barbspacing],
+                           Uwnd[::barbspacing], Vwnd[::barbspacing],  
+                           barbcolor=barbcolor, flagcolor=flagcolor, 
                            linewidth=lw, **kwargs)
+#        self.basemap.barbs(self.longitude[::barbspacing], self.latitude[::barbspacing],
+#                           Uwnd[::barbspacing], self.Vwd[::barbspacing],  
+#                           latlon=True, barbcolor=barbcolor, flagcolor=flagcolor, 
+#                           linewidth=lw, **kwargs)
     
     def plot_point(self, lon, lat, symbol='ro', label_text=None,
                    label_offset=(None, None), **kwargs):
@@ -639,13 +655,12 @@ class FlightLevel(object):
         line_style : str
             Matplotlib compatible string which specifies the line style.
         """
-        
-        self.basemap.plot(line_lons, line_lats, line_style, latlon=True,
-                          **kwargs)
+        X, Y = self.basemap(line_lons, line_lats)
+        self.basemap.plot(X, Y, line_style, **kwargs)
   
     def time_stamps(self, labelspacing=1800, symbol='k*',
                     size=12, color='k',
-                    label_offset=(None, None), 
+                    label_offset=(None, None),
                    start_time=None, end_time=None,
                     ax=None, **kwargs):
         """
@@ -701,12 +716,16 @@ class FlightLevel(object):
         xpos_text, ypos_text = self.basemap(lons + lon_offset, lats + lat_offset)
         
         for nn in range(len(labeltimes)):
-            # Plot the symbol
-            ax.plot(xpos_star[nn], ypos_star[nn], symbol, **kwargs)
-            label_text = labeltimes[nn].strftime("%H:%M")
+            # Check to make sure there are no missing lon/lat values and
+            # only plot the valid points
+            # This causes fatal error when trying to save figure later
+            if np.logical_and(np.isfinite(xpos_star[nn]), np.isfinite(ypos_star[nn])):
+                # Plot the symbol
+                ax.plot(xpos_star[nn], ypos_star[nn], symbol, **kwargs)
+                label_text = labeltimes[nn].strftime("%H:%M")
 
-            # Attach the text
-            ax.text(xpos_text[nn], ypos_text[nn], label_text, fontsize=size, color=color)
+                # Attach the text
+                ax.text(xpos_text[nn], ypos_text[nn], label_text, fontsize=size, color=color)
             
     #######################
     # Time Series methods #
@@ -1018,7 +1037,7 @@ class FlightLevel(object):
         return pos
         
     def _get_lon_index(self, value, radar):
-        '''Calculate the exact index position within latitude array'''
+        '''Calculate the exact index position within longitude array'''
         # Find the spacing
         dp = radar.longitude['data'][1] - radar.longitude['data'][0]
         
@@ -1026,8 +1045,6 @@ class FlightLevel(object):
         pos = (value - radar.longitude['data'][0]) / dp
         
         return pos
-        
-        
         
     ####################
     # Save methods #

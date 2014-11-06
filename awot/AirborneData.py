@@ -7,6 +7,7 @@ from .graph.common import create_basemap_instance
 
 from awot.io.FlightDataFile import read_flight
 from awot.io.RadarDataFile import read_radar
+from awot.io.write_radar_netcdf import radar2nc
 
 import inspect
 from copy import deepcopy
@@ -57,7 +58,7 @@ class AirborneData(object):
                 AirborneData = deepcopy(reader)
 
     ##########################################
-    # Get data from other files
+    # Get data from files
     ##########################################
     
     def get_flight_data(self, fname=None, platform='', file_format='netcdf'):
@@ -133,7 +134,7 @@ class AirborneData(object):
                 print "Could not grab data, check the instrument type!"
     
     ##############################################
-    # 
+    # Establish a basemap instance for plotting
     ##############################################
     
     def create_basemap(self,corners=None, proj=None, resolution='l', area_thresh=1000.,
@@ -153,9 +154,11 @@ class AirborneData(object):
         # Save the basemap instance for further plotting    
         self.basemap = bm
         
-    #########################
+    ##########################
+    # Save methods
+    ##########################
     
-    def save_figure(self, figName='awot_plot', figType="png", **kwargs):
+    def save_figure(self, figName='awot_plot', figType='png', **kwargs):
         '''Save the current plot
         
         Parameters::
@@ -173,6 +176,13 @@ class AirborneData(object):
         
         # Now close the plot to make sure matplotlib is happy
         plt.close()
+        
+    def write_radar_netcdf(self, radar=None, Outfile=None):
+        '''Save a radar instance as a NetCDF output file'''
+        if radar is None:
+            print "Must specify the radar instance to process"
+        else:
+            radar2nc(radar, Outfile=Outfile)
 
     ##########################################
         

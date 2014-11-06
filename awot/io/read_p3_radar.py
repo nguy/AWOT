@@ -37,7 +37,7 @@ def read_windsyn_tdr_netcdf(fname):
         Long path filename [string]
         
     Output::
-    ----------
+    ------
     data : Dictionary of the following values
     
     metadata : Dictionary of global attributes in file
@@ -195,7 +195,7 @@ def tdr_grid_variable(fname,Rec):
         Variable name to access
         
     Usage::
-    ----------
+    -----
         VarOut = tdr_grid_variable(fname, Rec)
     """
     # Read the NetCDF

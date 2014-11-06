@@ -26,20 +26,21 @@ def read_radar(filename=None, platform='p3', file_format='netcdf', instrument=No
     platform : str
         Platform for processing, see FileReader.
     file_format : str
-            Format of input file, see FileReader.
-        instrument : str
-            Type (name) of instrument to process
-            Currently the following arguments are valid:
-                'tdr_grid' - Tail Doppler radar gridded files (e.g. dual-Doppler analysis)
-                'tdr_sweep' = Tail Doppler radar (Native coordinate data)
-                'lf'  - Lower Fuselage radar
-                'ground' - A ground-based radar system, read in using PyArt
+        Format of input file, see FileReader.
+    instrument : str
+        Type (name) of instrument to process
+        Currently the following arguments are valid:
+            'tdr_grid' - Tail Doppler radar gridded files (e.g. dual-Doppler analysis)
+            'tdr_sweep' = Tail Doppler radar (Native coordinate data)
+            'lf'  - Lower Fuselage radar
+            'ground' - A ground-based radar system, read in using PyArt
     data_format : str
         Either 'grid' or 'native'.
+
     To Do:
     Add support for:
         Eldora X-band (historical) - should be similar to P3
-        King Air/C-130 95 GHZ
+        King Air/C-130 95 GHZ (Wyoming Cloud Radar; WCR)
         
     '''
     if filename is None:
@@ -105,14 +106,20 @@ class FileReader(object):
                 radar = read_ground_radar(filename)
             elif instrument.lower() == 'lf':
                 if (platform.upper() == 'P3') or (platform.upper() == 'P-3'):
-                    radar = read_lf_grid(filename)
+                    radar = read_lf_grid(filename, 
+                                        instrument=instrument,
+                                        platform=platform)
             elif instrument.lower() == 'tdr_grid':
                 if (platform.upper() == 'P3') or (platform.upper() == 'P-3') or \
                    (platform.upper() == 'ELDORA'):
                     if file_format.lower() == 'netcdf':
-                        radar = read_windsyn_tdr_netcdf(filename)
+                        radar = read_windsyn_tdr_netcdf(filename, 
+                                                        instrument=instrument,
+                                                        platform=platform)
                     elif file_format.lower() == 'binary':
-                        radar = read_windsyn_binary(filename)
+                        radar = read_windsyn_binary(filename, 
+                                                    instrument=instrument,
+                                                    platform=platform)
                     
             elif instrument.lower() == 'tdr_sweep':
                 if (platform.upper() == 'P3') or (platform.upper() == 'P-3'):
