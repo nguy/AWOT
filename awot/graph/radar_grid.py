@@ -180,7 +180,9 @@ class RadarGridPlot(object):
     
     def overlay_wind_vector(self, height_level=2., 
                                 vtrim=4, vlw=1.3, vhw=2.5, vscale=400,
-                                refVec=True, refU=10., refUposX=1.05, refUposY=1.015):
+                                refVec=True, refU=10., refUposX=1.05, refUposY=1.015,
+                                qcolor='k',
+                                ax=None, fig=None):
         """Overlays a 2-D wind field at specified height onto map
     
         Parameters::
@@ -221,8 +223,8 @@ class RadarGridPlot(object):
         Htind = find_nearest_indices(self.height['data'][:],height_level)
         	
         # transform to porjection grid
-        U = field['Uwind']['data'][Htind,:,:]
-        V = field['Vwind']['data'][Htind,:,:]
+        U = self.fields['Uwind']['data'][Htind,:,:]
+        V = self.fields['Vwind']['data'][Htind,:,:]
         lon = self.longitude['data'][:]
         lat = self.latitude['data'][:]
         uproj, vproj, xx, yy = self.basemap.transform_vector(U, V,
@@ -232,10 +234,10 @@ class RadarGridPlot(object):
         
         # Overplot the vectors
         Q = self.basemap.quiver(xx, yy, uproj, vproj, scale=vscale, 
-                                headwidth=vhw, linewidths=vlw)
+                                headwidth=vhw, linewidths=vlw, color=qcolor)
                             
         # Make a quiver key to attach to figure.
-        qkLab = str("%4.1f"%refU) + 'm/s at '+str("%4.1f"%Ucoord)+' km'
+        qkLab = str("%4.1f"%refU) + 'm/s at '+str("%4.1f"%height_level)+' km'
         qk = ax.quiverkey(Q, refUposX, refUposY, refU, qkLab)#, fontproperties={'weight': 'bold'})
     
         return

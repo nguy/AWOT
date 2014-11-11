@@ -668,6 +668,7 @@ class RadarSweepPlot(object):
         range, tilt = self._get_2D_var(self.tilt['data'][:])
         range, roll = self._get_2D_var(self.roll['data'][:])
         range, pitch = self._get_2D_var(self.pitch['data'][:])
+        range, heading = self._get_2D_var(self.heading['data'][:])
             
         X, Y, Z = radar_coords_to_cart_earth_relative(range / 1000.0, rotation, roll, 
                                                       heading, tilt, pitch)

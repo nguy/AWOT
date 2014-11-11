@@ -22,6 +22,7 @@ from matplotlib.collections import LineCollection
 from matplotlib.colors import Normalize
 from  matplotlib.dates import DateFormatter, date2num
 from  matplotlib.dates import SecondLocator, MinuteLocator, HourLocator, DayLocator
+from matplotlib import ticker
 from datetime import datetime
 import scipy.ndimage as scim
 
@@ -412,7 +413,7 @@ class FlightLevel(object):
         timeSub = self._get_time_subset(start_time, end_time)
             
         # Return masked or unmasked variable
-        Data = radar.fields[field]['data'][:]
+        Var, Data = radar.fields[field], radar.fields[field]['data'][:]
         if mask_procedure != None:
             Data = get_masked_data(Data, mask_procedure, mask_tuple)
             
@@ -487,7 +488,7 @@ class FlightLevel(object):
         # Add Colorbar
         if color_bar:
             cbStr = Var['long_name'] +' ('+ Var['units'] +')'
-            cb = fig.colorbar(p, orientation=cb_orient, pad=cb_pad)#,ticks=clevels)
+            cb = fig.colorbar(p, orientation=cb_orient, pad=cb_pad, ax=ax)#,ticks=clevels)
             cb.set_label(cbStr)
             # Set the number of ticks in the colorbar based upon number of contours
             tick_locator = ticker.MaxNLocator(nbins=int(clevs/cb_tick_int))
@@ -1045,6 +1046,10 @@ class FlightLevel(object):
         pos = (value - radar.longitude['data'][0]) / dp
         
         return pos
+    
+    def _get_radar_variable_dict_data(self, field):
+        '''Get the variable from the fields dictionary'''
+        Var, data = self.radarfields[field], self.radarfields[field]['data'][:]
         
     ####################
     # Save methods #
