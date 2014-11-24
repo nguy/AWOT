@@ -1,16 +1,15 @@
 """
-awot.graph.radar_sweep
+awot.graph.radar_vertical
 =========================
 
 A group of scripts create various plots of native coordinate data 
 collected by the NOAA P-3 tail Doppler radar. 
 
-Created by Nick Guy.
+Author:
+    06 Mar 2014 - Created by Nick Guy, NOAA/NSSL/WRDD, NRC.
+    10 Sep 2014 - Refactored to a class sctructure to fit AWOT flow
 
 """
-# HISTORY::
-#  6 Mar 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
-# 10 Sep 2014 - Refactored to a class sctructure to fit AWOT flow
 # FUNCTIONS::
 # polar_sweep - Plot polar coordinate data on polar coordinate axis
 # polar_sweep_grid - Plotting transformed data to Cartesian output
@@ -22,14 +21,25 @@ Created by Nick Guy.
 # Load the needed packages
 import numpy as np
 import matplotlib.pyplot as plt
+from  matplotlib.dates import DateFormatter, date2num
+import scipy.ndimage as scim
 
-from .common import plot_polar_contour
+from .common import plot_polar_contour, get_masked_data
+from .common import _get_start_datetime, _get_end_datetime
+from .common import contour_date_ts
 from .coord_transform import radar_coords_to_cart_track_relative, \
        radar_coords_to_cart_earth_relative, radar_coords_to_cart_aircraft_relative
        
+       
+# Define various constants that may be used for calculations
+RE = 6371.  # Earth radius (average)
 #===============================================================
 # BEGIN FUNCTIONS
 #**===============================================================
+########################
+# Vertical Sweep Class #
+########################
+
 class RadarSweepPlot(object):
     """
     To create a RadarPlot instance:
@@ -49,10 +59,10 @@ class RadarSweepPlot(object):
         elif instrument == 'tdr_sweep':
             radar_data = airborne.tdr_sweep_radar_data
         elif instrument == 'tdr_grid':
-            print "Use the radar_grid library (RadarGridPlot class)"
+            print "Use the radar_grid library (RadarRadarHorizontalPlotPlot class)"
             return
             
-        # Now initialize the RadarGridPlot Class
+        # Now initialize the RadarHorizontalPlot Class
         self.longitude = radar_data.longitude
         self.latitude = radar_data.latitude
         self.altitude = radar_data.altitude
@@ -685,7 +695,7 @@ class RadarSweepPlot(object):
                          cb_pad=cb_pad, cb_label=cb_label,
                          ax=ax, fig=fig)
         return p
-    
+        
     ####################
     # Get methods #
     #################### 
@@ -733,3 +743,401 @@ class RadarSweepPlot(object):
         if fig is None:
             fig = plt.gcf()
         return fig
+        
+
+#######################
+# Vertical Plot Class #
+#######################
+
+class RadarVerticalPlot(object):
+    """
+    To create a RadarHorizontalPlot instance:
+    new_instance = RadarHorizontalPlot() or new_instance = RadarHorizontalPlot(AirborneInstance)
+    
+    Notable attributes
+    ------------------
+    
+    A basemap call can be passed if created externally.
+    """
+    def __init__(self, airborne, basemap=None, instrument=None):
+        '''Intitialize the class to create plots'''
+        # Check the instrument to see how to import airborne class
+        if instrument is None:
+            print "Trying tail Doppler radar, please specify instrument type!"
+            instrument = 'tdr_grid'
+        elif instrument == 'tdr_grid':
+            radar_data = airborne.tdr_radar_data
+        elif instrument == 'lf':
+            radar_data = airborne.lf_radar_data
+        elif instrument == 'rasta':
+            radar_data = airborne.rasta_radar_data
+        elif instrument == 'ground':
+            print "Connected using PyArt"
+            radar_data = airborne.ground_radar_data
+            return
+        elif instrument == 'tdr_sweep':
+            print "Use the radar_sweep library (RadarSweepPlot class)"
+            return
+            
+        # Now initialize the RadarHorizontalPlot Class
+        self.longitude = radar_data['longitude']
+        self.latitude = radar_data['latitude']
+        self.height = radar_data['height']
+        self.fields = radar_data['fields']
+        
+        # Attempt to pull in time if found
+        try:
+            self.time = radar_data['time']
+        except:
+            print "Warning: No time variable found"
+        
+        if basemap != None:
+            self.basemap = basemap
+        try:
+            self.basemap = airborne.basemap
+        except:
+            print "Warning: No basemap instance"
+            
+        # Save the airborne class to this class in case cross-section is passed
+        self.airborne = airborne
+            
+    #########################
+    # Vertical plot methods #
+    #########################
+
+    def plot_cross_section(self, field, start_pt, end_pt, xs_length=500,
+                           mask_procedure=None, mask_tuple=None,
+                           title=" ", title_size=20,
+                           cminmax=(0.,60.), clevs=25, vmin=15., vmax=60.,
+                           cmap='gist_ncar', clabel='dBZ',
+                           color_bar=True, cb_pad=.05, cb_orient='vertical', cb_tick_int=2,
+                           ax=None, fig=None):
+        '''
+        Plot a cross-section between two points
+        
+        Parameters::
+        ----------
+        field : str
+            3-D variable (e.g. Reflectivity [dBZ]) to use in plot
+        start_pt, end_pt : tuple
+            (lat, lon) Tuple of start, end points for cross-section
+        xs_length : int
+            Number of to use for the cross section
+        mask_procedure : str
+            String indicating how to apply mask via numpy, possibilities are:
+            'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'
+        mask_tuple : (str, float[, float])
+            Tuple containing the field name and value(s) below which to mask
+            field prior to plotting, for example to mask all data where
+        cminmax : tuple
+            (min,max) values for controur levels
+        clevs : integer
+            Number of contour levels
+        vmin : float
+            Minimum contour value to display
+        vmax : float
+            Maximum contour value to display
+        clabel : string
+            Label for colorbar (e.g. units 'dBZ')
+
+        title : string
+            Plot title
+        title_size : int
+            Font size of title to display
+            
+        cmap : string
+            Matplotlib color map to use
+        color_bar : boolean
+            True to add colorbar, False does not
+        cb_pad : str
+            Pad to move colorbar, in the form "5%", pos is to right for righthand location
+        cb_loc : str
+            Location of colorbar, default is 'right', also available: 
+            'bottom', 'top', 'left'
+        cb_tick_int : int
+            Interval to use for colorbar tick labels, higher number "thins" labels
+                
+        ax : Axis
+            Axis to plot on. None will use the current axis.
+        fig : Figure
+            Figure to add the plot to. None will use the current figure.
+        '''
+        # parse parameters
+        ax, fig = self._parse_ax_fig(ax, fig)
+            
+        # Return masked or unmasked variable
+        Var, Data = self._get_variable_dict_data(field)
+        if mask_procedure != None:
+            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            
+        # Create contour level array
+        clevels = np.linspace(cminmax[0], cminmax[1], clevs)
+        
+        # Create lon and lat arrays for display
+        xslon = np.linspace(start_pt[0], end_pt[0], xs_length)
+        xslat = np.linspace(start_pt[1], end_pt[1], xs_length)
+        
+        # Create an array to hold the interpolated cross-section
+        xs_data = np.empty([xs_length, len(self.height['data'][:])])
+        
+        # Create arrays for cross-section lon-lat points
+        startloclon = self._get_lon_index(start_pt[0])
+        startloclat = self._get_lat_index(start_pt[1])
+        endloclon = self._get_lon_index(end_pt[0])
+        endloclat = self._get_lat_index(end_pt[1])
+        
+        xsY = np.linspace(startloclat, endloclat, xs_length)
+        xsX = np.linspace(startloclon, endloclon, xs_length)
+        
+        # Loop through each level to create cross-section and stack them
+        for nlev in range(len(self.height['data'][:])):
+            # Extract the values along the line, using cubic interpolation
+            xs_data[:,nlev] = scim.map_coordinates(Data[nlev,:,:],
+                                                  np.vstack((xsY, xsX)),
+                                                  prefilter=False)#, mode='nearest')
+            
+        # Calculate the distance array along the cross-section
+        Xdist = np.absolute((np.pi * RE / 180.) * (xslon - xslon[0]))
+        Ydist = np.absolute((np.pi * RE / 180.) * (xslat - xslat[0]))
+        xsDist = np.sqrt(Xdist**2 + Ydist**2)
+
+        # Define the angle of the cross-secton
+        Dlon = (start_pt[1] - end_pt[1])
+        Dlat = (start_pt[0] - end_pt[0])
+        Ang = np.arctan2(Dlat, Dlon)
+        if Ang < 0:
+            AngNref = 2 * np.pi + Ang
+        else:
+            AngNref = Ang
+           
+        # Convert Height, distance arrays to 2D 
+        Ht2D, Dist2D = np.meshgrid(self.height['data'][:], xsDist)
+        
+        p = ax.pcolormesh(Dist2D, Ht2D, np.ma.masked_less_equal(xs_data, -800.), 
+                          vmin=vmin, vmax=vmax, cmap=cmap)
+                          
+        ax.set_xlabel('Distance along track (km)')
+        ax.set_ylabel(' Altitude (km)')
+        
+        # Add title
+        ax.set_title(title, fontsize=title_size)
+
+        # Add Colorbar
+        if color_bar:
+            cbStr = Var['long_name'] +' ('+ Var['units'] +')'
+            cb = fig.colorbar(p, orientation=cb_orient, pad=cb_pad)#,ticks=clevels)
+            cb.set_label(cbStr)
+            # Set the number of ticks in the colorbar based upon number of contours
+            tick_locator = ticker.MaxNLocator(nbins=int(clevs/cb_tick_int))
+            cb.locator = tick_locator
+            cb.update_ticks()
+    
+        # Add title
+        ax.set_title(title, fontsize=title_size)
+    
+    def contour_timeseries(self, field,
+                           mask_procedure=None, mask_tuple=None,
+                           ptype='pcolormesh',
+                           cminmax=(0.,60.), clevs=25, vmin=15., vmax=60.,
+                           cmap='gist_ncar',
+                           color_bar=True, cb_orient='vertical',
+                           cb_pad=.05, cb_tick_int=2,
+                           cb_label=None, 
+     
+                           dForm='%H:%M',tz=None, xdate=True,
+                           date_MinTicker='minute',
+                           other_MajTicks=None, other_MinTicks=None,
+                           other_min=None, other_max=None,
+                
+                           start_time=None, end_time=None,
+                 
+                           title=None,
+                           xlab=' ', xlabFontSize=16, xpad=7,
+                           ylab=' ', ylabFontSize=16, ypad=7,
+                           ax=None, fig=None):
+        """
+        Wrapper function to produce a contoured time series plot of variable indicated
+        
+        Parameters::
+        ----------
+        field : float
+            Variable to plot as time series
+        mask_procedure : str
+            String indicating how to apply mask via numpy, possibilities are:
+            'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'
+        mask_tuple : (str, float[, float])
+            Tuple containing the field name and value(s) below which to mask
+            field prior to plotting, for example to mask all data where
+        cminmax : tuple
+            (min,max) values for controur levels
+        clevs : integer
+            Number of contour levels
+        vmin : float
+            Minimum contour value to display
+        vmax : float
+            Maximum contour value to display
+        
+        ptype : str
+            Type of plot to make, takes 'plot', 'contour', or 'pcolormsh'
+        cmap : string
+            Matplotlib color map to use
+        color_bar : boolean
+            True to add colorbar, False does not
+        cb_pad : str
+            Pad to move colorbar, in the form "5%", pos is to right for righthand location
+        cb_loc : str
+            Location of colorbar, default is 'right', also available: 
+            'bottom', 'top', 'left'
+        cb_tick_int : int
+            Interval to use for colorbar tick labels, higher number "thins" labels
+        cb_label : string
+            Label for colorbar (e.g. units 'dBZ')
+            
+        dForm : str
+            Format of the time string for x-axis labels
+        tz : str
+            Time zone info to use when creating axis labels (see datetime)
+        xdate : boolean
+            True to use X-axis as date axis, false implies Y-axis is date axis
+        date_MinTicker : str
+            Sting to set minor ticks of date axis,
+            'second','minute','hour','day' supported
+        other_MajTicks : float
+            Values for major tickmark spacing, non-date axis
+        other_MinTicks : float
+            Values for minor tickmark spacing, non-date axis
+        other_min : float
+            Minimum value for non-date axis
+        other_max : float
+            Maximum value for non-date axis
+    
+        start_time : string
+            UTC time to use as start time for subsetting in datetime format
+            (e.g. 2014-08-20 12:30:00)
+        end_time : string
+            UTC time to use as an end time for subsetting in datetime format
+            (e.g. 2014-08-20 16:30:00)
+    
+        title : str
+            Plot title
+        xlab : str
+            X-axis label
+        ylab : str
+            Y-axis label
+        xpad : int
+            Padding for X-axis label
+        ypad : int
+            Padding for Y-axis label
+        ax : Axes instance
+            Optional axes instance to plot the graph
+        fig : Figure
+            Figure to add the plot to. None will use the current figure.
+        """
+        # parse parameters
+        ax, fig = self._parse_ax_fig(ax, fig)
+        
+        # Return masked or unmasked variable
+        # Subsetted if desired
+        Var, tsub, Data = self._get_variable_dict_data_time_subset(field, start_time, end_time)
+        if mask_procedure != None:
+            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            
+        # Create contour level array
+        clevels = np.linspace(cminmax[0], cminmax[1], clevs)
+                                     
+        tSub2D, Ht2D = np.meshgrid(date2num(tsub), self.height['data'][:])
+        
+        # Plot the time series
+        ts = contour_date_ts(tSub2D, Ht2D, Data.T, 
+                vmin=vmin, vmax=vmax, clevs=clevs,
+                color_bar=color_bar, cb_orient=cb_orient,
+                cb_pad=cb_pad, cb_tick_int=cb_tick_int,
+                cb_label=cb_label,
+                dForm=dForm,tz=tz, xdate=xdate, 
+                date_MinTicker=date_MinTicker,
+                other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
+                other_min=other_min, other_max=other_max,
+                title=title,
+                xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
+                ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
+                ax=ax, fig=fig)
+                
+        return
+    
+    ####################
+    # Get methods #
+    #################### 
+    
+    def _get_variable_dict(self, field):
+        '''Get the variable from the fields dictionary'''
+        Var = self.fields[field]
+       
+        return Var
+    
+    def _get_variable_dict_data(self, field):
+        '''Get the variable from the fields dictionary'''
+        Var, data = self.fields[field], self.fields[field]['data'][:]
+       
+        return Var, data
+    
+    def _get_variable_dict_data_time_subset(self, field, start_time, end_time):
+        '''
+        Get the variable from the fields dictionary.
+        Subset the time when in time series format
+        '''
+        Var, data = self.fields[field], self.fields[field]['data'][:]
+        
+        # Check to see if time is subsetted
+        dt_start = _get_start_datetime(self.time, start_time)
+        dt_end = _get_end_datetime(self.time, end_time)
+
+        tsub = self.time[(self.time >= dt_start) & (self.time <= dt_end)]
+        datasub = data[(self.time >= dt_start) & (self.time <= dt_end)]
+       
+        return Var, tsub, datasub
+        
+    def _get_lat_index(self, value):
+        '''Calculate the exact index position within latitude array'''
+        # Find the spacing
+        dp = self.latitude['data'][1] - self.latitude['data'][0]
+        
+        # Calculate the relative position 
+        pos = (value - self.latitude['data'][0]) / dp
+        
+        return pos
+        
+    def _get_lon_index(self, value):
+        '''Calculate the exact index position within latitude array'''
+        # Find the spacing
+        dp = self.longitude['data'][1] - self.longitude['data'][0]
+        
+        # Calculate the relative position 
+        pos = (value - self.longitude['data'][0]) / dp
+        
+        return pos
+
+    ####################
+    # Parseing methods #
+    ####################
+    
+    def _parse_ax_fig(self, ax, fig):
+        """ Parse and return ax and fig parameters. """
+        if ax is None:
+            ax = plt.gca()
+        if fig is None:
+            fig = plt.gcf()
+        return ax, fig
+        
+    def _parse_ax(self, ax):
+        """ Parse and return ax and fig parameters. """
+        if ax is None:
+            ax = plt.gca()
+        return ax
+        
+    def _parse_fig(self, fig):
+        """ Parse and return ax and fig parameters. """
+        if fig is None:
+            fig = plt.gcf()
+        return fig
+
+    

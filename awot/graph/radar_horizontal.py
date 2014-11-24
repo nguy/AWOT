@@ -1,16 +1,14 @@
 """
-awot.graph.radar_grid
+awot.graph.radar_horizontal
 =========================
 
 A group of scripts create various plots of gridded products from 
 data collected by the NOAA P-3 tail Doppler radar. 
 
-Created by Nick Guy.
+Author: 
+    04 Sep 2014 Created by Nick Guy, NOAA/NSSL/WRDD, NRC.
 
 """
-# HISTORY::
-# 04 Sep 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
-#               Refactored from various scripts
 #-------------------------------------------------------------------
 # Load the needed packages
 from mpl_toolkits.basemap import Basemap, cm
@@ -21,17 +19,19 @@ import numpy as np
 import scipy.ndimage as scim
 
 from .common import find_nearest_indices, get_masked_data
-#import general.gplot as gp
+
+from .radar_3d import Radar3DPlot
+from .radar_vertical import RadarVerticalPlot
 
 # Define various constants that may be used for calculations
 RE = 6371.  # Earth radius (average)
 #===============================================================
 # BEGIN FUNCTIONS
 #===============================================================
-class RadarGridPlot(object):
+class RadarHorizontalPlot(object):
     """
-    To create a RadarGridPlot instance:
-    new_instance = RadarGridPlot() or new_instance = RadarGridPlot(AirborneInstance)
+    To create a RadarHorizontalPlot instance:
+    new_instance = RadarHorizontalPlot() or new_instance = RadarHorizontalPlot(AirborneInstance)
     
     Notable attributes
     ------------------
@@ -40,6 +40,11 @@ class RadarGridPlot(object):
     """
     def __init__(self, airborne, basemap=None, instrument=None):
         '''Intitialize the class to create plots'''
+            
+        # Save the airborne class to this class in case cross-section is passed
+        self.airborne = airborne
+        self.instrument = instrument
+        
         # Check the instrument to see how to import airborne class
         if instrument is None:
             print "Trying tail Doppler radar, please specify instrument type!"
@@ -56,7 +61,7 @@ class RadarGridPlot(object):
             print "Use the radar_sweep library (RadarSweepPlot class)"
             return
             
-        # Now initialize the RadarGridPlot Class
+        # Now initialize the RadarHorizontalPlot Class
         self.longitude = radar_data['longitude']
         self.latitude = radar_data['latitude']
         self.height = radar_data['height']
@@ -79,7 +84,8 @@ class RadarGridPlot(object):
                 cmap='gist_ncar',
                 color_bar=True, cb_pad="5%", cb_loc='right', cb_tick_int=2,
                 ax=None, fig=None):
-        """Produce a CAPPI (constant altitude plan position indicator) plot
+        """
+        Produce a CAPPI (constant altitude plan position indicator) plot
         using the Tail Doppler Radar data.
     
         Parameters::
@@ -183,7 +189,8 @@ class RadarGridPlot(object):
                                 refVec=True, refU=10., refUposX=1.05, refUposY=1.015,
                                 qcolor='k',
                                 ax=None, fig=None):
-        """Overlays a 2-D wind field at specified height onto map
+        """
+        Overlays a 2-D wind field at specified height onto map
     
         Parameters::
         ----------
@@ -249,7 +256,8 @@ class RadarGridPlot(object):
                 title=" ", title_size=20, cmap='gist_ncar',
                 color_bar=True, cb_pad="5%", cb_loc='right', cb_tick_int=2,
                 ax=None, fig=None):
-        """Produce a CAPPI (constant altitude plan position indicator) plot
+        """
+        Produce a CAPPI (constant altitude plan position indicator) plot
         using the Tail Doppler Radar data.
     
         Parameters::
@@ -422,7 +430,6 @@ class RadarGridPlot(object):
     #########################
     # 3-D plot methods #
     #########################
-    
     def DPJgrid_3d(self, surf_field,
                surf_min=-5., surf_max=5., surf_cmap='RdBu_r',
                rstride=5, cstride=5,
@@ -431,114 +438,23 @@ class RadarGridPlot(object):
                zlims=(-5.,5.), dlat=1.,dlon=1.,
                plot_track=True,
                title=" ", fig=None, ax=None):
-        """Read in data from NetCDF file containing P3 flight level data created
-        by NOAA AOC.  The NetCDF should be read in the main program and passed
-        to this function.
-        
-        Parameters::
-        ----------
-        surf_field : string
-            Name of field to use for the 3D surface plot
-        ppi_height : float
-            Height at which to plot the horizontal field
-
-        surf_min : float
-            Minimum surface value to display
-        surf_max : float
-            Maximum surface value to display
-        surf_cmap : string
-            Matplotlib color map to use
-        rstride : int
-            Row stride
-        cstride : int
-            Column stride
-        plot_contour : boolean
-            True to plot a contour along the axes
-        cminmax : tuple
-            (min,max) values for controur levels
-        clevs : integer
-            Number of contour levels
-            Number of contour levels
-        vmin : float
-            Minimum contour value to display
-        vmax : float
-            Maximum contour value to display
-        cmap : string
-            Matplotlib color map to use
-        alpha : float
-            Alpha factor for opacity
-        zlims : 2-tuple
-            (Min, Max) tuple for Z-axis
-  dlat            = Latitudinal spacing on plot
-  dlon            = Longitudinal spacing on plot
-  proj            = Projection to use for map
-  title           = Plot title
-  pName           = String name of output file
-  pType           = String name of output file format
-  figsize         = [x,y] size of figure to create
-        plot_track : boolean
-            True to overplot the aircraft track (Note must have ingested
-            flight level data file as well)        
-        ax : Axis
-            Axis to plot on. None will use the current axis.
-        fig : Figure
-            Figure to add the plot to. None will use the current figure.
-            
-        Notes::
-        -----
-        Defaults are established during DYNAMO project analysis
         """
-        # parse parameters
-        fig = self._parse_fig(fig)
-        
-        # Get variable
-        Var, Data = self._get_variable_dict_data(surf_field)
-    
-        # Create contour level array
-        clevels = np.linspace(vmin, vmax, clevs)
-    
-        # Set up the axes for 3D projection
-        ax = fig.gca(projection='3d')
-        
-        # Convert lats/lons to 2D grid
-        Lon2D, Lat2D = np.meshgrid(self.longitude['data'][:],self.latitude['data'][:])
+        Wrapper to call the 3D plotting function for backwards compatability.
+        """
 
-        # Plot the vertical velocity as a surface plot    
-        pS = ax.plot_surface(Lat2D, Lon2D, Data, 
-                            vmin=surf_min, vmax=surf_max, linewidth=0, alpha=alpha,
-                            rstride=rstride, cstride=cstride, cmap=surf_cmap)
-                         
-#    pW = ax.plot_wireframe(Lat2D,Lon2D,W,rstride=rstride,cstride=cstride,alpha=alf)
-        ax.set_xlim(Lat2D.min(), Lat2D.max())
-        ax.set_ylim(Lon2D.min(), Lon2D.max())
-        ax.set_zlim(zlim)
-        ax.set_xlabel('Latitude')
-        ax.set_ylabel('Longitude')
-        ax.set_zlabel(' Altitude (km)')
-#    ax.view_init(20.,
-        cb = fig.colorbar(pS, shrink=0.6)
-        cb.set_label(Var['long_name'] + Var['units'])#r'(m s$^{-1}$)')
-    
-        # Plot the horizontal dBZ contour field
-        if plot_contour:
-            if (con_field != None):
-                conVar = self._get_variable_dict(con_field)
-    
-                # Find the closest vertical point 
-                Zind = find_nearest_indices(self.height['data'][:], ppi_height)
-            
-                ax.contourf(Lon2D, Lat2D, conVar['data'][Zind,:,:], clevels,
-                            vmin=vmin, vmax=vmax, cmap=cmap,
-                            zdir='z')#,offset=surf_min)
-            else:
-                print "Need to set con_field and ppi_height"
-#    
-                             
-        if plot_track:
-            ax.plot(self.latitude['data'][:], self.longitude['data'][:], 
-                    self.height['data'][:]/1000., zdir='z', c='k')
-
-        return
+        r3d = Radar3DPlot(self.airborne, basemap=self.basemap,
+                                instrument=self.instrument)
+                                
+        r3d.DPJgrid_3d(self.airborne, surf_field,
+               surf_min=surf_min, surf_max=surf_max, surf_cmap=surf_cmap,
+               rstride=rstride, cstride=cstride,
+               plot_contour=plot_contour, cont_field=cont_field, 
+               ppi_height=ppi_height,
+               cminmax=cminmax, clevs=clevs, vmin=vmin, vmax=vmax, 
+               cmap=cmap, alpha=alpha,
+               zlims=zlims, dlat=dlat,dlon=dlon,
+               plot_track=plot_track,
+               title=title, fig=fig, ax=ax)
     
     #########################
     # Vertical plot methods #
@@ -600,78 +516,19 @@ class RadarGridPlot(object):
         fig : Figure
             Figure to add the plot to. None will use the current figure.
         '''
-        # parse parameters
-        ax, fig = self._parse_ax_fig(ax, fig)
-            
-        # Return masked or unmasked variable
-        Var, Data = self._get_variable_dict_data(field)
-        if mask_procedure != None:
-            Data = get_masked_data(Data, mask_procedure, mask_tuple)
-            
-        # Create contour level array
-        clevels = np.linspace(cminmax[0], cminmax[1], clevs)
-        
-        # Create lon and lat arrays for display
-        xslon = np.linspace(start_pt[0], end_pt[0], xs_length)
-        xslat = np.linspace(start_pt[1], end_pt[1], xs_length)
-        
-        # Create an array to hold the interpolated cross-section
-        xs_data = np.empty([xs_length, len(self.height['data'][:])])
-        
-        # Create arrays for cross-section lon-lat points
-        startloclon = self._get_lon_index(start_pt[0])
-        startloclat = self._get_lat_index(start_pt[1])
-        endloclon = self._get_lon_index(end_pt[0])
-        endloclat = self._get_lat_index(end_pt[1])
-        
-        xsY = np.linspace(startloclat, endloclat, xs_length)
-        xsX = np.linspace(startloclon, endloclon, xs_length)
-        
-        # Loop through each level to create cross-section and stack them
-        for nlev in range(len(self.height['data'][:])):
-            # Extract the values along the line, using cubic interpolation
-            xs_data[:,nlev] = scim.map_coordinates(Data[nlev,:,:],
-                                                  np.vstack((xsY, xsX)),
-                                                  prefilter=False)#, mode='nearest')
-            
-        # Calculate the distance array along the cross-section
-        Xdist = np.absolute((np.pi * RE / 180.) * (xslon - xslon[0]))
-        Ydist = np.absolute((np.pi * RE / 180.) * (xslat - xslat[0]))
-        xsDist = np.sqrt(Xdist**2 + Ydist**2)
 
-        # Define the angle of the cross-secton
-        Dlon = (start_pt[1] - end_pt[1])
-        Dlat = (start_pt[0] - end_pt[0])
-        Ang = np.arctan2(Dlat, Dlon)
-        if Ang < 0:
-            AngNref = 2 * np.pi + Ang
-        else:
-            AngNref = Ang
-           
-        # Convert Height, distance arrays to 2D 
-        Ht2D, Dist2D = np.meshgrid(self.height['data'][:], xsDist)
-        
-        p = ax.pcolormesh(Dist2D, Ht2D, np.ma.masked_less_equal(xs_data, -800.), 
-                          vmin=vmin, vmax=vmax, cmap=cmap)
-                          
-        ax.set_xlabel('Distance along track (km)')
-        ax.set_ylabel(' Altitude (km)')
-        
-        # Add title
-        ax.set_title(title, fontsize=title_size)
-
-        # Add Colorbar
-        if color_bar:
-            cbStr = Var['long_name'] +' ('+ Var['units'] +')'
-            cb = fig.colorbar(p, orientation=cb_orient, pad=cb_pad)#,ticks=clevels)
-            cb.set_label(cbStr)
-            # Set the number of ticks in the colorbar based upon number of contours
-            tick_locator = ticker.MaxNLocator(nbins=int(clevs/cb_tick_int))
-            cb.locator = tick_locator
-            cb.update_ticks()
-    
-        # Add title
-        ax.set_title(title, fontsize=title_size)
+        rvp = RadarVerticalPlot(self.airborne, basemap=self.basemap,
+                                instrument=self.instrument)
+                                
+        rvp.plot_cross_section(field, start_pt, end_pt, 
+                           xs_length=xs_length,
+                           mask_procedure=mask_procedure, mask_tuple=mask_tuple,
+                           title=title, title_size=title_size,
+                           cminmax=cminmax, clevs=clevs, vmin=vmin, vmax=vmax,
+                           cmap=cmap, clabel=clabel,
+                           color_bar=color_bar, cb_pad=cb_pad, 
+                           cb_orient=cb_orient, cb_tick_int=cb_tick_int,
+                           ax=ax, fig=fig)
     
     ####################
     # Get methods #

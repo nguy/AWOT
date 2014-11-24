@@ -4,11 +4,9 @@ awot.graph.common
 
 Common graphing routines.
 
-Created by Nick Guy.
+Author:
+    20 Aug 2014 - Created by Nick Guy, NOAA/NSSL/WRDD, NRC.
 """
-# HISTORY::
-# 20 Aug 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
-# 
 #-------------------------------------------------------------------
 # Load the needed packages
 
@@ -18,6 +16,8 @@ import matplotlib.pyplot as plt
 from  matplotlib.dates import DateFormatter
 from  matplotlib.dates import SecondLocator, MinuteLocator, HourLocator, DayLocator
 from matplotlib import ticker as mtic
+import matplotlib.cm as cm
+from datetime import datetime
 
 #######################
 # Map creation module #
@@ -30,7 +30,7 @@ def create_basemap_instance(corners=None, proj=None, resolution='l', area_thresh
     """
     Create a basemap instance for plotting.
     
-    PARAMETERS::
+    Parameters::
     ----------
     corners : float tuple
         Array of map corners [lowerLeftLon, lowerLeftLat, upperRightLon, upperRightLat].
@@ -106,7 +106,8 @@ def create_basemap_instance(corners=None, proj=None, resolution='l', area_thresh
 def plot_polar_contour(values, azimuths, zeniths, nlevs=30,
                        vmin=-24., vmax=60., cmap='jet',
                        ax=None):
-    """Plot a polar contour plot, with 0 degrees at the North.
+    """
+    Plot a polar contour plot, with 0 degrees at the North.
     
     NOTE: Need to call .common.create_polar_fig_ax to create properly projected axis
  
@@ -169,25 +170,31 @@ def plot_polar_contour(values, azimuths, zeniths, nlevs=30,
     
 ############
 
-def plot_date_ts(Time, Var, colF='ko', msize=1.5, lw=2,
+def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
                 dForm='%H:%M',tz=None, xdate=True, 
                 date_MinTicker='minute',
                 other_MajTicks=None, other_MinTicks=None,
+                other_min=None, other_max=None,
                 title=None,
-                xlab=' ', xlabFontSize=16, xpad=7,
-                ylab=' ', ylabFontSize=16, ypad=7,
+                xlab=None, xlabFontSize=16, xpad=7,
+                ylab=None, ylabFontSize=16, ypad=7,
                 ax=None):
-    """Returns a time series plot, with time on X-axis and variable on Y-axis.
+    """
+    Returns a time series plot, with time on X-axis and variable on Y-axis.
+    
     Parameters::
     ----------
     Time : float
         Time array to plot on x-axis
     Var : float
         Variable to plot as time series
-    colF : str
-        Color and marker shortcut (see python documentation)
+    color : str
+        Color of marker
+    marker : str
+        Marker to display
     msize : float
         Marker size
+        
     dForm : str
         Format of the time string for x-axis labels
     tz : str
@@ -211,18 +218,220 @@ def plot_date_ts(Time, Var, colF='ko', msize=1.5, lw=2,
         Values for major tickmark spacing, non-date axis
     other_MinTicks : float
         Values for minor tickmark spacing, non-date axis
+    other_min : float
+        Minimum value for non-date axis
+    other_max : float
+        Maximum value for non-date axis
     ax : Axes instance
         Optional axes instance to plot the graph
-    """         
+    """
     # parse parameters
     ax = _parse_ax(ax)
+    
+    if xdate:
+        ydate = False
+    else:
+        ydate = True
+    
+    # Set up the axes
+    _set_ts_axes(dForm=dForm,tz=tz, xdate=xdate, 
+                date_MinTicker=date_MinTicker,
+                other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
+                other_min=other_min, other_max=other_max,
+                title=title,
+                xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
+                ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
+                ax=ax)
+
+    # Create the plot
+    ax.plot_date(Time, Var, tz=tz, xdate=xdate, ydate=ydate, 
+                 mfc=color, mec=color, marker=marker,
+                 markersize=msize, lw=lw)
+    
+    return
+    
+##########
+    
+def contour_date_ts(Time, AxVar, PlotVar, 
+                ptype='pcolormesh',
+                vmin=None, vmax=None, clevs=25,
+                cmap=None,
+                
+                color_bar=True, cb_orient='vertical',
+                cb_pad=.05, cb_tick_int=2,
+                cb_label=None,
+                
+                dForm='%H:%M',tz=None, xdate=True, 
+                date_MinTicker='minute',
+                other_MajTicks=None, other_MinTicks=None,
+                other_min=None, other_max=None,
+                title=None,
+                xlab=None, xlabFontSize=16, xpad=7,
+                ylab=None, ylabFontSize=16, ypad=7,
+                ax=None, fig=None):
+    """
+    Returns a time series plot, with time on X-axis and variable on Y-axis.
+    
+    Parameters::
+    ----------
+    Time : float
+        Time array (2D same as PlotVar) to plot on x-axis
+    AxVar : float
+        Variable (2D same as PlotVar) to use as other axis variable for plot
+    PlotVar : float
+        Variable to plot as time series
+        
+    ptype : str
+        Type of plot to make, takes 'plot', 'contour', or 'pcolormsh'
+    vmin : float
+        Minimum contour value to display
+    vmax : float
+        Maximum contour value to display
+            
+    cmap : string
+        Matplotlib color map to use
+    color_bar : boolean
+        True to add colorbar, False does not
+    cb_pad : str
+        Pad to move colorbar, in the form "5%", pos is to right for righthand location
+    cb_loc : str
+        Location of colorbar, default is 'right', also available: 
+        'bottom', 'top', 'left'
+    cb_tick_int : int
+        Interval to use for colorbar tick labels, higher number "thins" labels
+    cb_label : str
+        String to use as colorbar label
+        
+    dForm : str
+        Format of the time string for x-axis labels
+    tz : str
+        Time zone info to use when creating axis labels (see datetime)
+    xdate : boolean
+        True to use X-axis as date axis, false implies Y-axis is date axis
+    title : str
+        Plot title
+    xlab : str
+        X-axis label
+    ylab : str
+        Y-axis label
+    xpad : int
+        Padding for X-axis label
+    ypad : int
+        Padding for Y-axis label
+    date_MinTicker : str
+        Sting to set minor ticks of date axis,
+        'second','minute','hour','day' supported
+    other_MajTicks : float
+        Values for major tickmark spacing, non-date axis
+    other_MinTicks : float
+        Values for minor tickmark spacing, non-date axis
+    other_min : float
+        Minimum value for non-date axis
+    other_max : float
+        Maximum value for non-date axis
+    ax : Axes instance
+        Optional axes instance to plot the graph
+        fig : Figure
+            Figure to add the plot to. None will use the current figure.
+    """
+    # parse parameters
+    ax = _parse_ax(ax)
+    
+    # If no cmap is specified, grab current
+    if cmap is None:
+        cmap = cm.get_cmap()
+    
+    # Set the axes variables depending on which is time axis
+    if xdate:
+        ydate = False
+        XVar = Time
+        YVar = AxVar
+    else:
+        ydate = True
+        XVar = AxVar
+        YVar = Time
+    
+    # Set up the axes
+    _set_ts_axes(dForm=dForm,tz=tz, xdate=xdate, 
+                date_MinTicker=date_MinTicker,
+                other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
+                other_min=other_min, other_max=other_max,
+                title=title,
+                xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
+                ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
+                ax=ax)
+
+    # Create the plot
+    if ptype == 'pcolormesh':
+        p = ax.pcolormesh(XVar, YVar, PlotVar, 
+                          vmin=vmin, vmax=vmax, cmap=cmap)
+    elif ptype == 'contour':
+        p = ax.contourf(XVar, YVar, PlotVar, 
+                          vmin=vmin, vmax=vmax, cmap=cmap)
+    
+    # Add Colorbar
+    if color_bar:
+        cb = fig.colorbar(p, orientation=cb_orient, pad=cb_pad, ax=ax)#,ticks=clevels)
+        if cb_label is not None:
+            cb.set_label(cb_label)
+        # Set the number of ticks in the colorbar based upon number of contours
+        tick_locator = mtic.MaxNLocator(nbins=int(clevs/cb_tick_int))
+        cb.locator = tick_locator
+        cb.update_ticks()
+    
+    return
+    
+##########
+    
+def _set_ts_axes(dForm='%H:%M',tz=None, xdate=True, 
+                date_MinTicker='minute',
+                other_MajTicks=None, other_MinTicks=None,
+                other_min=None, other_max=None,
+                title=None,
+                xlab=None, xlabFontSize=16, xpad=7,
+                ylab=None, ylabFontSize=16, ypad=7,
+                ax=None):
+    """
+    Returns a time series plot, with time on X-axis and variable on Y-axis.
+    
+    Parameters::
+    ----------
+    dForm : str
+        Format of the time string for x-axis labels
+    tz : str
+        Time zone info to use when creating axis labels (see datetime)
+    xdate : boolean
+        True to use X-axis as date axis, false implies Y-axis is date axis
+    title : str
+        Plot title
+    xlab : str
+        X-axis label
+    ylab : str
+        Y-axis label
+    xpad : int
+        Padding for X-axis label
+    ypad : int
+        Padding for Y-axis label
+    date_MinTicker : str
+        Sting to set minor ticks of date axis,
+        'second','minute','hour','day' supported
+    other_MajTicks : float
+        Values for major tickmark spacing, non-date axis
+    other_MinTicks : float
+        Values for minor tickmark spacing, non-date axis
+    other_min : float
+        Minimum value for non-date axis
+    other_max : float
+        Maximum value for non-date axis
+    ax : Axes instance
+        Optional axes instance to plot the graph
+    """
     
     # Set the date format
     date_Fmt = DateFormatter(dForm,tz=tz)
     
     # Check which axis to set for date axis and set tick parameters
     if xdate:
-        ydate = False
         # Set the x-axis date format and ticks
         ax.xaxis.set_major_formatter(date_Fmt)
         if date_MinTicker == 'second':
@@ -245,9 +454,13 @@ def plot_date_ts(Time, Var, colF='ko', msize=1.5, lw=2,
             ax.yaxis.set_minor_locator(mtic.MultipleLocator(other_MinTicks))
         except:
             pass
+            
+        if other_min is not None:
+            ax.set_ylim(bottom=other_min)
+        if other_max is not None:
+            ax.set_ylim(top=other_max)
     
     else:
-        ydate = True
         # Set the y-axis date format and ticks
         ax.yaxis.set_major_formatter(date_Fmt)
         if date_MinTicker == 'second':
@@ -270,27 +483,22 @@ def plot_date_ts(Time, Var, colF='ko', msize=1.5, lw=2,
             ax.xaxis.set_minor_locator(mtic.MultipleLocator(other_MinTicks))
         except:
             pass
-
-    # Create the plot
-    ax.plot_date(Time, Var, fmt=colF, tz=tz, xdate=xdate, ydate=ydate,
-                 markersize=msize, lw=lw)
+            
+        if other_min is not None:
+            ax.set_xlim(left=other_min)
+        if other_max is not None:
+            ax.set_xlim(right=other_max)
     
-
     ax.tick_params(which='both',direction='out') # Turn the tick marks outward
     
     # Set the Y label
-    ax.set_ylabel(ylab,labelpad=ypad,fontsize=ylabFontSize)
-    if xlab is None:
-        pass
-    else:
+    if ylab is not None:
+        ax.set_ylabel(ylab,labelpad=ypad,fontsize=ylabFontSize)
+    if xlab is not None:
         ax.set_xlabel(xlab,labelpad=xpad,fontsize=xlabFontSize)
-#    except:
-#        pass
         
     # Set the title
-    if title is None:
-        pass
-    else:
+    if title is not None:
         ax.set_title(title)
     
     return
@@ -366,6 +574,47 @@ def get_masked_data(data, mask_procedure, mask_tuple):
         print "Check the mask_procedure operation string!"
             
     return data
+       
+                            
+def _get_start_datetime(time, start_time):
+    '''
+    Get a start time as datetime instance for subsetting.
+    '''
+    # Check to see if time is subsetted
+    if start_time is None:
+        dt_start = time.min()
+    else:
+        startStr = [start_time[0:4],start_time[5:7],start_time[8:10], \
+                    start_time[11:13],start_time[14:16],start_time[17:19],'0']
+        startInt = [ int(s) for s in startStr ]
+        try:
+            dt_start = datetime(startInt[0],startInt[1],startInt[2],startInt[3],\
+                                    startInt[4],startInt[5],startInt[6])
+        except:
+            print "Check the format of date string (e.g. '2014-08-20 12:30:00')"
+            return
+                
+    return dt_start    
+                            
+def _get_end_datetime(time, end_time):
+    '''
+    Get a start time as datetime instance for subsetting.
+    '''
+    #Check to see if the time is subsetted
+    if end_time is None:
+        dt_end = time.max()
+    else:
+        endStr = [end_time[0:4],end_time[5:7],end_time[8:10],\
+                   end_time[11:13],end_time[14:16],end_time[17:19],'0']
+        endInt = [ int(s) for s in endStr ]           
+        try:
+            dt_end = datetime(endInt[0],endInt[1],endInt[2],endInt[3],\
+                                  endInt[4],endInt[5],endInt[6])
+        except:
+            print "Check the format of date string (e.g. '2014-08-20 12:30:00')"
+            return
+    
+    return dt_end
     
 #####################
 # Parseing Methods #

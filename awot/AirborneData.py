@@ -37,7 +37,7 @@ class AirborneData(object):
     
     '''
 
-    def __init__(self, reader=None):
+    def __init__(self, reader=None, data_type=None):
 
         """
         Initialize the class if a reader class is provided.
@@ -61,7 +61,8 @@ class AirborneData(object):
     # Get data from files
     ##########################################
     
-    def get_flight_data(self, fname=None, platform='', file_format='netcdf'):
+    def get_flight_data(self, fname=None, platform='', file_format='netcdf',
+                       instrument=None):
         '''
         Return a FlightDataFile reader instance
         
@@ -79,7 +80,7 @@ class AirborneData(object):
             return
         else:
             FlightData = read_flight(filename=fname, platform=platform, 
-                                     file_format=file_format)
+                                     file_format=file_format, instrument=instrument)
             
         # Now need to add dictionary to AirborneData class
             self.flight_data = FlightData.flight_data
@@ -119,16 +120,29 @@ class AirborneData(object):
             if instrument is None:
                print "Need to supply instrument type"
                return
-               
+            
             # Add the dictionary to existing class
-            elif instrument.lower() == 'tdr_grid':
-                self.tdr_radar_data = RadarData.radar_data
-            elif instrument.lower() == 'lf':
-                self.lf_radar_data = RadarData.radar_data
-            elif instrument.lower() == 'tdr_sweep':
-            	self.tdr_sweep_radar_data = RadarData.radar_data
-                
-            elif instrument.lower() == 'ground':
+            if (platform.upper() == 'P3') or (platform.upper() == 'P-3') or \
+            (platform.upper() == 'NOAA_P3') or \
+            (platform.upper() == 'NOAA P3') or \
+            (platform.upper() == 'ELDORA'):   
+                if instrument.lower() == 'tdr_grid':
+                    self.tdr_radar_data = RadarData.radar_data
+                elif instrument.lower() == 'lf':
+                    self.lf_radar_data = RadarData.radar_data
+                elif instrument.lower() == 'tdr_sweep':
+            	    self.tdr_sweep_radar_data = RadarData.radar_data
+            
+            elif platform.upper() == 'FALCON':
+                if instrument.lower() == 'radar':
+                    self.rasta_radar_data = RadarData.radar_data
+                elif instrument.lower() == 'microphysics':
+                    self.rasta_microphysics_data = RadarData.radar_data
+                else:
+                    print "Set instrument parameter to 'radar' or 'microphysics'"
+                    return
+            
+            elif (platform.upper() == 'GROUND'):
                 self.ground_radar_data = RadarData.radar_data
             else:
                 print "Could not grab data, check the instrument type!"

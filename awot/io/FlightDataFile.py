@@ -7,13 +7,14 @@ import os
 #from ..AirborneData import AirborneData
 from ..io.read_p3_flight import flight_data as p3_read_flight
 from ..io.read_citation_flight import flight_data as citation_read_flight
+from ..io.read_latmos_falcon import rasta_radar, rasta_microphysics
 
 import numpy as np
 ########################
 ## BEGIN MAIN CODE
 ########################
 
-def read_flight(filename=None, platform='', file_format='netcdf', \
+def read_flight(filename=None, platform='', file_format='netcdf', instrument=None,\
                 initialize=False):
     '''
     Takes a filename pointing to a aircraft flight level data file
@@ -33,7 +34,8 @@ def read_flight(filename=None, platform='', file_format='netcdf', \
         print "Need to provide a filename!"
         return
         
-    reader = FileReader(filename=filename, platform=platform, file_format=file_format)
+    reader = FileReader(filename=filename, platform=platform, file_format=file_format,
+                        instrument=instrument)
     
     if initialize:
         FlightData = AirborneData(reader)
@@ -50,7 +52,7 @@ class FileReader(object):
     FileReader class to process data files.  
     '''
     
-    def __init__(self, filename=None, platform=None, file_format=None):
+    def __init__(self, filename=None, platform=None, file_format=None, instrument=None):
 
         """
         If initialized with a filename (incl. path), will call
@@ -87,26 +89,44 @@ class FileReader(object):
             if ((platform.upper() == 'P3') or (platform.upper() == 'P-3')):
                 if file_format.upper() == 'NETCDF':
                     flight = p3_read_flight(filename)
+                else:
+                    print "Only netCDF format currently supported"
+                    
             elif (platform.upper() == 'CITATION'):
                 if ((file_format.upper() == 'ASCII') or \
                 (file_format.upper() == 'NASA AMES') or \
                 (file_format.upper() == 'NA')):
                     flight = citation_read_flight(filename)
                 elif file_format.upper() == 'NETCDF':
-                    print "No NetCDF reader currently exists for citation data"
+                    print "No netCDF reader currently exists for citation data"
                     return
                 else:
                     print "Check the format call!"
                     return
+                    
+            elif platform.upper() == 'FALCON':
+                if instrument.lower() == 'radar':
+                    flight = rasta_radar(filename)
+                elif instrument.lower() == 'microphysics':
+                    flight = rasta_microphysics(filename)
+                else:
+                    print "Only netCDF format currently supported"
                                               
-            # Calculate meridional and zonal wind components
-            Uwind, Vwind = self._winduv(flight)
+            if platform.upper() != 'FALCON':
+                # Calculate meridional and zonal wind components
+                Uwind, Vwind = self._winduv(flight)
+                        
+                # Add to the dictionary
+                flight['Uwind'] =  Uwind
+                flight['Vwind'] =  Vwind
+            else:
+                flight['Uwind'] = flight['Vx_flight_level']#['Uwind']['data'][:]
+                flight['Vwind'] = flight['Vy_flight_level']
+                flight['Wwind'] = flight['Vz_flight_level']
+                #['fields']['Vwind']['data'][:]
+                
             
-            # Add to the dictionary
-            flight['Uwind'] =  Uwind
-            flight['Vwind'] =  Vwind
-            
-            # Record the data into the variable 
+                # Record the data into the variable 
             self.flight_data = flight
         else:
             #Initializes class instance but leaves it to other methods to

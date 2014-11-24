@@ -5,14 +5,13 @@ awot.io.read_p3_radar
 A group of scripts to read data collected by the NOAA P-3 aircraft.
 Supports both tail Doppler and lower fuselage radars. 
 
-Created by Nick Guy.
+Author:
+    08 Jan 2014 - Created by Nick Guy, NOAA/NSSL/WRDD, NRC.
+                  Converted NCL functions to Python
 
 """
 # NOTES:: This has only been tested with DYNAMO data files, versions
-#         may change and another function may be needed.
-# HISTORY::
-#   8 Jan 2014 - Nick Guy.   NRC, NOAA/NSSL (nick.guy@noaa.gov)   
-#                Converted NCL functions below to Python
+#         may change and another function may be needed.  
 #-------------------------------------------------------------------
 # Load the needed packages
 from netCDF4 import Dataset
@@ -67,6 +66,7 @@ def read_windsyn_tdr_netcdf(fname):
         datetime_end : datetime object
             HHNN (Hour Minute) module end time
     """
+     
     # Read in NetCDF
     ncFile = Dataset(fname,'r')
     ncvars = ncFile.variables

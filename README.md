@@ -89,6 +89,7 @@ flp.plot_trackmap(color_by_altitude=True, track_cmap='spectral', addlegend=True,
 ## Dependencies
 
 Developed on the Anaconda distribution (1.9.1 & Python 2.7.7).
+[Anaconda](https://store.continuum.io/cshop/anaconda/)
 
 It uses a typical scientific python stack:
 [Numpy](http://www.scipy.org)

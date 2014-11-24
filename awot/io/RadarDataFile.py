@@ -8,6 +8,7 @@ import os
 from ..io.read_ground_radar import read_radar as read_ground_radar
 from ..io.read_p3_radar import read_lf_grid, read_windsyn_tdr_netcdf 
 from ..io.read_p3_radar import read_tdr_sweep, read_windsyn_binary
+from ..io.read_latmos_falcon import rasta_radar, rasta_microphysics
 
 ########################
 ## BEGIN MAIN CODE
@@ -25,6 +26,9 @@ def read_radar(filename=None, platform='p3', file_format='netcdf', instrument=No
         Long path filename of data file.
     platform : str
         Platform for processing, see FileReader.
+        Currenlty supported:
+            'p3' - NOAA P-3 radar tail Doppler and lower fuselage radars
+            'falcon' - LATMOS French falcon W-band
     file_format : str
         Format of input file, see FileReader.
     instrument : str
@@ -98,43 +102,58 @@ class FileReader(object):
         """
 
         if isinstance(filename, str) != False:
-            
-            if instrument is None:
-               print "Need to supply instrument type"
-               return
-            if instrument.lower() == 'ground':
-                radar = read_ground_radar(filename)
-            elif instrument.lower() == 'lf':
-                if (platform.upper() == 'P3') or (platform.upper() == 'P-3'):
-                    radar = read_lf_grid(filename, 
-                                        instrument=instrument,
-                                        platform=platform)
-            elif instrument.lower() == 'tdr_grid':
-                if (platform.upper() == 'P3') or (platform.upper() == 'P-3') or \
-                   (platform.upper() == 'ELDORA'):
+                
+            if (platform.upper() == 'P3') or (platform.upper() == 'P-3') or \
+            (platform.upper() == 'NOAA_P3') or \
+            (platform.upper() == 'NOAA P3') or \
+            (platform.upper() == 'ELDORA'):
+                if instrument.lower() == 'tdr_grid':
                     if file_format.lower() == 'netcdf':
-                        radar = read_windsyn_tdr_netcdf(filename, 
-                                                        instrument=instrument,
-                                                        platform=platform)
+                        radar = read_windsyn_tdr_netcdf(filename)
                     elif file_format.lower() == 'binary':
                         radar = read_windsyn_binary(filename, 
                                                     instrument=instrument,
                                                     platform=platform)
-                    
-            elif instrument.lower() == 'tdr_sweep':
-                if (platform.upper() == 'P3') or (platform.upper() == 'P-3'):
+                elif instrument.lower() == 'tdr_sweep':
                     if (file_format.lower() =='netcdf') or \
                        (file_format.lower() =='sigmet'):
                         radar = read_tdr_sweep(filename)
-            else:
-                print "Check the supported instrument list"
-                return
+                    else:
+                        print ("Currently limited to netCDF and Sigmet " +\
+                                + "formats for sweep files")
+                elif instrument.lower() == 'lf':
+                    radar = read_lf_grid(filename)
+                    
+            elif platform.upper() == 'FALCON':
+                if instrument.lower() == 'radar':
+                    radar = rasta_radar(filename)
+                elif instrument.lower() == 'microphysics':
+                    radar = rasta_microphysics(filename)
                 
-            
-            if (platform.upper() == 'C130'):
+            elif (platform.upper() == 'C130') or \
+            (platform.upper() == 'NCAR_C130') or \
+            (platform.upper() == 'NCAR C130'):
                 print "Sorry not supported at this time"
+                
             elif (platform.upper() == 'KING AIR'):
                 print "Sorry not supported at this time"
+                
+            elif (platform.upper() == 'GROUND'):
+                radar = read_ground_radar(filename)
+                
+            else:
+                # Check to see if a ground instrument is being fed
+                if instrument.lower() == 'ground':
+                    radar = read_ground_radar(filename)
+                else:
+                    print "Check supported platform list: \
+                           'p3' or 'p-3' - NOAA P-3 \
+                           'eldora' - NCAR Eldor radar (same as P-3) \
+                           'falcon' - LATMOS French Falcon \
+                           'C130' - NCAR C130, Coming Soon \
+                           'King Air' - Wyoming King Air, Coming Soon \
+                           'Ground' - Any PyArt supported data format"
+                    return
             
             # Record the data into the variable 
             self.radar_data = radar

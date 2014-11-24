@@ -4,7 +4,8 @@ awot.graph.flight_level
 
 A group of scripts to create plots of flight level data. 
 
-Created by Nick Guy.
+Author:
+    20 Aug 2014 - Created by Nick Guy, NOAA/NSSL/WRDD, NRC.
 
 TODO:
 Fix the time_stamp module to work with savefig.  Okay on screen output,
@@ -12,8 +13,6 @@ but for some reason it bombs when trying to save.
 
 Improve time series variable plotting?
 """
-# HISTORY::
-# 20 Aug 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
 #-------------------------------------------------------------------
 # Load the needed packages
 import numpy as np
@@ -26,7 +25,7 @@ from matplotlib import ticker
 from datetime import datetime
 import scipy.ndimage as scim
 
-from .common import plot_date_ts
+from .common import plot_date_ts, contour_date_ts
 
 # Define various constants that may be used for calculations
 RE = 6371.  # Earth radius (average)
@@ -59,13 +58,14 @@ class FlightLevel(object):
         
         if basemap != None:
             self.basemap = basemap
+        
+            # Calculate x,y map position coordinates
+            self.x, self.y = self.basemap(self.longitude, self.latitude)
         try:
             self.basemap = airborne.basemap
         except:
             print "Warning: No basemap instance"
-            
-        # Calculate x,y map position coordinates
-        self.x, self.y = self.basemap(self.longitude, self.latitude)        
+                    
        
     ###############
     # Track plots #
@@ -332,14 +332,14 @@ class FlightLevel(object):
                            date_MinTicker='minute',
                            ax=None, fig=None):
         '''
-        Plot a cross-section between two points
+        Plot a cross-section along a flight path segment
         
         Parameters::
         ----------
         radar : object
-            RadarGridPlot object 
+            RadarHorizontalPlot object 
         field : str
-            3-D variable inf RadarGridPlot object (e.g. Reflectivity ['dBZ'])
+            3-D variable inf RadarHorizontalPlot object (e.g. Reflectivity ['dBZ'])
             to use in plot
         start_pt, end_pt : tuple
             (lat, lon) Tuple of start, end points for cross-section
@@ -732,10 +732,11 @@ class FlightLevel(object):
     # Time Series methods #
     #######################
     
-    def plot_timeseries(self, field, colF='ko', msize=1.5, lw=2,
+    def plot_timeseries(self, field, color='k', marker='o', msize=1.5, lw=2, 
                 dForm='%H:%M',tz=None, xdate=True,
                 date_MinTicker='minute',
                 other_MajTicks=None, other_MinTicks=None,
+                other_min=None, other_max=None,
                 
                 start_time=None, end_time=None,
                 
@@ -745,12 +746,15 @@ class FlightLevel(object):
                 ax=None):
         """
         Wrapper function to produce a time series plot of variable indicated
+        
         Parameters::
         ----------
         field : float
             Variable to plot as time series
-        colF : str
-            Color and marker shortcut (see python documentation)
+        color : str
+            Color of marker
+        marker : str
+            Marker to display
         msize : float
             Marker size
         lw : float
@@ -768,6 +772,10 @@ class FlightLevel(object):
             Values for major tickmark spacing, non-date axis
         other_MinTicks : float
             Values for minor tickmark spacing, non-date axis
+        other_min : float
+            Minimum value for non-date axis
+        other_max : float
+            Maximum value for non-date axis
     
         start_time : string
             UTC time to use as start time for subsetting in datetime format
@@ -791,20 +799,174 @@ class FlightLevel(object):
         """
         # parse parameters
         ax = self._parse_ax(ax)
+        
         # Get the subsetted data
         tSub, VarSub = self._get_time_var_time_subset(field, 
                                              start_time=start_time, end_time=end_time)
-        
+
         # Plot the time series
         ts = plot_date_ts(tSub, VarSub, 
-                colF=colF, msize=msize, lw=lw,
+                color=color, marker=marker, msize=msize, lw=lw,
                 dForm=dForm,tz=tz, xdate=xdate, 
                 date_MinTicker=date_MinTicker,
                 other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
+                other_min=other_min, other_max=other_max,
                 title=title,
                 xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
                 ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
                 ax=ax)
+                
+    def overplot_timeseries(self, field, color='k', marker='o', 
+                            msize=1.5, lw=2, ax=None,
+                            start_time=None, end_time=None,):
+        """
+        Overplot data onto an already established time series
+        
+        Parameters::
+        ----------
+        field : float
+            Variable to plot as time series
+        color : str
+            Color of marker
+        marker : str
+            Marker to display
+        msize : float
+            Marker size
+        lw : float
+            Linewidth to use with line
+        ax : Axes instance
+            Optional axes instance to plot the graph
+    
+        start_time : string
+            UTC time to use as start time for subsetting in datetime format
+            (e.g. 2014-08-20 12:30:00)
+        end_time : string
+            UTC time to use as an end time for subsetting in datetime format
+            (e.g. 2014-08-20 16:30:00)
+        """       
+        # parse parameters
+        ax = self._parse_ax(ax)
+        
+        # Get the subsetted data
+        tSub, VarSub = self._get_time_var_time_subset(field, 
+                                             start_time=start_time, end_time=end_time)
+    
+        # Create the plot
+        ax.plot_date(tSub, VarSub, 
+                     mfc=color, mec=color, marker=marker,
+                     markersize=msize, lw=lw)
+        
+        return
+    
+    def contour_timeseries(self, field,
+                ptype='pcolormesh',
+                clevs=25, vmin=15., vmax=60.,
+                cmap=None,
+                color_bar=True, cb_orient='vertical',
+                cb_pad=.05, cb_tick_int=2, 
+     
+                dForm='%H:%M',tz=None, xdate=True,
+                date_MinTicker='minute',
+                other_MajTicks=None, other_MinTicks=None,
+                other_min=None, other_max=None,
+                
+                start_time=None, end_time=None,
+                
+                title=None,
+                xlab=' ', xlabFontSize=16, xpad=7,
+                ylab=' ', ylabFontSize=16, ypad=7,
+                ax=None):
+        """
+        Wrapper function to produce a time series plot of variable indicated
+        
+        Parameters::
+        ----------
+        field : float
+            Variable to plot as time series
+        
+        ptype : str
+            Type of plot to make, takes 'plot', 'contour', or 'pcolormsh'
+        clevs : integer
+            Number of contour levels
+        vmin : float
+            Minimum contour value to display
+        vmax : float
+            Maximum contour value to display
+            
+        cmap : string
+            Matplotlib color map to use
+        color_bar : boolean
+            True to add colorbar, False does not
+        cb_pad : str
+            Pad to move colorbar, in the form "5%", pos is to right for righthand location
+        cb_loc : str
+            Location of colorbar, default is 'right', also available: 
+            'bottom', 'top', 'left'
+        cb_tick_int : int
+            Interval to use for colorbar tick labels, higher number "thins" labels
+            
+        dForm : str
+            Format of the time string for x-axis labels
+        tz : str
+            Time zone info to use when creating axis labels (see datetime)
+        xdate : boolean
+            True to use X-axis as date axis, false implies Y-axis is date axis
+        date_MinTicker : str
+            Sting to set minor ticks of date axis,
+            'second','minute','hour','day' supported
+        other_MajTicks : float
+            Values for major tickmark spacing, non-date axis
+        other_MinTicks : float
+            Values for minor tickmark spacing, non-date axis
+        other_min : float
+            Minimum value for non-date axis
+        other_max : float
+            Maximum value for non-date axis
+    
+        start_time : string
+            UTC time to use as start time for subsetting in datetime format
+            (e.g. 2014-08-20 12:30:00)
+        end_time : string
+            UTC time to use as an end time for subsetting in datetime format
+            (e.g. 2014-08-20 16:30:00)
+    
+        title : str
+            Plot title
+        xlab : str
+            X-axis label
+        ylab : str
+            Y-axis label
+        xpad : int
+            Padding for X-axis label
+        ypad : int
+            Padding for Y-axis label
+        ax : Axes instance
+            Optional axes instance to plot the graph
+        """
+        # parse parameters
+        ax = self._parse_ax(ax)
+        # Create contour level array
+        clevels = np.linspace(vmin, vmax, clevs)
+        
+        # Get the subsetted data
+        tSub, VarSub = self._get_time_var_time_subset(field, 
+                                             start_time=start_time, end_time=end_time)
+                                             
+        tSub2D, Ht2D = np.meshgrid(tsub, self.flight_data['height'])
+
+        # Plot the time series
+        ts = contour_date_ts(tSub2D, Ht2D, VarSub, 
+                vmin=vmin, vmax=vmax, 
+                dForm=dForm,tz=tz, xdate=xdate, 
+                date_MinTicker=date_MinTicker,
+                other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
+                other_min=other_min, other_max=other_max,
+                title=title,
+                xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
+                ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
+                ax=ax)
+                
+        return
                             
     ######################
     # Line methods  #
@@ -1008,7 +1170,7 @@ class FlightLevel(object):
         # Check to see if time is subsetted
         dt_start = self._get_start_datetime(start_time)
         dt_end = self._get_end_datetime(end_time)
-        
+
         tsub = self.time[(self.time >= dt_start) & (self.time <= dt_end)]
         var = self.flight_data[field]
         vsub = var[(self.time >= dt_start) & (self.time <= dt_end)]
