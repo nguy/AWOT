@@ -308,6 +308,7 @@ def rasta_microphysics(fname):
     
     # Read the NetCDF
     ncFile = Dataset(fname,'r')
+    ncvars = ncFile.variables
     
     # Grab the metadata stored in global attributes as a dictionary
     metadata = ncFile.__dict__
@@ -318,14 +319,20 @@ def rasta_microphysics(fname):
     yyyymmdd = fname.split("_")[1]
     StartDate = yyyymmdd[0:4] + '-' + yyyymmdd[4:6] + '-' + yyyymmdd[6:8]
     
-    # Grab the time array
-    # There can be missing values in Falcon Data (seriously come on!)
+    # Create the time array
+    # First find the good indices, there can be missing values 
+    # in Falcon Data (seriously come on!)
     # So we have remove these indices from all fields in the future
-    TimeHrs = np.ma.masked_invalid(ncFile.variables['time'][:])
+
     # Find the indices of not missing points
-    Good = np.where(~np.isnan(TimeHrs))
-    
-    Time_unaware = num2date(TimeHrs[Good]*3600.,'seconds since 1970-01-01 00:00:00+0:00')
+    Good = np.where(~np.isnan(ncFile.variables['time'][:]))
+
+    # Now convert the time array into a datetime instance
+    dtHrs = num2date(ncFile.variables['time'][Good], 'hours since ' + StartDate +  '00:00:00+0:00')
+    # Now convert this datetime instance into a number of seconds since Epoch
+    TimeSec = date2num(dtHrs, 'seconds since 1970-01-01 00:00:00+0:00')
+    # Now once again convert this data into a datetime instance
+    Time_unaware = num2date(TimeSec, 'seconds since 1970-01-01 00:00:00+0:00')
     Time = Time_unaware#.replace(tzinfo=pytz.UTC)
     
     # Pull out each variable
@@ -338,57 +345,66 @@ def rasta_microphysics(fname):
     except:
         Lon = None
     try:
-        Ht = ncFile.variables['height'][:] * 1000.
+        Ht = _nc_height_var_to_dict(ncvars['height'])
     except:
         Ht = None
+    if Ht is not None:
+        Ht['data'][:] = Ht['data'][:] * 1000.
+        Ht['units'] = 'm'
+        
+    # Add fields to their own dictionary
+    fields = {}
     try:
-        extinction = ncFile.variables['extinction'][:, Good]
+        fields['extinction'] = _nc_radar_var_to_dict(ncvars['extinction'], Good)
     except:
-        extinction = None
+        fields['extinction'] = None
     try:
-        n0start = ncFile.variables['n0star'][:, Good]
+        fields['n0star'] = _nc_radar_var_to_dict(ncvars['n0star'], Good)
     except:
-        n0start = None
+        fields['n0star'] = None
     try:
-        iwc = ncFile.variables['iwc'][:, Good]
+        fields['iwc'] = _nc_radar_var_to_dict(ncvars['iwc'], Good)
     except:
-        iwc = None
+        fields['iwc'] = None
     try:
-        effective_radius = ncFile.variables['effective_radius'][:, Good]
+        fields['effective_radius'] = _nc_radar_var_to_dict(ncvars['effective_radius'], Good)
     except:
-        effective_radius = None
+        fields['effective_radius'] = None
     try:
-        Dm = ncFile.variables['Dm'][:, Good]
+        fields['Dm'] = _nc_radar_var_to_dict(ncvars['Dm'], Good)
     except:
-        Dm = None
+        fields['Dm'] = None
+    if fields['Dm'] is not None:
+        fields['Dm']['data'][:] = fields['Dm']['data'][:] * 1000.
+        fields['Dm']['units'] = 'mm'
     try:
-        Nt = ncFile.variables['Nt'][:, Good]
+        fields['Nt'] = _nc_radar_var_to_dict(ncvars['Nt'], Good)
     except:
-        Nt = None
+        fields['Nt'] = None
     try:
-        dBZ = ncFile.variables['Z'][:, Good]
+        fields['dBZ'] = _nc_radar_var_to_dict(ncvars['Z'], Good)
     except:
-        dBZ = None
+        fields['dBZ'] = None
     try:
-        Z_fwd = ncFile.variables['Z_fwd'][:, Good]
+        fields['Z_fwd'] = _nc_radar_var_to_dict(ncvars['Z_fwd'], Good)
     except:
-        Z_fwd = None
+        fields['Z_fwd'] = None
     try:
-        Vt = ncFile.variables['vt'][:, Good]
+        fields['term_velocity'] = _nc_radar_var_to_dict(ncvars['vt'], Good)
     except:
-        Vt = None
+        fields['term_velocity'] = None
     try:
-        Vt_fwd = ncFile.variables['vt_fwd'][:, Good]
+        fields['term_velocity_fwd'] = _nc_radar_var_to_dict(ncvars['vt_fwd'], Good)
     except:
-        Vt_fwd = None
+        fields['term_velocity_fwd'] = None
     try:
-        temp = ncFile.variables['T'][:, Good]
+        fields['temperature'] = _nc_radar_var_to_dict(ncvars['T'], Good)
     except:
-        temp = None
+        fields['temperature'] = None
     try:
-        aM = ncFile.variables['aM'][:, Good]
+        fields['aM'] = _nc_radar_var_to_dict(ncvars['aM'], Good)
     except:
-        aM = None
+        fields['aM'] = None
     
     # Pull out global attributes
     try:
@@ -410,50 +426,13 @@ def rasta_microphysics(fname):
         np.ma.masked_invalid(Lat)
     if Lon is not None:
         np.ma.masked_invalid(Lon)
-    if Ht is not None:
-        np.ma.masked_invalid(Ht)
-    if extinction is not None:
-        np.ma.masked_invalid(extinction)
-    if n0start is not None:
-        np.ma.masked_invalid(n0start)
-    if iwc is not None:
-        np.ma.masked_invalid(iwc)
-    if effective_radius is not None:
-        np.ma.masked_invalid(effective_radius)
-    if Dm is not None:
-        np.ma.masked_invalid(Dm)
-    if Nt is not None:
-        np.ma.masked_invalid(Nt)
-    if dBZ is not None:
-        np.ma.masked_invalid(dBZ)
-    if Z_fwd is not None:
-        np.ma.masked_invalid(Z_fwd)
-    if Vt is not None:
-        np.ma.masked_invalid(Vt)
-    if Vt_fwd is not None:
-        np.ma.masked_invalid(Vt_fwd)
-    if temp is not None:
-        np.ma.masked_invalid(temp)
-    if aM is not None:
-        np.ma.masked_invalid(aM)
 
     # Create a dictionary to transfer the data
     data = {'time': Time,
             'latitude': Lat,
             'longitude': Lon,
             'height': Ht,
-            'extinction': extinction,
-            'n0start': n0start,
-            'iwc': iwc,
-            'effective_radius': effective_radius,
-            'Dm': Dm,
-            'Nt': Nt,
-            'dBZ': dBZ,
-            'Z_fwd': Z_fwd,
-            'term_velocity': Vt,
-            'term_velocity_fwd': Vt_fwd,
-            'temperature': temp,
-            'aM': aM,
+            'fields': fields,
             'metadata': metadata,
             'project' : project,
             'platform': platform,

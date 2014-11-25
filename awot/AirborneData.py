@@ -137,7 +137,7 @@ class AirborneData(object):
                 if instrument.lower() == 'radar':
                     self.rasta_radar_data = RadarData.radar_data
                 elif instrument.lower() == 'microphysics':
-                    self.rasta_microphysics_data = RadarData.radar_data
+                    self.rasta_microphysical_data = RadarData.radar_data
                 else:
                     print "Set instrument parameter to 'radar' or 'microphysics'"
                     return
@@ -146,6 +146,46 @@ class AirborneData(object):
                 self.ground_radar_data = RadarData.radar_data
             else:
                 print "Could not grab data, check the instrument type!"
+                
+    def get_radar_microphysics_data(self, fname=None, platform='',\
+                        file_format='netcdf', instrument=None):
+        '''
+        Return a RadarDataFile reader instance
+        
+        Parameters::
+        ------------
+        fname : str
+            Long path filename
+        platform : str
+            Platform name (see io.RadarDataFile)
+        file_format : str
+            Format of file to read
+        instrument : str
+            Type (name) of instrument to process
+            Currently the following arguments are valid:
+                'tdr_grid' - Tail Doppler radar gridded files (e.g. dual-Doppler analysis)
+                'tdr_sweep' = Tail Doppler radar (Native coordinate data)
+                'lf'  - Lower Fuselage radar
+                'ground' - A ground-based radar system, read in using PyArt
+        '''
+        if fname is None:
+            print "Must supply input file!!"
+            return
+        else:
+            RadarData = read_radar(filename=fname, platform=platform, 
+                                   file_format=file_format, instrument=instrument)
+            
+        # Now need to add dictionary to AirborneData class
+            if instrument is None:
+               print "Need to supply instrument type"
+               return
+            
+            # Add the dictionary to existing class
+            
+            if platform.upper() == 'FALCON':
+                if instrument.lower() == 'microphysics':
+                    self.rasta_microphysical_data = RadarData.radar_data
+            
     
     ##############################################
     # Establish a basemap instance for plotting

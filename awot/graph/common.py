@@ -253,7 +253,7 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
 ##########
     
 def contour_date_ts(Time, AxVar, PlotVar, 
-                ptype='pcolormesh',
+                ptype='pcolormesh', plot_log10_var=False,
                 vmin=None, vmax=None, clevs=25,
                 cmap=None,
                 
@@ -350,7 +350,7 @@ def contour_date_ts(Time, AxVar, PlotVar,
         ydate = True
         XVar = AxVar
         YVar = Time
-    
+            
     # Set up the axes
     _set_ts_axes(dForm=dForm,tz=tz, xdate=xdate, 
                 date_MinTicker=date_MinTicker,
@@ -360,7 +360,7 @@ def contour_date_ts(Time, AxVar, PlotVar,
                 xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
                 ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
                 ax=ax)
-
+    
     # Create the plot
     if ptype == 'pcolormesh':
         p = ax.pcolormesh(XVar, YVar, PlotVar, 
