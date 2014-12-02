@@ -7,6 +7,7 @@ import os
 #from ..AirborneData import AirborneData
 from ..io.read_p3_flight import flight_data as p3_read_flight
 from ..io.read_citation_flight import flight_data as citation_read_flight
+from ..io.read_latmos_falcon_flight import flight_data as latmos_falcon_read_flight
 from ..io.read_latmos_falcon import rasta_radar, rasta_microphysics
 
 import numpy as np
@@ -70,6 +71,7 @@ class FileReader(object):
             Currently supported: 
                 'p3' or p-3' (NOAA WP-3D)
                 'citation' (Univ North Dakota Citation)
+                'falcon' (LATMOS - SAFIRE)
         file_format : str
             Format of input file.  Each platform currently has
             a specific file type.  This may be extended in the future.
@@ -105,14 +107,16 @@ class FileReader(object):
                     return
                     
             elif platform.upper() == 'FALCON':
-                if instrument.lower() == 'radar':
+                if instrument is None:
+                    flight = latmos_falcon_read_flight(filename, mapping='basic')
+                elif instrument.lower() == 'radar':
                     flight = rasta_radar(filename)
                 elif instrument.lower() == 'microphysics':
                     flight = rasta_microphysics(filename)
                 else:
                     print "Only netCDF format currently supported"
                                               
-            if platform.upper() != 'FALCON':
+            if (instrument != 'radar') | (instrument != 'microphysics') :
                 # Calculate meridional and zonal wind components
                 Uwind, Vwind = self._winduv(flight)
                         

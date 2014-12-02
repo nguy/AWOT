@@ -6,16 +6,12 @@ This is a grouping of scripts designed to process University of
  North Dakota Citation flight level data recorded during flights 
  and NASA Ames Ascii format
 
-Created by Nick Guy.
-
-Original code developed in NCL between Jul 2013 - Mar 2014, 
-refactored 6 Aug 2014 to python
+Author::
+    6 Aug 2014 - Created by Nick Guy, OU CIMMS/ Univ of Miami.
 
 """
 # NOTES:: This has only been tested with DYNAMO data files, versions
 #         may change and another function may be needed.
-# HISTORY::
-#  21 Aug 2014 - Nick Guy.   NRC, NOAA/NSSL (nick.guy@noaa.gov) 
 #-------------------------------------------------------------------
 # Load the needed packages
 import nappy

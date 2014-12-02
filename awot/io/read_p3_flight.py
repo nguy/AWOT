@@ -19,7 +19,7 @@ Author Nick Guy.  NRC, NOAA/NSSL (nick.guy@noaa.gov)
 #  flight_track - Read in data to for flight track
 #-------------------------------------------------------------------
 # Load the needed packages
-from netCDF4 import Dataset,num2date
+from netCDF4 import Dataset, num2date
 import numpy as np
 import pytz
 #-------------------------------------------------------------------

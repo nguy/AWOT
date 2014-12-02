@@ -58,13 +58,14 @@ class FlightLevel(object):
         
         if basemap != None:
             self.basemap = basemap
-        
             # Calculate x,y map position coordinates
             self.x, self.y = self.basemap(self.longitude, self.latitude)
-        try:
-            self.basemap = airborne.basemap
-        except:
-            print "Warning: No basemap instance"
+        else:
+            try:
+                self.basemap = airborne.basemap
+                self.x, self.y = self.basemap(self.longitude, self.latitude)
+            except:
+                print "Warning: No basemap instance"
                     
        
     ###############
@@ -152,8 +153,8 @@ class FlightLevel(object):
             max_altitude = self.altitude.max()
             
         # Get start and end times (this deals with subsets)
-        dt_start = self._get_start_datetime(start_time)
-        dt_end = self._get_end_datetime(end_time)
+        dt_start = self._get_datetime(start_time, get_start=True)
+        dt_end = self._get_datetime(end_time, get_end=True)
         
         # Subset the data (will use min/max if None given)
         xSub, ySub = self._get_x_y_time_subset(start_time, end_time, return_time=False)
@@ -270,8 +271,8 @@ class FlightLevel(object):
         ax, fig = self._parse_ax_fig(ax, fig)
             
         # Get start and end times (this deals with subsets)
-        dt_start = self._get_start_datetime(start_time)
-        dt_end = self._get_end_datetime(end_time)
+        dt_start = self._get_datetime(start_time, get_start=True)
+        dt_end = self._get_datetime(end_time, get_end=True)
         
         # Subset the data (will use min/max if None given)
         xSub, ySub = self._get_x_y_time_subset(start_time, end_time, return_time=False)
@@ -404,8 +405,8 @@ class FlightLevel(object):
         ax, fig = self._parse_ax_fig(ax, fig)
             
         # Get start and end times (this deals with subsets)
-        dt_start = self._get_start_datetime(start_time)
-        dt_end = self._get_end_datetime(end_time)
+        dt_start = self._get_datetime(start_time, get_start=True)
+        dt_end = self._get_datetime(end_time, get_end=True)
         
         # Subset the data (will use min/max if None given)
         xSub, ySub = self._get_x_y_time_subset(start_time, end_time, return_time=False)
@@ -583,8 +584,8 @@ class FlightLevel(object):
         """
             
         # Get start and end times (this deals with subsets)
-        dt_start = self._get_start_datetime(start_time)
-        dt_end = self._get_end_datetime(end_time)
+        dt_start = self._get_datetime(start_time, get_start=True)
+        dt_end = self._get_datetime(end_time, get_end=True)
    
         # Subset the data
         X = self.x[(self.time >= dt_start) & (self.time <= dt_end)]
@@ -603,7 +604,7 @@ class FlightLevel(object):
 #                           linewidth=lw, **kwargs)
     
     def plot_point(self, lon, lat, symbol='ro', label_text=None,
-                   label_offset=(None, None), **kwargs):
+                   label_offset=(None, None), text_size=None, **kwargs):
         """
         Plot a point on the current map.
 
@@ -630,6 +631,8 @@ class FlightLevel(object):
             lon_offset = 0.01
         if lat_offset is None:
             lat_offset = 0.01
+        if text_size is None:
+            text_size = 12
             
         # Plot the symbol
         self.basemap.plot(lon, lat, symbol, latlon=True, **kwargs)
@@ -639,7 +642,7 @@ class FlightLevel(object):
             # the x and y points and plot them on the basemap's axis.
             x_text, y_text = self.basemap(lon + lon_offset,
                                           lat + lat_offset)
-            self.basemap.ax.text(x_text, y_text, label_text)
+            self.basemap.ax.text(x_text, y_text, label_text, size=text_size)
             
     def plot_line_geo(self, line_lons, line_lats, line_style='r-', **kwargs):
         """
@@ -702,8 +705,8 @@ class FlightLevel(object):
             lat_offset = 0.01
             
         # Get start and end times (this deals with subsets)
-        dt_start = self._get_start_datetime(start_time)
-        dt_end = self._get_end_datetime(end_time)
+        dt_start = self._get_datetime(start_time, get_start=True)
+        dt_end = self._get_datetime(end_time, get_end=True)
    
         time = self.time[(self.time >= dt_start) & (self.time <= dt_end)]
         lon = self.longitude[(self.time >= dt_start) & (self.time <= dt_end)]
@@ -713,20 +716,83 @@ class FlightLevel(object):
         labeltimes = time[::labelspacing]
         lons = lon[::labelspacing]
         lats = lat[::labelspacing]
-        xpos_star, ypos_star = self.basemap(lons, lats)
+        xpos_mrkr, ypos_mrkr = self.basemap(lons, lats)
         xpos_text, ypos_text = self.basemap(lons + lon_offset, lats + lat_offset)
         
         for nn in range(len(labeltimes)):
             # Check to make sure there are no missing lon/lat values and
             # only plot the valid points
             # This causes fatal error when trying to save figure later
-            if np.logical_and(np.isfinite(xpos_star[nn]), np.isfinite(ypos_star[nn])):
+            if np.logical_and(np.isfinite(xpos_mrkr[nn]), np.isfinite(ypos_mrkr[nn])):
                 # Plot the symbol
-                ax.plot(xpos_star[nn], ypos_star[nn], symbol, **kwargs)
+                ax.plot(xpos_mrkr[nn], ypos_mrkr[nn], symbol, **kwargs)
                 label_text = labeltimes[nn].strftime("%H:%M")
 
                 # Attach the text
                 ax.text(xpos_text[nn], ypos_text[nn], label_text, fontsize=size, color=color)
+                
+    def label_time_point(self, label_time,label_text=None,
+                    add_symbol=False, symbol='k*',
+                    size=12, color='k',
+                    label_offset=(None, None),
+                    ax=None, **kwargs):
+        """
+        Add a label at a particular time along track
+        
+        Parameters::
+        ----------
+        label_time : string
+            UTC time to use as start time for subsetting in datetime format
+            (e.g. 2014-08-20 12:30:00)
+        label_text : string
+            Optional label to use, if none given a time stamp is generated
+        add_symbol : boolean
+            True to add a symbol at the label_time, provided by symbol keyword
+        symbol : str
+            Color-symbol combo per matplotlib.pyplot.plot
+        size : int
+            Font size used
+        color : str
+            Matplotlib color
+        label_offset : [float, float]
+            Offset in lon, lat degrees for the bottom left corner of the label
+            text relative to the point. A value of None will use 0.01 default.
+        ax : Axis
+            Optional Axes instance
+        """
+        
+        # parse parameters
+        ax = self._parse_ax(ax)
+                           
+        # Only plot every nth barb from the barbspacing parameter
+        lon_offset, lat_offset = label_offset
+        if lon_offset is None:
+            lon_offset = 0.01
+        if lat_offset is None:
+            lat_offset = 0.01
+            
+        # Get start and end times (this deals with subsets)
+        dt_point = self._get_datetime(label_time)
+   
+        time = self.time[(self.time >= dt_point)]
+        lon = self.longitude[(self.time >= dt_point)]
+        lat = self.latitude[(self.time >= dt_point)]
+        
+        xpos_mrkr, ypos_mrkr = self.basemap(lon[0], lat[0])
+        xpos_text, ypos_text = self.basemap(lon[0] + lon_offset, lat[0] + lat_offset)
+        
+        # Check to make sure there are no missing lon/lat values and
+        # only plot the valid points
+        # This causes fatal error when trying to save figure later
+        if np.logical_and(np.isfinite(xpos_mrkr), np.isfinite(ypos_mrkr)):
+            # Plot the symbol
+            if add_symbol:
+                ax.plot(xpos_mrkr, ypos_mrkr, symbol, **kwargs)
+            if label_text is None:
+                label_text = time[0].strftime("%H:%M")
+
+            # Attach the text
+            ax.text(xpos_text, ypos_text, label_text, fontsize=size, color=color)
             
     #######################
     # Time Series methods #
@@ -1091,6 +1157,29 @@ class FlightLevel(object):
     # Get methods #
     ####################     
                             
+    def _get_datetime(self, time_string, get_start=False, get_end=False):
+        '''
+        Get a start time as datetime instance for subsetting.
+        '''
+        # Check to see if time is subsetted
+        if time_string is None:
+                if get_start is True:
+                    dt = self.time.min()
+                if get_end is True:
+                    dt = self.time.max()
+        else:
+            tStr = [time_string[0:4],time_string[5:7],time_string[8:10],
+                    time_string[11:13],time_string[14:16],time_string[17:19],'0']
+            tInt = [ int(s) for s in tStr ]
+            try:
+                dt = datetime(tInt[0],tInt[1],tInt[2],tInt[3],
+                                tInt[4],tInt[5],tInt[6])
+            except:
+                print "Check the format of date string (e.g. '2014-08-20 12:30:00')"
+                return
+                
+        return dt        
+                            
     def _get_start_datetime(self, start_time):
         '''
         Get a start time as datetime instance for subsetting.
@@ -1136,8 +1225,8 @@ class FlightLevel(object):
         Get a subsetted X and Y to control track length if input by user.
         '''
         # Check to see if time is subsetted
-        dt_start = self._get_start_datetime(start_time)
-        dt_end = self._get_end_datetime(end_time)
+        dt_start = self._get_datetime(start_time, get_start=True)
+        dt_end = self._get_datetime(end_time, get_end=True)
         
         x = self.x[(self.time >= dt_start) & (self.time <= dt_end)]
         y = self.y[(self.time >= dt_start) & (self.time <= dt_end)]
@@ -1155,8 +1244,8 @@ class FlightLevel(object):
         Get a subsetted Lon and Lat to control track length if input by user.
         '''
         # Check to see if time is subsetted
-        dt_start = self._get_start_datetime(start_time)
-        dt_end = self._get_end_datetime(end_time)
+        dt_start = self._get_datetime(start_time, get_start=True)
+        dt_end = self._get_datetime(end_time, get_end=True)
         
         lon = self.longitude[(self.time >= dt_start) & (self.time <= dt_end)]
         lat = self.latitude[(self.time >= dt_start) & (self.time <= dt_end)]
@@ -1168,8 +1257,8 @@ class FlightLevel(object):
         Get a subsetted time and Variable to control track length if input by user.
         '''
         # Check to see if time is subsetted
-        dt_start = self._get_start_datetime(start_time)
-        dt_end = self._get_end_datetime(end_time)
+        dt_start = self._get_datetime(start_time, get_start=True)
+        dt_end = self._get_datetime(end_time, get_end=True)
 
         tsub = self.time[(self.time >= dt_start) & (self.time <= dt_end)]
         var = self.flight_data[field]
@@ -1182,8 +1271,8 @@ class FlightLevel(object):
         Get a subsetted time to control track length if input by user.
         '''
         # Check to see if time is subsetted
-        dt_start = self._get_start_datetime(start_time)
-        dt_end = self._get_end_datetime(end_time)
+        dt_start = self._get_datetime(start_time, get_start=True)
+        dt_end = self._get_datetime(end_time, get_end=True)
         
         tsub = self.time[(self.time >= dt_start) & (self.time <= dt_end)]
         
