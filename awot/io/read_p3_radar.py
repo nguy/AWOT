@@ -24,7 +24,7 @@ import pyart.io as pio
 #####################################################################
 # TDR file methods #
 ######################
-def read_windsyn_tdr_netcdf(fname):
+def read_windsyn_tdr_netcdf(fname, mapping=None):
     """Read in a NetCDF data file containing a pseudo-dual-Doppler
     analysis of NOAA P-3 tail radar data from the windsyn program.  
     
@@ -34,6 +34,12 @@ def read_windsyn_tdr_netcdf(fname):
     ----------
     fname : str
         Long path filename [string]
+    mapping : str
+            Mapping dictionary to use for pulling data in
+            If not set, equivalent to None, then the basic variables
+            are input.  
+            However, if 'extended' is selected then 
+            additional variables are mapped.
         
     Output::
     ------
@@ -117,36 +123,13 @@ def read_windsyn_tdr_netcdf(fname):
     
     # Add fields to their own dictionary
     fields = {}
-    # Read the Reflectivity
-    fields['dBZ'] = _ncvar_to_dict(ncvars['dBZ'])
     
-    # Read the U wind (Along aircraft longitudinal axis)
-    fields['Uwind'] = _ncvar_to_dict(ncvars['U'])
+    # Grab a name map for NOAA P-3 TDR data
+    name_map = _get_name_map(mapping=mapping)
     
-    # Read the V wind (Perpendicular to aircraft longitudinal axis)
-    fields['Vwind'] = _ncvar_to_dict(ncvars['V'])
-    
-    # Read the vertical wind
-    fields['Wwind'] = _ncvar_to_dict(ncvars['W'])
-    
-    # Try reading some variables that are not always included
-    # Read the divergence
-    try:
-        fields['divergence'] = _ncvar_to_dict(ncvars['Div'])
-    except:
-        fields['divergence'] = None
-    
-    # Read the terminal velocity
-    try:
-        fields['term_fall_speed'] = _ncvar_to_dict(ncvars['Vt'])
-    except:
-        fields['term_fall_speed'] = None
-    
-    # Read the time difference
-    try:
-        fields['time_diff'] = _ncvar_to_dict(ncvars['Tdiff'])
-    except:
-        fields['time_diff'] = None
+    # Loop through the variables and pull data
+    for varname in name_map:
+        fields[varname] = _ncvar_to_dict(ncvars[name_map[varname]])
     
     # Mask bad data values
     #badval = float(ncFile.MissingValue)
@@ -602,6 +585,25 @@ def _ncvar_to_dict(ncvar):
         d['data'] = np.array(d['data'])
         d['data'].shape = (1, )
     return d
+    
+def _get_name_map(mapping=None):
+    '''Map out names used in NOAA P-3 TDR NetCDF files to AWOT'''
+    name_map = {}
+    
+    # Radar reflectivity
+    name_map['dBZ'] = 'dBZ'
+    # U wind component (Along aircraft longitudinal axis)
+    name_map['Uwind'] = 'U'
+    # V wind component (Perpendicular aircraft longitudinal axis)
+    name_map['Vwind'] = 'V'
+    # Vertical wind component
+    name_map['Wwind'] = 'W'
+        
+    if mapping == 'extended':
+        name_map['divergence'] = 'Div'
+        name_map['term_fall_speed'] = 'Vt'
+        name_map['time_diff'] = 'Tdiff'
+    return name_map
     
 def _windsyn_var_to_dict(wsvar, hdr_dict, units=None, long_name=None):
     """ Convert a variable read in from the windsyn 
