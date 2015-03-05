@@ -60,43 +60,52 @@ def rasta_dynamic(fname):
     ------
     data : Dictionary of the following values
     
-    Lat : float
-        Aircraft latitude [decimal degrees]
-    Lon : float
-        Aircraft longitude [decimal degrees]
-    Alt : float
-        Aircraft altitude via GPS [km]
-    Ht : float
-        Height [km]
-    temp : float
-        Temperature at aircraft altitude [degrees C]
-    pressure: float
-        Pressure at aircraft altitude [hPa]
-    Vx_flight_level : float
-        Vx at flight level from in situ measurements [m/s]
-    Vy_flight_level : float
-        Vy at flight level from in situ measurements [m/s]
-    Vz_flight_level : float
-        Vz at flight level from in situ measurements [m/s]
-    zonal_wind : float
-        Zonal wind component [m/s]
-    meridional_wind : float
-        Meriodional wind component [m/s]
-    fields : Dictionary of variables in file
-        reflectivity : float
-            Radar Reflectivity [dBZ]
-        Uwind : float
-            Wind along aircraft longitudinal axis wind [m/s]
-        Vwind : float
-            Wind perpendicular to aircraft longitudinal axis wind [m/s]
-        Wwind : float
-            Vertical wind component [m/s]
-        term_fall_speed : float
-            Terminal fall speed [m/s]
-        term_fall_speed_weighted : float
-            Terminal fall speed weighted by Vt-Z [m/s]
+	    latitude : float
+    	    Aircraft latitude [decimal degrees]
+	    longitude : float
+    	    Aircraft longitude [decimal degrees]
+	    altitude : float
+    	    Aircraft altitude via GPS [km]
+	    height : float
+    	    Height [km]
+	    temperature : float
+    	    Temperature at aircraft altitude [degrees C]
+	    pressure: float
+    	    Pressure at aircraft altitude [hPa]
+	    Vx_flight_level : float
+    	    Vx at flight level from in situ measurements [m/s]
+	    Vy_flight_level : float
+    	    Vy at flight level from in situ measurements [m/s]
+	    Vz_flight_level : float
+    	    Vz at flight level from in situ measurements [m/s]
+	    zonal_wind : float
+    	    Zonal wind component [m/s]
+	    meridional_wind : float
+    	    Meriodional wind component [m/s]
+	    fields : Dictionary of variables in file
+    	    reflectivity : float
+        	    Radar Reflectivity [dBZ]
+	        Uwind : float
+    	        Wind along aircraft longitudinal axis wind [m/s]
+	        Vwind : float
+    	        Wind perpendicular to aircraft longitudinal axis wind [m/s]
+        	Wwind : float
+	            Vertical wind component [m/s]
+    	    term_fall_speed : float
+        	    Terminal fall speed [m/s]
+	        term_fall_speed_weighted : float
+    	        Terminal fall speed weighted by Vt-Z [m/s]
         metadata : Dictionary of global attributes in file
+        project : str
+            Project Name
+        platform : str
+            Platform name or identifier
+        flight_number : str
+            Flight number or identifer
     '''
+    
+    # Create a dictionary to hold data
+    data = {}
     
     # Read the NetCDF
     ncFile = Dataset(fname,'r')
@@ -105,75 +114,36 @@ def rasta_dynamic(fname):
     # Grab the metadata stored in global attributes as a dictionary
     metadata = ncFile.__dict__
 
-    # Pull out the date, convert the date to a datetime friendly string
-    # Adds dashes between year, month, and day
-    # This assumes that the date is the 2nd instance in the filename!!
-    yyyymmdd = fname.split("_")[1]
-    StartDate = yyyymmdd[0:4] + '-' + yyyymmdd[4:6] + '-' + yyyymmdd[6:8]
-    
-    # Create the time array
-    # First find the good indices, there can be missing values 
-    # in Falcon Data (seriously come on!)
-    # So we have remove these indices from all fields in the future
-
     # Find the indices of not missing points
     Good = np.where(~np.isnan(ncFile.variables['time'][:]))
 
-    # Now convert the time array into a datetime instance
-    dtHrs = num2date(ncFile.variables['time'][Good], 'hours since ' + StartDate +  '00:00:00+0:00')
-    # Now convert this datetime instance into a number of seconds since Epoch
-    TimeSec = date2num(dtHrs, 'seconds since 1970-01-01 00:00:00+0:00')
-    # Now once again convert this data into a datetime instance
-    Time_unaware = num2date(TimeSec, 'seconds since 1970-01-01 00:00:00+0:00')
-    Time = Time_unaware#.replace(tzinfo=pytz.UTC)
+    Time = _get_latmos_time(fname, ncFile, Good)
     
-    # Pull out each variable
-    try:
-        Lat = ncFile.variables['latitude'][Good]
-    except:
-        Lat = None
-    try:
-        Lon = ncFile.variables['longitude'][Good]
-    except:
-        Lon = None
+    # Put time into output dictionary
+    data['time'] = Time
+        
+    # Grab a name map for RASTA dynamic file data
+    name_map_data = _get_dynamic_data_name_map()
+    
+    # Loop through the variables and pull data
+    for varname in name_map_data:
+        if varname in ncvars:
+            data[varname] = _nc_var_masked(ncFile, name_map_data[varname], Good)
+        else:
+            data[varname] = None
+        
+        if varname is 'altitude':
+            data[varname] = data[varname] * 1000.
+    
     try:
         Ht = _nc_height_var_to_dict(ncvars['height'])
         Ht['data'][:] = Ht['data'][:] * 1000.
         Ht['units'] = 'meters'
     except:
         Ht = None
-    try:
-        Alt = ncFile.variables['altitude'][Good] * 1000.
-    except:
-        Alt = None
-    try:
-        temp = ncFile.variables['temperature'][Good]
-    except:
-        temp = None
-    try:
-        pressure = ncFile.variables['pressure'][Good]
-    except:
-        pressure = None
-    try:
-        Vx_flight_level = ncFile.variables['Vx_insitu'][Good]
-    except:
-        Vx_flight_level = None
-    try:
-        Vy_flight_level = ncFile.variables['Vy_insitu'][Good]
-    except:
-        Vy_flight_level = None
-    try:
-        Vz_flight_level = ncFile.variables['Vz_insitu'][Good]
-    except:
-        Vz_flight_level = None
-    try:
-        zonal_wind = ncFile.variables['VE'][Good, :]
-    except:
-        zonal_wind = None
-    try:
-        meridional_wind = ncFile.variables['VN'][Good, :]
-    except:
-        meridional_wind = None
+        
+    data['height'] = Ht
+
     try:
         mask_hydro = _nc_radar_var_to_dict(ncvars['Mask'], Good)
     except:
@@ -181,22 +151,20 @@ def rasta_dynamic(fname):
 
     # Add fields to their own dictionary
     fields = {}
-    # Read the Reflectivity
-    fields['dBZ'] = _nc_radar_var_to_dict(ncvars['Z'], Good)
     
-    # Read the U wind (Along aircraft longitudinal axis)
-    fields['Uwind'] = _nc_radar_var_to_dict(ncvars['Vx'], Good)
+    # Grab a name map for RASTA dynamic field data
+    name_map_fields = _get_dynamic_field_name_map()
     
-    # Read the V wind (Perpendicular to aircraft longitudinal axis)
-    fields['Vwind'] = _nc_radar_var_to_dict(ncvars['Vy'], Good)
-    
-    # Read the vertical wind
-    fields['Wwind'] = _nc_radar_var_to_dict(ncvars['Vz'], Good)
-    
-    # Read the terminal velocity
-    fields['term_fall_speed'] = _nc_radar_var_to_dict(ncvars['Vt'], Good)
-    fields['term_fall_speed_weighted'] = _nc_radar_var_to_dict(ncvars['Vt_weighted'], Good)
-    
+    # Loop through the variables and pull data
+    for varname in name_map_fields:
+        try:
+            fields[varname] = _ncvar_radar_to_dict(ncvars[name_map_fields[varname]], Good)
+        except:
+            fields[varname] = None
+            
+    # Save to output dictionary
+    data['fields'] = fields
+            
     # Pull out global attributes
     try:
         ncFile.ProjectName
@@ -212,43 +180,11 @@ def rasta_dynamic(fname):
     # Set the platform
     platform = 'falcon'
     
-    # Now mask missing values
-    if Lat is not None:
-        np.ma.masked_invalid(Lat)
-    if Lon is not None:
-        np.ma.masked_invalid(Lon)
-    if Alt is not None:
-        np.ma.masked_invalid(Alt)
-    if temp is not None:
-        np.ma.masked_invalid(temp)
-    if pressure is not None:
-        np.ma.masked_invalid(pressure)
-    if Vx_flight_level is not None:
-        np.ma.masked_invalid(Vx_flight_level)
-    if Vy_flight_level is not None:
-        np.ma.masked_invalid(Vy_flight_level)
-    if Vz_flight_level is not None:
-        np.ma.masked_invalid(Vz_flight_level)
-
     # Create a dictionary to transfer the data
-    data = {'time': Time,
-            'latitude': Lat,
-            'longitude': Lon,
-            'height': Ht,
-            'altitude': Alt,
-            'temperature': temp,
-            'pressure': pressure,
-            'Vx_flight_level': Vx_flight_level,
-            'Vy_flight_level': Vy_flight_level,
-            'Vz_flight_level': Vz_flight_level,
-            'zonal_wind': zonal_wind,
-            'meridional_wind': meridional_wind,
-            'fields': fields,
-            'metadata': metadata,
-            'project' : project,
-            'platform': platform,
-            'flight_number': flightnum,
-            }
+    data['metadata'] = metadata
+    data['project'] = project
+    data['platform'] = platform
+    data['flight_number'] = flightnum
     
     ncFile.close()
     
@@ -262,21 +198,22 @@ def rasta_microphysics(fname):
     
     PARAMETERS::
     ----------
-        fname : string
-            Filename [string]
+    fname : string
+        Filename [string]
     
     OUTPUT::
     ------
-        data : Dictionary of the following values
-            Lat : float
-                Aircraft latitude [decimal degrees]
-            Lon : float
-                Aircraft longitude [decimal degrees]
-            Ht : float
-                Height [km]
+    data : Dictionary of the following values
+        latitude : float
+            Aircraft latitude [decimal degrees]
+        longitude : float
+            Aircraft longitude [decimal degrees]
+        height : float
+            Height [km]
+        fields : Dictionary of variables in file
             extinction : float
                 Visible extinction [1/m]
-            Time : float
+            time : float
                 Aircraft time array
             n0start : float
                 Normalized concentration parameter [m^-4]
@@ -292,14 +229,21 @@ def rasta_microphysics(fname):
                 Radar reflectivity [dBZ]
             Z_fwd : float
                 Forward-modelled radar reflectivity [dBZ]
-            Vt : float
+            term_velocity : float
                 Terminal fall velocity [m s^-1]
-            Vt_fwd : float
+            term_velocity_fwd : float
                 Forward-modelled terminal fall velocity [m s^-1]
-            temp : float
+            temperature : float
                 Temperature [degrees C]
             aM : float
                 Retrieved aM (M (D)=aD^b) [unitless]
+            metadata : Dictionary of global attributes in file
+            project : str
+                Project Name
+            platform : str
+                Platform name or identifier
+            flight_number : str
+                Flight number or identifer
        
     USAGE::
     -----
@@ -313,27 +257,10 @@ def rasta_microphysics(fname):
     # Grab the metadata stored in global attributes as a dictionary
     metadata = ncFile.__dict__
 
-    # Pull out the date, convert the date to a datetime friendly string
-    # Adds dashes between year, month, and day
-    # This assumes that the date is the 2nd instance in the filename!!
-    yyyymmdd = fname.split("_")[1]
-    StartDate = yyyymmdd[0:4] + '-' + yyyymmdd[4:6] + '-' + yyyymmdd[6:8]
-    
-    # Create the time array
-    # First find the good indices, there can be missing values 
-    # in Falcon Data (seriously come on!)
-    # So we have remove these indices from all fields in the future
-
     # Find the indices of not missing points
     Good = np.where(~np.isnan(ncFile.variables['time'][:]))
 
-    # Now convert the time array into a datetime instance
-    dtHrs = num2date(ncFile.variables['time'][Good], 'hours since ' + StartDate +  '00:00:00+0:00')
-    # Now convert this datetime instance into a number of seconds since Epoch
-    TimeSec = date2num(dtHrs, 'seconds since 1970-01-01 00:00:00+0:00')
-    # Now once again convert this data into a datetime instance
-    Time_unaware = num2date(TimeSec, 'seconds since 1970-01-01 00:00:00+0:00')
-    Time = Time_unaware#.replace(tzinfo=pytz.UTC)
+    Time = _get_latmos_time(fname, ncFile, Good)
     
     # Pull out each variable
     try:
@@ -354,58 +281,21 @@ def rasta_microphysics(fname):
         
     # Add fields to their own dictionary
     fields = {}
-    try:
-        fields['extinction'] = _nc_radar_var_to_dict(ncvars['extinction'], Good)
-    except:
-        fields['extinction'] = None
-    try:
-        fields['n0star'] = _nc_radar_var_to_dict(ncvars['n0star'], Good)
-    except:
-        fields['n0star'] = None
-    try:
-        fields['iwc'] = _nc_radar_var_to_dict(ncvars['iwc'], Good)
-    except:
-        fields['iwc'] = None
-    try:
-        fields['effective_radius'] = _nc_radar_var_to_dict(ncvars['effective_radius'], Good)
-    except:
-        fields['effective_radius'] = None
-    try:
-        fields['Dm'] = _nc_radar_var_to_dict(ncvars['Dm'], Good)
-    except:
-        fields['Dm'] = None
+    
+    # Grab a name map for RASTA microphysics field data
+    name_map = _get_microphysics_field_name_map()
+    
+    # Loop through the variables and pull data
+    for varname in name_map:
+        try:
+            fields[varname] = _ncvar_radar_to_dict(ncvars[name_map[varname]], Good)
+        except:
+            fields[varname] = None
+    
     if fields['Dm'] is not None:
         fields['Dm']['data'][:] = fields['Dm']['data'][:] * 1000.
         fields['Dm']['units'] = 'mm'
-    try:
-        fields['Nt'] = _nc_radar_var_to_dict(ncvars['Nt'], Good)
-    except:
-        fields['Nt'] = None
-    try:
-        fields['dBZ'] = _nc_radar_var_to_dict(ncvars['Z'], Good)
-    except:
-        fields['dBZ'] = None
-    try:
-        fields['Z_fwd'] = _nc_radar_var_to_dict(ncvars['Z_fwd'], Good)
-    except:
-        fields['Z_fwd'] = None
-    try:
-        fields['term_velocity'] = _nc_radar_var_to_dict(ncvars['vt'], Good)
-    except:
-        fields['term_velocity'] = None
-    try:
-        fields['term_velocity_fwd'] = _nc_radar_var_to_dict(ncvars['vt_fwd'], Good)
-    except:
-        fields['term_velocity_fwd'] = None
-    try:
-        fields['temperature'] = _nc_radar_var_to_dict(ncvars['T'], Good)
-    except:
-        fields['temperature'] = None
-    try:
-        fields['aM'] = _nc_radar_var_to_dict(ncvars['aM'], Good)
-    except:
-        fields['aM'] = None
-    
+
     # Pull out global attributes
     try:
         ncFile.ProjectName
@@ -447,6 +337,96 @@ def rasta_microphysics(fname):
 ###########################
 # Create Variable methods #
 ###########################
+
+def _get_dynamic_data_name_map():
+    '''Map out names used in RASTA microphysics NetCDF files to AWOT'''
+    name_map = {}
+    
+    name_map['latitude'] = 'latitude'
+    name_map['longitude'] = 'longitude'
+    name_map['height'] = 'height'
+    name_map['altitude'] = 'altitude'
+    name_map['temperature'] = 'temperature'
+    name_map['pressure'] = 'pressure'
+    name_map['Vx_flight_level'] = 'Vx_insitu'
+    name_map['Vy_flight_level'] = 'Vy_insitu'
+    name_map['Vz_flight_level'] = 'Vz_insitu'
+    name_map['zonal_wind'] =  'VE'
+    name_map['meridional_wind'] = 'VN'
+
+    return name_map
+    
+
+def _get_microphysics_field_name_map():
+    '''Map out names used in RASTA microphysics NetCDF files to AWOT'''
+    name_map = {}
+        
+    name_map['extinction'] = 'extinction'
+    name_map['n0star'] = 'n0star'
+    name_map['iwc'] = 'iwc'
+    name_map['effective_radius'] = 'effective_radius'
+    name_map['Dm'] = 'Dm'
+    name_map['Nt'] = 'Nt'
+    name_map['dBZ'] = 'Z'
+    name_map['Z_fwd'] = 'Z_fwd'
+    name_map['term_velocity'] = 'vt'
+    name_map['term_velocity_fwd'] = 'vt_fwd'
+    name_map['temperature'] = 'T'
+    name_map['aM'] = 'aM'
+
+    return name_map
+
+def _get_dynamic_field_name_map():
+    '''Map out names used in RASTA dynamic NetCDF files to AWOT'''
+    name_map = {}
+    
+    # Read the Reflectivity
+    name_map['dBZ'] = 'Z'
+    
+    # Read the U wind (Along aircraft longitudinal axis)
+    name_map['Uwind'] = 'Vx'
+    
+    # Read the V wind (Perpendicular to aircraft longitudinal axis)
+    name_map['Vwind'] = 'Vy'
+    
+    # Read the vertical wind
+    name_map['Wwind'] = 'Vz'
+    
+    # Read the terminal velocity
+    name_map['term_fall_speed'] = 'Vt'
+    name_map['term_fall_speed_weighted'] = 'Vt_weighted'
+
+    return name_map
+    
+def _get_latmos_time(fname, ncFile, Good_Indices):
+    """Pull the time from RASTA file and convert to AWOT useable"""
+    
+    # Pull out the date, convert the date to a datetime friendly string
+    # Adds dashes between year, month, and day
+    # This assumes that the date is the 2nd instance in the filename!!
+    yyyymmdd = fname.split("_")[1]
+    StartDate = yyyymmdd[0:4] + '-' + yyyymmdd[4:6] + '-' + yyyymmdd[6:8]
+    
+    # Create the time array
+    # First find the good indices, there can be missing values 
+    # in Falcon Data (seriously come on!)
+    # So we have remove these indices from all fields in the future
+    
+    # Now convert the time array into a datetime instance
+    dtHrs = num2date(ncFile.variables['time'][Good_Indices], 'hours since ' + StartDate + '00:00:00+0:00')
+    # Now convert this datetime instance into a number of seconds since Epoch
+    TimeSec = date2num(dtHrs, 'seconds since 1970-01-01 00:00:00+0:00')
+    # Now once again convert this data into a datetime instance
+    Time_unaware = num2date(TimeSec, 'seconds since 1970-01-01 00:00:00+0:00')
+    Time = Time_unaware#.replace(tzinfo=pytz.UTC)
+    
+    return Time
+  
+def _nc_var_masked(ndFile, ncvar, Good_Indices):
+    """Convert a NetCDF variable into a masked variable"""
+    d = ncFile.variables[ncvar][Good_Indices]
+    np.ma.masked_invalid(d)
+    return d
 
 def _nc_radar_var_to_dict(ncvar, Good_Indices):
     """ Convert a NetCDF Dataset variable to a dictionary. 

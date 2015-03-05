@@ -125,7 +125,7 @@ def read_windsyn_tdr_netcdf(fname, mapping=None):
     fields = {}
     
     # Grab a name map for NOAA P-3 TDR data
-    name_map = _get_name_map(mapping=mapping)
+    name_map = _get_tdr_name_map(mapping=mapping)
     
     # Loop through the variables and pull data
     for varname in name_map:
@@ -586,7 +586,7 @@ def _ncvar_to_dict(ncvar):
         d['data'].shape = (1, )
     return d
     
-def _get_name_map(mapping=None):
+def _get_tdr_name_map(mapping=None):
     '''Map out names used in NOAA P-3 TDR NetCDF files to AWOT'''
     name_map = {}
     
@@ -604,6 +604,14 @@ def _get_name_map(mapping=None):
         name_map['term_fall_speed'] = 'Vt'
         name_map['time_diff'] = 'Tdiff'
     return name_map
+    
+def _get_lf_name_map():
+    '''Map out names used in NOAA P-3 LF NetCDF files to AWOT'''
+    name_map = {}
+    
+    # Radar reflectivity
+    name_map['dBZ'] = 'dBZ'
+
     
 def _windsyn_var_to_dict(wsvar, hdr_dict, units=None, long_name=None):
     """ Convert a variable read in from the windsyn 
