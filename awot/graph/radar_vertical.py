@@ -747,6 +747,8 @@ class RadarVerticalPlot(object):
             radar_data = airborne.lf_radar_data
         elif instrument == 'rasta':
             radar_data = airborne.rasta_radar_data
+        elif instrument.lower() == 'wcr':
+            radar_data = airborne.wcr_radar_data
         elif instrument == 'ground':
             print "Connected using PyArt"
             radar_data = airborne.ground_radar_data

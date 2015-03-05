@@ -9,6 +9,7 @@ from ..io.read_ground_radar import read_radar as read_ground_radar
 from ..io.read_p3_radar import read_lf_grid, read_windsyn_tdr_netcdf 
 from ..io.read_p3_radar import read_tdr_sweep, read_windsyn_binary
 from ..io.read_latmos_falcon import rasta_radar, rasta_microphysics
+from ..io.read_wcr import read_wcr
 
 ########################
 ## BEGIN MAIN CODE
@@ -29,6 +30,7 @@ def read_radar(filename=None, platform='p3', file_format='netcdf', instrument=No
         Currenlty supported:
             'p3' - NOAA P-3 radar tail Doppler and lower fuselage radars
             'falcon' - LATMOS French falcon W-band
+            'king air' - University of Wyoming King Air W-band ProSensing radar
     file_format : str
         Format of input file, see FileReader.
     instrument : str
@@ -38,6 +40,7 @@ def read_radar(filename=None, platform='p3', file_format='netcdf', instrument=No
             'tdr_sweep' = Tail Doppler radar (Native coordinate data)
             'lf'  - Lower Fuselage radar
             'ground' - A ground-based radar system, read in using PyArt
+            'wcr' - University of Wyoming King Air W-band ProSensing radar
     data_format : str
         Either 'grid' or 'native'.
 
@@ -87,6 +90,7 @@ class FileReader(object):
                     'p3' or p-3' (NOAA WP-3D)
                     'eldora'
                     'citation' (Univ North Dakota Citation)
+                    'kingair' or 'king air' (Univ of Wyoming King Air)
             file_format : string
                 Format of input file.  Each platform currently has
                 a specific file type.  This may be extended in the future.
@@ -98,6 +102,8 @@ class FileReader(object):
                 'tdr_sweep' = Tail Doppler radar (Native coordinate data)
                 'lf'  - Lower Fuselage radar
                 'ground' - A ground-based radar system, read in using PyArt
+                'wcr' - Wyoming Cloud Radar, 
+                        University of Wyoming King Air W-band ProSensing radar
         
         """
 
@@ -135,23 +141,31 @@ class FileReader(object):
             (platform.upper() == 'NCAR C130'):
                 print "Sorry not supported at this time"
                 
-            elif (platform.upper() == 'KING AIR'):
-                print "Sorry not supported at this time"
+            elif (platform.upper() == 'KING AIR') or \
+            (platform.upper() == 'KING_AIR') or \
+            (platform.upper() == 'KINGAIR') or \
+            (platform.upper() == 'KING-AIR') or \
+            (platform.upper() == 'WCR'):
+                radar = read_wcr(filename)
                 
             elif (platform.upper() == 'GROUND'):
                 radar = read_ground_radar(filename)
-                
+
             else:
                 # Check to see if a ground instrument is being fed
                 if instrument.lower() == 'ground':
                     radar = read_ground_radar(filename)
+                
+                elif (instrument.lower() == 'wcr'):
+                    radar = read_wcr(filename)
+                
                 else:
                     print "Check supported platform list: \
                            'p3' or 'p-3' - NOAA P-3 \
                            'eldora' - NCAR Eldor radar (same as P-3) \
                            'falcon' - LATMOS French Falcon \
                            'C130' - NCAR C130, Coming Soon \
-                           'King Air' - Wyoming King Air, Coming Soon \
+                           'King Air' or 'King_Air' or 'WCR' - Wyoming Cloud Radar \
                            'Ground' - Any PyArt supported data format"
                     return
             

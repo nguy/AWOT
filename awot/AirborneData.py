@@ -106,6 +106,7 @@ class AirborneData(object):
                 'tdr_grid' - Tail Doppler radar gridded files (e.g. dual-Doppler analysis)
                 'tdr_sweep' = Tail Doppler radar (Native coordinate data)
                 'lf'  - Lower Fuselage radar
+                'wcr' - Wyoming Cloud Radar
                 'ground' - A ground-based radar system, read in using PyArt
         '''
         if fname is None:
@@ -141,6 +142,12 @@ class AirborneData(object):
                 else:
                     print "Set instrument parameter to 'radar' or 'microphysics'"
                     return
+            elif (platform.upper() == 'KING AIR') or \
+            (platform.upper() == 'KING_AIR') or \
+            (platform.upper() == 'KINGAIR') or \
+            (platform.upper() == 'KING-AIR') or \
+            (platform.upper() == 'WCR'):
+                self.wcr_radar_data = RadarData.radar_data
             
             elif (platform.upper() == 'GROUND'):
                 self.ground_radar_data = RadarData.radar_data
