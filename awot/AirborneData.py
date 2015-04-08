@@ -3,10 +3,11 @@
 Airborne.py - Class for airborne observations
 """
 
-from .graph.common import create_basemap_instance
+from awot.graph.common import create_basemap_instance
 
 from awot.io.FlightDataFile import read_flight
 from awot.io.RadarDataFile import read_radar
+from awot.io.SondeDataFile import read_sonde
 from awot.io.write_radar_netcdf import radar2nc
 
 import inspect
@@ -247,22 +248,37 @@ class AirborneData(object):
 
     ##########################################
         
-    def get_dropsonde_data(self, fname=None):
+    def get_sonde_data(self, fname=None, instrument=None):
         '''
-        Return DropsondeDataFile reader instance
+        Return a SondeDataFile reader instance
         
         Parameters::
         ------------
         fname : str
             Long path filename
-            
+        instrument : str
+            Type (name) of instrument to process
+            Currently the following arguments are valid:
+            'dropsonde' - Dropsonde from aircraft
+            'sounding' - Upsonde (rawinsonde) from ground
+        
         TODO: Get working
         '''
         if fname is None:
             print "Must supply input file!!"
             return
         else:
-            pass
+            SondeData = read_sonde(filename=fname, instrument=instrument)
+            
+        # Now need to add dictionary to AirborneData class
+            if instrument is None:
+                print "Need to supply instrument type"
+                return
+            elif instrument == 'dropsonde':
+                self.dropsonde_data = SondeData.sonde_data
+            elif instrument == 'sounding':
+                self.sounding_data = SondeData.sonde_data
+            
 
     ##########################################
         

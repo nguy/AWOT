@@ -13,7 +13,7 @@ Created by Nick Guy.
 """
 #-------------------------------------------------------------------
 # Load the needed packages
-import pyart.io as pio
+import pyart
 #===============================================================
 # BEGIN FUNCTIONS
 #===============================================================
@@ -27,7 +27,7 @@ def read_radar(fname, instrument=None, platform=''):
     if instrument is None:
         instrument = 'ground'
     
-    rad = pio.read(fname)
+    rad = pyart.io.read(fname)
     
     # build the fields dictionary
     fields = {}

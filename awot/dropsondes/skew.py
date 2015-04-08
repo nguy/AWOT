@@ -24,10 +24,12 @@ from matplotlib.projections import register_projection
 #SKEW Class#
 ###########
 
- # The sole purpose of this class is to look at the upper, lower, or total
-    # interval as appropriate and see what parts of the tick to draw, if any.
-    
 class SkewXTick(maxis.XTick):
+    '''
+    The sole purpose of this class is to look at the 
+    upper, lower, or total interval as appropriate and see 
+    what parts of the tick to draw, if any.
+    '''
     def draw(self, renderer):
         if not self.get_visible(): return
         renderer.open_group(self.__name__)
@@ -53,11 +55,12 @@ class SkewXTick(maxis.XTick):
 
         renderer.close_group(self.__name__)
 
-
-# This class exists to provide two separate sets of intervals to the tick,
-# as well as create instances of the custom tick
-
 class SkewXAxis(maxis.XAxis):
+    '''
+    This class exists to provide two separate sets of 
+    intervals to the tick, as well as create instances 
+    of the custom tick.
+    '''
     def __init__(self, *args, **kwargs):
         maxis.XAxis.__init__(self, *args, **kwargs)
         self.upper_interval = 0.0, 1.0
@@ -71,13 +74,13 @@ class SkewXAxis(maxis.XAxis):
 
     def get_view_interval(self):
         return self.upper_interval[0], self.axes.viewLim.intervalx[1]
-
-
-# This class exists to calculate the separate data range of the
-# upper X-axis and draw the spine there. It also provides this range
-# to the X-axis artist for ticking and gridlines
-
+        
 class SkewSpine(mspines.Spine):
+    '''
+    This class exists to calculate the separate data range of 
+    the upper X-axis and draw the spine there. It also provides 
+    this range to the X-axis artist for ticking and gridlines
+    '''
     def _adjust_location(self):
         trans = self.axes.transDataToAxes.inverted()
         if self.spine_type == 'top':
@@ -92,15 +95,16 @@ class SkewSpine(mspines.Spine):
         pts[1, 0] = right
         self.axis.upper_interval = (left, right)
 
-
-# This class handles registration of the skew-xaxes as a projection as well
-# as setting up the appropriate transformations. It also overrides standard
-# spines and axes instances as appropriate.
-
 class SkewXAxes(Axes):
-    # The projection must specify a name.  This will be used be the
-    # user to select the projection, i.e. ``subplot(111,
-    # projection='skewx')``.
+    '''
+    This class handles registration of the skew-xaxes as a 
+    projection as well as setting up the appropriate transformations. 
+    It also overrides standard spines and axes instances as appropriate.
+     
+    The projection must specify a name.  This will be used be the
+    user to select the projection, i.e. ``subplot(111,
+    projection='skewx')``.
+    '''
     name = 'skewx'
 
     def _init_axis(self):

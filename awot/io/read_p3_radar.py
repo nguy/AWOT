@@ -18,7 +18,7 @@ from netCDF4 import Dataset
 import numpy as np
 import pytz
 from datetime import datetime
-import pyart.io as pio
+import pyart
 #-------------------------------------------------------------------
 # Begin methods
 #####################################################################
@@ -464,7 +464,7 @@ def read_tdr_sweep(fname):
     ----------
     data : Dictionary of the following values
     """
-    data = pio.read(fname)
+    data = pyart.io.read(fname)
     
     return data
 
@@ -481,7 +481,7 @@ def read_lf_sweep(fname):
     ----------
     data : Dictionary of the following values
     """
-    data = pio.read(fname)
+    data = pyart.io.read(fname)
     
     return data
     

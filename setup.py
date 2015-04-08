@@ -18,7 +18,8 @@ doclines = __doc__.split("\n")
 packages = ['awot',
             'awot.io',
             'awot.display',
-            'awot.graph']
+            'awot.graph',
+            'awot.dropsondes']
 package_dirs = {'awot'}
 #datafiles = glob.glob(os.path.join(pathout, '*'))
 #datafiles = [os.path.join('data', os.path.basename(f)) for f in datafiles]

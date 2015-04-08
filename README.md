@@ -4,7 +4,10 @@ AWOT
 AWOT is a toolkit of utilities to analyze and visualize weather
 observations taken by aircraft.
 
-Author: Nick Guy (nick.guy@noaa.gov)
+Authors:
+
+Nick Guy (nick.guy@uwyo.edu)
+Andrew Lyons
 
 Created:  11 Sep 2014   Refactored various scripts into a dedicated package
 
@@ -15,7 +18,7 @@ The latest source code for AWOT can be obtained from the GitHub repository,
 Either download and unpack the zip file of the source code or use git to checkout the repository
 
 ```python
-git clone https://github.com/ARM-DOE/pyart.git
+git clone https://github.com/nguy/AWOT
 ```
 To install in your home directory, use:
 ```python
@@ -35,6 +38,8 @@ Currently supported:
 	NOAA P-3 tail Doppler and lower fuselage radar native radar coordinates.
 	NOAA P-3 tail Doppler and lower fuselage radar gridded coordinates, specifically produced by the windysn program.
 	NOAA P-3 and UND flight level data.
+	LATMOS Falcon NetCDF files which contain both W-band radar and flight information.
+	U. Wyoming King Air W-band radar Level 2 NetCDF files.
 
 graph - Produces plots.  Horizontal plots are overlaid on a basemap instance 
 and vertical plots are regular 2D plots.
@@ -100,15 +105,23 @@ It uses a typical scientific python stack:
 Development used the 
 
 It also uses the [Py-Art](https://github.com/ARM-DOE/pyart) package for importing some radar data.
+And [nappy](https://pypi.python.org/pypi/nappy/1.1.0) to read NASA Ames formatted ASCII files.
 
 ## Notes
 
 Future enhancements will include the ability to read data files from other platforms.
   
-At present this package does mostly plotting.  However, work is underway to connect 
+At present this package is primarily for visualization.  However, work is underway to connect 
 many processing routines that allow processing from start to finish with airborne data.
 
-Primary development will be with the NOAA P-3 and UND Citation aircraft.  
+Primary development was with the NOAA P-3 aircraft.  
+Ability to display UND Citation and LATMOS Falcon aircraft data was added in, but is not actively developed.
+Future development will include U Wyoming King Air flight, radar, and lidar capabilities.
+
+A known issue exists in reading certain King Air radar files.  This is under investigation. 
+
+There is a current dependency on nappy for reading NASA AMES formatted ASCII files. 
+This package appears to no longer be supported, though easy to attain.   
 
 
 
