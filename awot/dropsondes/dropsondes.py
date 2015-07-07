@@ -138,7 +138,7 @@ class DropSondes(object):
 		fp = open(data,'r')
 		sounding_data = fp
 
-		p,T,Td,RH,u,v,h = np.genfromtxt(sounding_data, skip_header= 4, usecols = (1,2,3,4,5,6,14), dtype = float, missing_values = '9999.0', unpack = True, usemask = True)
+		p,T,Td,RH,u,v,h = np.genfromtxt(sounding_data, skip_header= 15, usecols = (1,2,3,4,5,6,14), dtype = float, missing_values = '9999.0', unpack = True, usemask = True)
 
 		#mask incoming T and dewpoint data
 
