@@ -22,6 +22,7 @@ Author:
 import numpy as np
 import matplotlib.pyplot as plt
 from  matplotlib.dates import DateFormatter, date2num
+from matplotlib import ticker
 import scipy.ndimage as scim
 
 from .common import plot_polar_contour, get_masked_data
@@ -232,7 +233,7 @@ class RadarSweepPlot(object):
         Parameters::
         ----------
         field : str
-            Variable name (e.g. 'dBZ') to use in plot
+            Variable name (e.g. 'reflectivity') to use in plot
         nlevs : int
             Number of contour levels to plot
         mask_procedure : str
@@ -344,7 +345,7 @@ class RadarSweepPlot(object):
         Parameters::
         ----------
         field : str
-            Variable name (e.g. 'dBZ') to use in plot
+            Variable name (e.g. 'reflectivity') to use in plot
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
             'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'
@@ -462,7 +463,7 @@ class RadarSweepPlot(object):
         Parameters::
         ----------
         field : str
-            Variable name (e.g. 'dBZ') to use in plot
+            Variable name (e.g. 'reflectivity') to use in plot
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
             'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'
@@ -587,7 +588,7 @@ class RadarSweepPlot(object):
         Parameters::
         ----------
         field : str
-            Variable name (e.g. 'dBZ') to use in plot
+            Variable name (e.g. 'reflectivity') to use in plot
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
             'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'
@@ -903,7 +904,7 @@ class RadarVerticalPlot(object):
         # Add Colorbar
         if color_bar:
             cbStr = Var['long_name'] +' ('+ Var['units'] +')'
-            cb = fig.colorbar(p, orientation=cb_orient, pad=cb_pad)#,ticks=clevels)
+            cb = fig.colorbar(p, orientation=cb_orient, pad=cb_pad, ax=ax)#,ticks=clevels)
             cb.set_label(cbStr)
             # Set the number of ticks in the colorbar based upon number of contours
             tick_locator = ticker.MaxNLocator(nbins=int(clevs/cb_tick_int))
@@ -1382,8 +1383,12 @@ def _parse_ax_fig(ax, fig):
     """ Parse and return ax and fig parameters. """
     if ax is None:
         ax = plt.gca()
+    else:
+        ax = ax
     if fig is None:
         fig = plt.gcf()
+    else:
+        fig = fig
     return ax, fig
         
 def _parse_ax(ax):

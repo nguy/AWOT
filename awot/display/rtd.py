@@ -1,21 +1,17 @@
 """
-awot.graph.plot_tdr_swp
+awot.display.rtd
 =========================
 
 A group of scripts create various plots of data collected by the NOAA P-3 tail Doppler radar. 
-
-Created by Nick Guy.
-
+Functions
+---------
+ polar_sweep - Plot polar coordinate data on polar coordinate axis
+ polar_sweep_grid - Plotting transformed data to Cartesian output
+ sweep_to_Cart - Polar coordinates transformed to Cartesian
+ sweep_aircraft_relative - Polar coord data transformed to aircraft-relative frame
+ sweep_track_relative - Polar coord data transformed to track-relative frame
+ sweep_earth_relative - Polar coord data transformed to earth-relative frame
 """
-# HISTORY::
-#  6 Mar 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
-# FUNCTIONS::
-# polar_sweep - Plot polar coordinate data on polar coordinate axis
-# polar_sweep_grid - Plotting transformed data to Cartesian output
-# sweep_to_Cart - Polar coordinates transformed to Cartesian
-# sweep_aircraft_relative - Polar coord data transformed to aircraft-relative frame
-# sweep_track_relative - Polar coord data transformed to track-relative frame
-# sweep_earth_relative - Polar coord data transformed to earth-relative frame
 #-------------------------------------------------------------------
 # Load the needed packages
 from mpl_toolkits.basemap import Basemap, cm
@@ -27,41 +23,48 @@ import numpy as np
 import general.library as gl
 import general.gplot as gp
 
-# Define various constants that may be used for calculations
-#===============================================================
-# BEGIN FUNCTIONS
-#**===============================================================
 def polar_sweep(Var,rot,range,nlevs=30,
                vmin=None,vmax=None,cmap=None,mask_outside=True,
                rng_rings=None,rot_angs=None,
                title=None,cb_flag=True,cb_orient='horizontal',cb_lab=None):
-    """Plot a sweep of native (polar) coordinate radar data on polar format plot
- INPUT::
-  Var             = Data values to plot
-  range           = Range along ray
-  rot             = Rotation angle with respect to instrument [degrees]
+    """
+    Plot a sweep of native (polar) coordinate radar data on polar format plot
 
-       THESE NEXT VALUES CUSTOMIZE THE PLOT
-  nlevs           = Number of contour levels to plot
-  vmin            = Minimum value to display
-  vmax            = Maximum value to display
-  cmap            = Matplotlib colormap name
-  mask_outside    = Boolean flag to mask values outside vmin/vmax
-  title           = Title to label plot with, if none given it is omitted
-  cb_flag         = True turns on colorbar, False no colorbar
-  cb_lab          = Colorbar label, None will use a default label generated from the
-                     field information.
-  cb_orient       = Orientation of colorbar (vertical or horizontal)
- OUTPUT::
-  fig             = Figure to create plot to
-  ax              = Polar axis created
-  p               = Output plot
- USAGE::
-  p, fig, ax = DPJgrid_Horiz(fig,Z,W,Lon,Lat,Ht,TLon,TLat,TAlt,[Zcoord],[Ucoord],[WindVec],[Track],
-                     [cminmax],[clevs],[vmin],[vmax],[dlat],[dlon],[proj],
-                     [cmap],[title],[pName],[pType],[figsize])
- NOTES::
- Defaults are established during DYNAMO project analysis
+    Parameters
+    ----------
+    Var : float array
+        Data values to plot.
+    range : float array
+        Range along ray.
+    rot : float array
+        Rotation angle with respect to instrument [degrees].
+
+    THESE NEXT VALUES CUSTOMIZE THE PLOT
+    nlevs : int
+        Number of contour levels to plot.
+    vmin : float
+        Minimum value to display.
+    vmax : float
+        Maximum value to display.
+    cmap : str
+        Matplotlib colormap name.
+    mask_outside : bool 
+        True to mask values outside vmin/vmax.
+    title : str
+        Title to label plot with, if none given it is omitted.
+    cb_flag : bool
+        True turns on colorbar, False no colorbar.
+    cb_lab : str
+        Colorbar label, None will use a default label generated from the
+        field information.
+    cb_orient : str
+        Orientation of colorbar (vertical or horizontal).
+
+    Output
+    ------
+    fig : Figure to create plot to
+    ax : Polar axis created
+    p : Output plot
     """
 # HISTORY::
 #  15 Apr 2014 - Nick Guy NOAA/NSSL/WRDD, NRC 
@@ -73,25 +76,25 @@ def polar_sweep(Var,rot,range,nlevs=30,
     # Set the range and turn grid on
     ax.set_rmax(1.05 * range.max())
     ax.grid(True)
-               
+
     # Set the title
     if title == None:
         pass
     else:
         ax.set_title(title)
-        
+
     # Set the range rings if set
     if rng_rings == None:
         pass
     else:
        plt.rgrids(rng_rings)
-        
+
     # Set the rotation angles (theta) if set
     if rot_angs == None:
         pass
     else:
        plt.thetagrids(rot_angs)
-       
+
     # Set the colorbar if desired
     if cb_flag:
         cb = plt.colorbar(mappable=p,orientation=cb_orient)
@@ -99,41 +102,61 @@ def polar_sweep(Var,rot,range,nlevs=30,
             pass
         else:
             cb.set_label(cb_lab)
-    
+
     return fig, ax, p
 #**===============================================================
 def plot_sweep_grid(Xcoord,Ycoord,Values,ax=None,title=None,
                vmin=-24.,vmax=64.,cmap='jet',grid_on=True,
                xlims=None,ylims=None,xlab=None,ylab=None,
                cb_flag=True,cb_orient='horizontal',cb_lab=None):
-    """Plot a sweep of native (polar) projected on a Cartesian plane.
- INPUT::
-  X               = Variable to plot along the X-axis
-  Y               = Variable to plot along the Y-axis
-  Values          = Data values to plot (Ydims,Xdims)
+    """
+    Plot a sweep of native (polar) projected on a Cartesian plane.
+    Parameters
+    ----------
+    X : float array
+        Variable to plot along the X-axis.
+    Y : float array
+        Variable to plot along the Y-axis.
+    Values : float array
+        Data values to plot (Ydims,Xdims).
 
-       THESE NEXT VALUES CUSTOMIZE THE PLOT
-  ax              = Axis instance on which to be plotted
-  title           = Title to label plot with, if none given it is omitted
-  vmin            = Minimum value to display
-  vmax            = Maximum value to display
-  cmap            = Matplotlib colormap name
-  xlims           = X-axis limits (min,max)
-  ylims           = Y-axis limits (min,max)
-  xlab            = X-axis label
-  ylab            = Y-axis label
-  cb_flag         = True turns on colorbar, False no colorbar
-  cb_lab          = Colorbar label, None will use a default label generated from the
-                     field information.
-  cb_orient       = Orientation of colorbar (vertical or horizontal)
- OUTPUT::
-  fig             = Figure to create plot to
-  p               = Output plot
- USAGE::
-  p = plot_sweep_grid(X,Y,Val,[**args])
- NOTES::
- Plotting convention is to project the data onto a 2D surface looking from the back of
-   aircraft forward
+    THESE NEXT VALUES CUSTOMIZE THE PLOT
+    ax : Matplotlib Axis instance 
+        Plot imaget to this axis.
+    title : str
+        Title to label plot with, if none given it is omitted.
+    vmin : float
+        Minimum value to display.
+    vmax : float
+        Maximum value to display.
+    cmap : str
+        Matplotlib colormap name.
+    xlims : tuple
+        X-axis limits (min,max).
+    ylims : tuple
+        Y-axis limits (min,max).
+    xlab : str
+        X-axis label.
+    ylab : str
+        Y-axis label.
+    cb_flag : bool
+        True turns on colorbar, False no colorbar.
+    cb_lab : str
+        Colorbar label, None will use a default label generated from the
+            field information.
+    cb_orient : str
+        Orientation of colorbar (vertical or horizontal).
+
+    Output
+    ------
+    fig : Matplotlib figure instance
+    ax : Matplotlib Polar axis instance
+    p : Matplotlib plot instance
+
+    Notes
+    -----
+    Plotting convention is to project the data onto a 2D surface looking from the back of
+    aircraft forward
     """
 # HISTORY::
 #  15 Apr 2014 - Nick Guy NOAA/NSSL/WRDD, NRC 
@@ -185,40 +208,62 @@ def sweep_to_Cart(Var,range,rot,tilt,ax=None,data_proj='fore',title=None,
                vmin=-24.,vmax=64.,cmap=None,mask_outside=True,grid_on=True,
                xlims=None,ylims=None,xlab=None,ylab=None,
                cb_flag=True,cb_orient='horizontal',cb_lab=None):
-    """Project native (polar) coordinate radar sweep data onto a flat Cartesian coordinate grid.
-       See Lee et al. (1994) Journal of Atmospheric and Oceanic Technology for methodology and definitions.
- INPUT::
-  Var             = Data values to plot
-  range           = Range along ray
-  rot             = Rotation angle with respect to instrument [degrees]
-  tilt            = Tilt angle with respect to platform [degrees]
+    """
+    Project native (polar) coordinate radar sweep data onto a
+    flat Cartesian coordinate grid.
+    
+    See Lee et al. (1994) Journal of Atmospheric and 
+    Oceanic Technology for methodology and definitions.
+
+    Parameters
+    ----------
+    Var : float array
+        Data values to plot.
+    range : float array
+        Range along ray.
+    rot : float array
+        Rotation angle with respect to instrument [degrees].
+    tilt : float array
+        Tilt angle with respect to platform [degrees].
 
        THESE NEXT VALUES CUSTOMIZE THE PLOT
-  data_proj       = Which direction the data is collected [ 'fore' or 'aft' ]
-                    Needed to display the data in forward-looking convention
-  vmin            = Minimum value to display
-  vmax            = Maximum value to display
-  cmap            = Matplotlib colormap name
-  mask_outside    = Boolean flag to mask values outside vmin/vmax
-  title           = Title to label plot with, if none given it is omitted
-  xlims           = X-axis limits (min,max)
-  ylims           = Y-axis limits (min,max)
-  cb_flag         = True turns on colorbar, False no colorbar
-  cb_lab          = Colorbar label, None will use a default label generated from the
-                     field information.
-  cb_orient       = Orientation of colorbar (vertical or horizontal)
- OUTPUT::
-  fig             = Figure to create plot to
-  ax              = Polar axis created
-  p               = Output plot
- USAGE::
-  p, fig, ax = DPJgrid_Horiz(fig,Z,W,Lon,Lat,Ht,TLon,TLat,TAlt,[Zcoord],[Ucoord],[WindVec],[Track],
-                     [cminmax],[clevs],[vmin],[vmax],[dlat],[dlon],[proj],
-                     [cmap],[title],[pName],[pType],[figsize])
- NOTES::
- Plotting convention is to project the data onto a 2D surface looking from the back of
+    data_proj : str
+        Which direction the data is collected [ 'fore' or 'aft' ].
+        Needed to display the data in forward-looking convention.
+    vmin : float
+        Minimum value to display.
+    vmax : float
+        Maximum value to display.
+    cmap : str
+        Matplotlib colormap name.
+    mask_outside : bool
+        True to mask values outside vmin/vmax.
+    title : str
+        Title to label plot with, if none given it is omitted.
+    xlims : tuple
+        X-axis limits (min,max).
+    ylims : tuple
+        Y-axis limits (min,max).
+    cb_flag : bool
+        True turns on colorbar, False no colorbar.
+    cb_lab : str
+        Colorbar label, None will use a default label generated from the
+            field information.
+    cb_orient : str
+        rientation of colorbar (vertical or horizontal).
+
+    Output
+    ------
+    fig : Matplotlib figure instance
+    ax : Matplotlib Polar axis instance
+    p : Matplotlib plot instance
+
+    Notes
+    -----
+   Plotting convention is to project the data onto a 2D surface looking from the back of
    aircraft forward.  The polar data has no direct measure of direction and therefore for 
    the P-3, determination of 'fore' or 'aft' may be accomplished by looking at tilt angle.
+   
    Positive is fore, negative is aft.
     """
 # HISTORY::
@@ -272,38 +317,61 @@ def sweep_aircraft_relative(Var,range,tilt,rot,ax=None,title=None,
                vmin=-24.,vmax=64.,cmap=None,mask_outside=True,grid_on=True,
                xlims=None,ylims=None,xlab=None,ylab=None,
                cb_flag=True,cb_orient='horizontal',cb_lab=None):
-    """Project native (polar) coordinate radar sweep data onto aircraft-relative Cartesian coordinate grid.
-       See Lee et al. (1994) Journal of Atmospheric and Oceanic Technology for methodology and definitions.
- INPUT::
-  Var             = Data values to plot
-  range           = Range along ray
-  tilt            = Radar ray Tilt angle with respect to platform [degrees]
-  rot             = Rotation angle with respect to instrument [degrees]
+    """
+    Project native (polar) coordinate radar sweep data onto 
+    aircraft-relative Cartesian coordinate grid.
+    
+    See Lee et al. (1994) Journal of Atmospheric and Oceanic 
+    Technology for methodology and definitions.
 
-       THESE NEXT VALUES CUSTOMIZE THE PLOT
-  vmin            = Minimum value to display
-  vmax            = Maximum value to display
-  cmap            = Matplotlib colormap name
-  mask_outside    = Boolean flag to mask values outside vmin/vmax
-  title           = Title to label plot with, if none given it is omitted
-  xlims           = X-axis limits (min,max)
-  ylims           = Y-axis limits (min,max)
-  cb_flag         = True turns on colorbar, False no colorbar
-  cb_lab          = Colorbar label, None will use a default label generated from the
-                     field information.
-  cb_orient       = Orientation of colorbar (vertical or horizontal)
- OUTPUT::
-  fig             = Figure to create plot to
-  ax              = Polar axis created
-  p               = Output plot
- USAGE::
-  p = sweep_aircraft(Var,range,tilt,rot,[**args])
- NOTES::
-  Plotting convention is to project the data onto a 2D surface looking from the back of
-   aircraft forward.  X,Y,Z coordinates are a direct projection from polar to Cartesian
-   coordinates.
-  This mapping does NOT take into account corrections for roll, pitch, or drift of the
-   aircraft.
+     Parameters
+    ----------
+    Var : float array
+        Data values to plot.
+    range : float array
+        Range along ray.
+    tilt : float array
+        Radar ray Tilt angle with respect to platform [degrees].
+    rot : float array
+        Rotation angle with respect to instrument [degrees].
+
+    THESE NEXT VALUES CUSTOMIZE THE PLOT
+    vmin : float
+        Minimum value to display.
+    vmax : float
+        Maximum value to display.
+    cmap : str
+        Matplotlib colormap name.
+    mask_outside : bool
+        True to mask values outside vmin/vmax.
+    title : str
+        Title to label plot with, if none given it is omitted.
+    xlims : tuple
+        X-axis limits (min,max).
+    ylims : tuple
+        Y-axis limits (min,max).
+    cb_flag : bool
+        True turns on colorbar, False no colorbar.
+    cb_lab : str
+        Colorbar label, None will use a default label generated from the
+        field information.
+    cb_orient : str
+        Orientation of colorbar (vertical or horizontal).
+
+    Output
+    ------
+    fig : Matplotlib figure instance
+    ax : Matplotlib Polar axis instance
+    p : Matplotlib plot instance
+
+    Notes
+    -----
+    Plotting convention is to project the data onto a 2D surface looking from the back of
+    aircraft forward.  X,Y,Z coordinates are a direct projection from polar to Cartesian
+    coordinates.
+
+    This mapping does NOT take into account corrections for roll, pitch, or drift of the
+    aircraft.
     """
 # HISTORY::
 #  15 Apr 2014 - Nick Guy NOAA/NSSL/WRDD, NRC 
@@ -348,40 +416,64 @@ def sweep_track_relative(Var,range,tilt,rot,roll,drift,pitch,ax=None,title=None,
                vmin=-24.,vmax=64.,cmap=None,mask_outside=True,grid_on=True,
                xlims=None,ylims=None,xlab=None,ylab=None,
                cb_flag=True,cb_orient='horizontal',cb_lab=None):
-    """Project native (polar) coordinate radar sweep data onto track-relative Cartesian coordinate grid.
-       See Lee et al. (1994) Journal of Atmospheric and Oceanic Technology for methodology and definitions..
- INPUT::
-  Var             = Data values to plot
-  range           = Range along ray
-  tilt            = Radar ray Tilt angle with respect to platform [degrees]
-  rot             = Rotation angle with respect to instrument [degrees]
-  roll            = Aircraft roll angle [degrees], right-wing down positive
-  drift           = Drift angle [degrees], between heading and track
-  pitch           = Pitch angle [degrees], nose up positive
+    """
+    Project native (polar) coordinate radar sweep data onto track-relative 
+    Cartesian coordinate grid.
+    See Lee et al. (1994) Journal of Atmospheric and Oceanic Technology 
+    for methodology and definitions.
+    Parameters
+    ----------
+    Var : float array
+        Data values to plot.
+    range : float array
+        Range along ray.
+    tilt : float array
+        Radar ray Tilt angle with respect to platform [degrees].
+    rot : float array
+        Rotation angle with respect to instrument [degrees].
+    roll : float array
+        Aircraft roll angle [degrees], right-wing down positive.
+    drift : float array
+        Drift angle [degrees], between heading and track.
+    pitch : float array
+        Pitch angle [degrees], nose up positive.
 
-       THESE NEXT VALUES CUSTOMIZE THE PLOT
-  vmin            = Minimum value to display
-  vmax            = Maximum value to display
-  cmap            = Matplotlib colormap name
-  mask_outside    = Boolean flag to mask values outside vmin/vmax
-  title           = Title to label plot with, if none given it is omitted
-  xlims           = X-axis limits (min,max)
-  ylims           = Y-axis limits (min,max)
-  cb_flag         = True turns on colorbar, False no colorbar
-  cb_lab          = Colorbar label, None will use a default label generated from the
-                     field information.
-  cb_orient       = Orientation of colorbar (vertical or horizontal)
- OUTPUT::
-  fig             = Figure to create plot to
-  ax              = Polar axis created
-  p               = Output plot
- USAGE::
-  p = sweep_track_relative(Var,range,tilt,rot,roll,drift,pitch,[**args])
- NOTES::
-  Plotting convention is to project the data onto a 2D surface looking from the back of
-   aircraft forward.  X,Y,Z coordinates are a rotation of the data about the aircraft
-   track, following a direct projection from polar to Cartesian coordinates.
-  This mapping corrects for roll, pitch, and drift of the aircraft.
+    THESE NEXT VALUES CUSTOMIZE THE PLOT
+    vmin : float
+        Minimum value to display.
+    vmax : float
+        Maximum value to display.
+    cmap : str
+        Matplotlib colormap name.
+    mask_outside : bool
+        True to mask values outside vmin/vmax.
+    title : str
+        Title to label plot with, if none given it is omitted.
+    xlims : tuple
+        X-axis limits (min,max).
+    ylims : tuple
+        Y-axis limits (min,max).
+    cb_flag : bool
+        True turns on colorbar, False no colorbar.
+    cb_lab : str
+        Colorbar label, None will use a default label generated from the
+        field information.
+    cb_orient : str
+        Orientation of colorbar (vertical or horizontal).
+
+    Output
+    ------
+    fig : Matplotlib figure instance
+    ax : Matplotlib Polar axis created
+    p : Matplotlib plot instance
+
+    Notes
+    -----
+    Plotting convention is to project the data onto a 2D surface looking from the back of
+    aircraft forward.  X,Y,Z coordinates are a rotation of the data about the aircraft
+    track, following a direct projection from polar to Cartesian coordinates.
+    
+    This mapping corrects for roll, pitch, and drift of the aircraft.
   This is considered a leveled, heading-relative coordinate system.
     """
 # HISTORY::
@@ -435,42 +527,69 @@ def sweep_earth_relative(Var,range,tilt,rot,roll,heading,pitch,ax=None,title=Non
                vmin=-24.,vmax=64.,cmap=None,mask_outside=True,grid_on=True,
                xlims=None,ylims=None,xlab=None,ylab=None,
                cb_flag=True,cb_orient='horizontal',cb_lab=None):
-    """Project native (polar) coordinate radar sweep data onto earth-relative Cartesian coordinate grid.
-       See Lee et al. (1994) Journal of Atmospheric and Oceanic Technology for methodology and definitions.
- INPUT::
-  Var             = Data values to plot
-  range           = Range along ray
-  tilt            = Radar ray Tilt angle with respect to platform [degrees]
-  rot             = Rotation angle with respect to instrument [degrees]
-  roll            = Aircraft roll angle [degrees], right-wing down positive
-  heading         = Heading angle [degrees], clockwise from North
-  pitch           = Pitch angle [degrees], nose up positive
+    """
+    Project native (polar) coordinate radar sweep data onto earth-relative 
+    Cartesian coordinate grid.
+    
+    See Lee et al. (1994) Journal of Atmospheric and Oceanic Technology 
+    for methodology and definitions.
+    
+    Parameters
+    ----------
+    Var : float array
+        Data values to plot.
+    range : float array
+        Range along ray.
+    tilt : float array
+        Radar ray Tilt angle with respect to platform [degrees].
+    rot : float array
+        Rotation angle with respect to instrument [degrees].
+    roll : float array
+        Aircraft roll angle [degrees], right-wing down positive.
+    heading : float array
+        Heading angle [degrees], clockwise from North.
+    pitch : float array
+        Pitch angle [degrees], nose up positive.
 
-       THESE NEXT VALUES CUSTOMIZE THE PLOT
-  vmin            = Minimum value to display
-  vmax            = Maximum value to display
-  cmap            = Matplotlib colormap name
-  mask_outside    = Boolean flag to mask values outside vmin/vmax
-  title           = Title to label plot with, if none given it is omitted
-  xlims           = X-axis limits (min,max)
-  ylims           = Y-axis limits (min,max)
-  cb_flag         = True turns on colorbar, False no colorbar
-  cb_lab          = Colorbar label, None will use a default label generated from the
-                     field information.
-  cb_orient       = Orientation of colorbar (vertical or horizontal)
- OUTPUT::
-  fig             = Figure to create plot to
-  ax              = Polar axis created
-  p               = Output plot
- USAGE::
-  p = sweep_earth_relative(Var,range,tilt,rot,roll,heading,pitch,[**args])
- NOTES::
-  Plotting convention is to project the data onto a 2D surface looking from the back of
-   aircraft forward.  X,Y,Z coordinates are a rotation of the data about an 
-   earth-relative azimuth, following a direct projection from polar to 
-   Cartesian coordinates.
-  This mapping corrects for roll, pitch, and drift of the aircraft.
-  This is considered a leveled, heading-relative coordinate system.
+    THESE NEXT VALUES CUSTOMIZE THE PLOT
+    vmin : float
+        Minimum value to display.
+    vmax : float
+        Maximum value to display.
+    cmap : str
+        Matplotlib colormap name.
+    mask_outside : bool
+        True to mask values outside vmin/vmax.
+    title : str
+        Title to label plot with, if none given it is omitted.
+    xlims : tuple
+        X-axis limits (min,max).
+    ylims : tuple
+        Y-axis limits (min,max).
+    cb_flag : bool
+        True turns on colorbar, False no colorbar.
+    cb_lab : str
+        Colorbar label, None will use a default label generated from the
+        field information.
+    cb_orient : str
+        Orientation of colorbar (vertical or horizontal).
+
+    Output
+    ------
+    fig : Figure to create plot to
+    ax : Polar axis created
+    p : Output plot
+
+    Notes
+    -----
+    Plotting convention is to project the data onto a 2D surface looking from the back of
+    aircraft forward.  X,Y,Z coordinates are a rotation of the data about an 
+    earth-relative azimuth, following a direct projection from polar to 
+    Cartesian coordinates.
+    
+    This mapping corrects for roll, pitch, and drift of the aircraft.
+    
+    This is considered a leveled, heading-relative coordinate system.
     """
 # HISTORY::
 #  15 Apr 2014 - Nick Guy NOAA/NSSL/WRDD, NRC 

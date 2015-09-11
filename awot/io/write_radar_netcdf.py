@@ -4,29 +4,23 @@ awot.io.write_radar_netcdf
 
 A group of scripts to write radar data to NetCDF.
 Especially that collected by the NOAA P-3 aircraft.
-Supports both tail Doppler and lower fuselage radars. 
+Supports both tail Doppler and lower fuselage radars.
 
-Created by Nick Guy.
-
+Note: This has only been tested with DYNAMO data files, versions
+may change and another function may be needed. 
 """
-# NOTES:: This has only been tested with DYNAMO data files, versions
-#         may change and another function may be needed.
-# HISTORY::
-#   8 Jan 2014 - Nick Guy.   NRC, NOAA/NSSL (nick.guy@noaa.gov)   
-#                Converted NCL functions below to Python
-#-------------------------------------------------------------------
 # Load the needed packages
 import netCDF4 as nc4
 import numpy as np
-#-------------------------------------------------------------------
-# Begin methods
+
 ######################
 # TDR file methods #
 ######################
 def radar2nc(radar, Outfile=None):
-    """Write a NetCDF data file with data in a radar dictionary.
-        
-    Parameters::
+    """
+    Write a NetCDF data file with data in a radar dictionary.
+
+    Parameters
     ----------
     radar : dict
         Dictionary of data retrieved from an input reader 
@@ -38,17 +32,17 @@ def radar2nc(radar, Outfile=None):
         Outfile = radar['metadata']['Flight_ID'].replace(" ", "") + '_windsyn'
     nc_fid = nc4.Dataset(Outfile + '.nc', 'w', format='NETCDF4')
     nc_fid.description = "Airborne radar data NetCDF"
-    
+
     # Define dimensions
     Imax = len(radar['longitude']['data'][:])
     Jmax = len(radar['latitude']['data'][:])
     Kmax = len(radar['height']['data'][:])
-    
+
     pid = nc_fid.createDimension('property', 1)
     xid = nc_fid.createDimension('lon', Imax)
     yid = nc_fid.createDimension('lat', Jmax)
     zid = nc_fid.createDimension('height', Kmax)
-    
+
     # Set global attributes
     nc_fid.source = radar['metadata']['source_file']
     nc_fid.creation_date = radar['metadata']['creation_date'].isoformat()
@@ -65,20 +59,20 @@ def radar2nc(radar, Outfile=None):
     nc_fid.End_datetime = radar['datetime_end'].isoformat() + 'Z'
     nc_fid.platform = radar['platform']
     nc_fid.instrument = radar['instrument']
-    
+
     # Create Output variables
     lonid = nc_fid.createVariable('Lon', np.float32, ('lon',))
     lonid.units = radar['longitude']['units']
     lonid.long_name = radar['longitude']['long_name']
-    
+
     latid = nc_fid.createVariable('Lat', np.float32, ('lat',))
     latid.units = radar['latitude']['units']
     latid.long_name = radar['latitude']['long_name']
-    
+
     htid = nc_fid.createVariable('Height', np.float32, ('height',))
     htid.units = radar['height']['units']
     htid.long_name = radar['height']['long_name']
-    
+
     # Loop through the fields to create variables for each
     for variable in radar['fields'].keys():
         if radar['fields'][variable] is not None:
@@ -87,6 +81,6 @@ def radar2nc(radar, Outfile=None):
             vid.long_name = radar['fields'][variable]['long_name']
             vid.fill_value = radar['fields'][variable]['_FillValue']
             vid[:] = radar['fields'][variable]['data'][:]
-        
+
     # Close the NetCDF file
     nc_fid.close()
