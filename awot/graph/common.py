@@ -547,26 +547,26 @@ def create_polar_fig_ax(nrows=1, ncols=1, figsize=(5, 5)):
        
 def get_masked_data(data, mask_procedure, mask_tuple):
     '''Get a masked variable from dictionary'''
-    if mask_procedure == 'less':
+    if mask_procedure.lower() == 'less':
         vmin = mask_tuple[1]
         data = np.ma.masked_less(data, vmin)
-    elif mask_procedure == 'less_equal':
+    elif mask_procedure.lower() == 'less_equal':
         vmin = mask_tuple[1]
         data = np.ma.masked_less_equal(data, vmin)
-    if mask_procedure == 'greater':
-        vmin = mask_tuple[1]
+    elif mask_procedure.lower() == 'greater':
+        vmax = mask_tuple[1]
         data = np.ma.masked_greater(data, vmax)
-    elif mask_procedure == 'greater_equal':
-        vmin = mask_tuple[1]
+    elif mask_procedure.lower() == 'greater_equal':
+        vmax = mask_tuple[1]
         data = np.ma.masked_greater_equal(data, vmax)
-    elif mask_procedure == 'equal':
-        veq = mask_tuple[1]
+    elif mask_procedure.lower() == 'equal':
+        vmeq = mask_tuple[1]
         data = np.ma.masked_equal(data, vmeq)
-    elif mask_procedure == 'inside':
+    elif mask_procedure.lower() == 'inside':
         vmin = mask_tuple[1]
         vmax = mask_tuple[2]
         data = np.ma.masked_inside(data, vmin, vmax)
-    elif mask_procedure == 'oustide':
+    elif mask_procedure.lower() == 'outside':
         vmin = mask_tuple[1]
         vmax = mask_tuple[2]
         data = np.ma.masked_outside(data, vmin, vmax)

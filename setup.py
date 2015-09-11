@@ -42,5 +42,5 @@ setup(name='awot',
       install_requires=['Numpy>=1.7.2',
                         'SciPy>=0.13.3',
                         'matplotlib>=1.3.1',
-                        'pyart'],
+                        ],
       )

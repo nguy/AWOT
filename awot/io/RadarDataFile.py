@@ -9,7 +9,7 @@ from ..io.read_ground_radar import read_radar as read_ground_radar
 from ..io.read_p3_radar import read_lf_grid, read_windsyn_tdr_netcdf 
 from ..io.read_p3_radar import read_tdr_sweep, read_windsyn_binary
 from ..io.read_latmos_falcon import rasta_radar, rasta_microphysics
-from ..io.read_wcr import read_wcr
+from ..io.read_uwka import read_wcr2
 
 ########################
 ## BEGIN MAIN CODE
@@ -20,9 +20,9 @@ def read_radar(filename=None, platform='p3', file_format='netcdf', instrument=No
     '''
     Takes a filename pointing to a aircraft radar data file
      and returns a RadarData object.
-        
-    Parameters::
-    ------------
+
+    Parameters
+    ----------
     filename : str
         Long path filename of data file.
     platform : str
@@ -48,18 +48,17 @@ def read_radar(filename=None, platform='p3', file_format='netcdf', instrument=No
     Add support for:
         Eldora X-band (historical) - should be similar to P3
         King Air/C-130 95 GHZ (Wyoming Cloud Radar; WCR)
-        
     '''
     if filename is None:
         print "Need to provide a filename!"
         return
-    
+
     reader = FileReader(filename=filename, platform=platform, 
                         file_format=file_format, instrument=instrument)
-    
+
     if initialize:
         RadarData = AirborneData(reader)
-    
+
         return RadarData
     else:
         return reader
@@ -70,7 +69,7 @@ class FileReader(object):
     '''
     FileReader class to process data files.  
     '''
-    
+
     def __init__(self, filename=None, platform=None, file_format='netcdf',
                  instrument=None):
 
@@ -81,7 +80,8 @@ class FileReader(object):
         its attributes.
         verbose: Set to True for text output. Useful for debugging.
         
-        OPTIONAL INPUT::
+        OPTIONAL INPUT
+        --------------
             filename : string
                 Filename (including path) of file to process
             platform : string
@@ -104,11 +104,10 @@ class FileReader(object):
                 'ground' - A ground-based radar system, read in using PyArt
                 'wcr' - Wyoming Cloud Radar, 
                         University of Wyoming King Air W-band ProSensing radar
-        
         """
 
         if isinstance(filename, str) != False:
-                
+
             if (platform.upper() == 'P3') or (platform.upper() == 'P-3') or \
             (platform.upper() == 'NOAA_P3') or \
             (platform.upper() == 'NOAA P3') or \
@@ -129,25 +128,25 @@ class FileReader(object):
                                 + "formats for sweep files")
                 elif instrument.lower() == 'lf':
                     radar = read_lf_grid(filename)
-                    
+
             elif platform.upper() == 'FALCON':
                 if instrument.lower() == 'radar':
                     radar = rasta_radar(filename)
                 elif instrument.lower() == 'microphysics':
                     radar = rasta_microphysics(filename)
-                
+
             elif (platform.upper() == 'C130') or \
             (platform.upper() == 'NCAR_C130') or \
             (platform.upper() == 'NCAR C130'):
                 print "Sorry not supported at this time"
-                
+
             elif (platform.upper() == 'KING AIR') or \
             (platform.upper() == 'KING_AIR') or \
             (platform.upper() == 'KINGAIR') or \
             (platform.upper() == 'KING-AIR') or \
             (platform.upper() == 'WCR'):
-                radar = read_wcr(filename)
-                
+                radar = read_wcr2(filename)
+
             elif (platform.upper() == 'GROUND'):
                 radar = read_ground_radar(filename)
 
@@ -155,10 +154,10 @@ class FileReader(object):
                 # Check to see if a ground instrument is being fed
                 if instrument.lower() == 'ground':
                     radar = read_ground_radar(filename)
-                
+
                 elif (instrument.lower() == 'wcr'):
-                    radar = read_wcr(filename)
-                
+                    radar = read_wcr2(filename)
+
                 else:
                     print "Check supported platform list: \
                            'p3' or 'p-3' - NOAA P-3 \
@@ -168,15 +167,11 @@ class FileReader(object):
                            'King Air' or 'King_Air' or 'WCR' - Wyoming Cloud Radar \
                            'Ground' - Any PyArt supported data format"
                     return
-            
+
             # Record the data into the variable 
             self.radar_data = radar
-            
+
         else:
             #Initializes class instance but leaves it to other methods to
             #populate the class attributes.
-            return 
-            
-
-            
-        
+            return
