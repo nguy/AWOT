@@ -9,11 +9,8 @@ from ..io.read_ground_radar import read_radar as read_ground_radar
 from ..io.read_p3_radar import read_lf_grid, read_windsyn_tdr_netcdf 
 from ..io.read_p3_radar import read_tdr_sweep, read_windsyn_binary
 from ..io.read_latmos_falcon import rasta_radar, rasta_microphysics
-from ..io.read_uwka import read_wcr2
+#from ..io.read_uwka import read_wcr2
 
-########################
-## BEGIN MAIN CODE
-########################
 
 def read_radar(filename=None, platform='p3', file_format='netcdf', instrument=None,
                initialize=False ):
@@ -62,26 +59,21 @@ def read_radar(filename=None, platform='p3', file_format='netcdf', instrument=No
         return RadarData
     else:
         return reader
-###################################################
+
 
 class FileReader(object):
-
-    '''
-    FileReader class to process data files.  
-    '''
-
+    '''FileReader class to process data files.'''
     def __init__(self, filename=None, platform=None, file_format='netcdf',
                  instrument=None):
-
         """
         If initialized with a filename (incl. path), will call
         ***_read_flight() to populate the class instance.
         If not, it simply instances the class but does not populate
         its attributes.
         verbose: Set to True for text output. Useful for debugging.
-        
-        OPTIONAL INPUT
-        --------------
+
+        Parameters
+        ----------
             filename : string
                 Filename (including path) of file to process
             platform : string
@@ -105,9 +97,7 @@ class FileReader(object):
                 'wcr' - Wyoming Cloud Radar, 
                         University of Wyoming King Air W-band ProSensing radar
         """
-
         if isinstance(filename, str) != False:
-
             if (platform.upper() == 'P3') or (platform.upper() == 'P-3') or \
             (platform.upper() == 'NOAA_P3') or \
             (platform.upper() == 'NOAA P3') or \

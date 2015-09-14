@@ -7,6 +7,7 @@ observations taken by aircraft.
 Authors:
 
 Nick Guy (nick.guy@uwyo.edu)
+
 Andrew Lyons
 
 Created:  11 Sep 2014   Refactored various scripts into a dedicated package

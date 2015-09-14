@@ -312,7 +312,7 @@ class RadarHorizontalPlot(object):
         
         # Grab the variable dictionary of interest to plot
         if field is None:
-            field = 'dBZ'
+            field = 'reflectivity'
             
         # Return masked or unmasked variable
         Var, Data = self._get_variable_dict_data(field)

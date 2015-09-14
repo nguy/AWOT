@@ -27,7 +27,7 @@ package_dirs = {'awot'}
 
 #- Run setup
 setup(name='awot',
-      version='0.1.1',
+      version='0.1.4',
       author='Nick Guy',
       author_email='nick.guy@noaa.gov',
       packages=packages,
@@ -39,8 +39,8 @@ setup(name='awot',
       long_description="""A toolkit that contains utilities to analyze and 
       visualize observational data by aircraft.
         """,
-      install_requires=['Numpy>=1.7.2',
-                        'SciPy>=0.13.3',
-                        'matplotlib>=1.3.1',
-                        ],
+#      install_requires=['Numpy>=1.7.2',
+#                        'SciPy>=0.13.3',
+#                        'matplotlib>=1.3.1',
+#                        ],
       )

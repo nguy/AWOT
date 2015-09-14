@@ -4,11 +4,7 @@ awot.io.read_citation_flight
 
 This is a grouping of scripts designed to process University of
  North Dakota Citation flight level data recorded during flights 
- and NASA Ames Ascii format
-
-Author::
-    6 Aug 2014 - Created by Nick Guy, OU CIMMS/ Univ of Miami.
-
+ and NASA Ames Ascii format.
 """
 # NOTES:: This has only been tested with DYNAMO data files, versions
 #         may change and another function may be needed.
@@ -26,10 +22,12 @@ import pytz
 def flight_data(fname):
     """Read in data from NASA Ames formatted ASCII file containing the
         University of North Dakota Citation aircraft flight level data
-    INPUT::
+    Parameters
+    ----------
         fname : string
             Filename [string]
-    OUTPUT::
+    Output
+    ------
         data : Dictionary of the following values
             Lat : float
                 Aircraft latitude [deg]
@@ -79,11 +77,7 @@ def flight_data(fname):
                 Platform name
             flightnum : str
                 Flight number
-       
-    USAGE::
-     data = flight_track(fname)
     """
-#---------------------------------------------------
     # Read the file
     FileIn = nappy.openNAFile(fname)
     
@@ -92,10 +86,10 @@ def flight_data(fname):
         print "Check if this is a UND Citation file!"
         FilenIn.close()
         return
-        
+
     # Get the whole file as a dictionary (NA = NASA Ames)
     NA_dict = FileIn.getNADict()
-    
+
     # Pull out global attributes
     project = NA_dict['MNAME']
     platform = NA_dict['SNAME']
@@ -112,11 +106,11 @@ def flight_data(fname):
     # Get the data columns
     junk = np.genfromtxt(fname, skiprows=hdr_row_length, 
                           missing_values=missingData, filling_values=np.nan)
-    
+
     # Get the variable names
     # This assumes that there are 4 lines of normal comments and that the 
     VarNames = NA_dict['NCOM'][2].split()
-    
+
     # Pull out each variable data and multiply by scale factor
     Lat = np.array(junk[:,VarNames.index("POS_Lat")] \
                * scaleFactor[VarNames.index("POS_Lat")])
@@ -164,20 +158,20 @@ def flight_data(fname):
                 * scaleFactor[VarNames.index("2-DC_EffRad")])
     Nt_CPC = np.array(junk[:,VarNames.index("CPCConc")] \
                 * scaleFactor[VarNames.index("CPCConc")])
-    
+
     # Create a time array 
     TimeSec = junk[:,VarNames.index("Time")]
-    
+
     # Get the date
     Date = NA_dict['DATE']
     DateStr = str(Date[0])+'-'+str(Date[1])+'-'+str(Date[2])
-    
+
     # Create a datetime instance from file
     Time_dt = num2date(TimeSec, 'seconds since '+DateStr+' 00:00:00+0:00')
 
     # Now move this back into number format
     TimeNum = date2num(Time_dt, 'seconds since 1970-1-1 00:00:00+0:00')
-    
+
     # Finally convert this back to a standard used by this package (Epoch)
     Time_unaware = num2date(TimeNum,'seconds since 1970-1-1 00:00:00+0:00')
     Time = Time_unaware#.replace(tzinfo=pytz.UTC)
@@ -236,73 +230,6 @@ def flight_data(fname):
             'platform': platform,
             'flight_number': Date,
             }
-            
+
     FileIn.close()
-
     return data 
-    
-#**====================================================
-
-def flight_track(fname):
-    """Read in data from NetCDF file containing P3 flight level data created
-    by NOAA AOC.  Pull out the needed variables for flight track info.
-    INPUT::
-     fname : string
-         Filename [string]
-    OUTPUT::
-     data : Dictionary of the following values
-       Lat : float
-           Aircraft latitude
-       Lon : float
-           Aircraft longitude
-       Alt : float
-           Aircraft altitude
-       PAlt : float
-           Aircraft pressure altitude
-       Time : float
-           Aircraft time array
-    USAGE::
-     data = flight_track(fname)
-    """
-#---------------------------------------------------
-    # Read the NetCDF
-    ncFile = Dataset(fname,'r')
-    
-    # Pull out each variable
-    Lat = np.array(junk[:,VarNames.index("POS_Lat")])
-    Lon = np.array(junk[:,VarNames.index("POS_Lon")])
-    Alt = np.array(junk[:,VarNames.index("POS_Alt")])
-    PAlt = np.array(junk[:,VarNames.index("Press_Alt")])
-    
-    # Create a time array 
-    TimeSec = junk[:,VarNames.index("Time")]
-    
-    # Get the date
-    Date = NA_dict['DATE']
-    DateStr = str(Date[0])+'-'+str(Date[1])+'-'+str(Date[2])
-    
-    # Create a datetime instance from file
-    Time_dt = num2date(TimeSec, 'seconds since '+DateStr+' 00:00:00+0:00')
-    
-    # Now move this back into number format
-    TimeNum = date2num(Time_dt, 'seconds since 1970-1-1 00:00:00+0:00')
-    
-    # Finally convert this back to a standard used by this package (Epoch)
-    Time_unaware = num2date(TimeSec,'seconds since 1970-1-1 00:00:00+0:00')
-    Time = Time_unaware#.replace(tzinfo=pytz.UTC)
-    
-    # Now mask missing values
-    np.ma.masked_invalid(Lat)
-    np.ma.masked_invalid(Lon)
-    np.ma.masked_invalid(Alt)
-    np.ma.masked_invalid(PAlt)
-
-    # Create a dictionary to transfer the data
-    data = {'latitude': Lat,
-            'longitude': Lon,
-            'altitude': Alt,
-            'pressure_altitude': PAlt,
-            'time': Time}
-    
-    return data
-
