@@ -140,7 +140,7 @@ def read_windsyn_tdr_netcdf(fname, mapping=None):
     return radar
 
 
-def tdr_grid_variable(fname,Rec):
+def read_tdr_grid_variable(fname,Rec):
     """
     Read in a variable from a gridded NetCDF file 
     containing NOAA P-3 tail Doppler radar fields.

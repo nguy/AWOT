@@ -175,9 +175,9 @@ def _get_wcl_name_map():
                'attitude': 'BeamVector'
                }
 
-      ; get the id's of the variables to be read    
-  Time_id=ncdf_varid(cdfid,'Time')
-  timeSec_id=ncdf_varid(cdfid,'time')
+    # get the id's of the variables to be read    
+    Time_id=ncdf_varid(cdfid,'Time')
+    timeSec_id=ncdf_varid(cdfid,'time')
 
     return name_map
     

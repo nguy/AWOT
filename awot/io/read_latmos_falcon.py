@@ -15,27 +15,17 @@ import datetime
 import numpy as np
 import pytz
 
-def flight_data(fname):
-    '''A wrapper to call the rasta_dynamic.'''
-    data = rasta_dynamic(fname)
+def read_rasta_wind(fname):
+    '''A wrapper to call the read_rasta_dynamic module.'''
+    data = read_rasta_dynamic(fname)
     return data
 
-def rasta_wind(fname):
-    '''A wrapper to call the rasta_dynamic module.'''
-    data = rasta_dynamic(fname)
+def read_rasta_radar(fname):
+    '''A wrapper to call the read_rasta_dynamic module.'''
+    data = read_rasta_dynamic(fname)
     return data
 
-def rasta_radar(fname):
-    '''A wrapper to call the rasta_dynamic module.'''
-    data = rasta_dynamic(fname)
-    return data
-
-def rasta_radonvar(fname):
-    '''A wrapper to call the rasta_microphysics module.'''
-    data = rasta_microphysics(fname)
-    return data
-
-def rasta_dynamic(fname):
+def read_rasta_dynamic(fname):
     '''
     Read in NetCDF data file containing Falcon dynamic properties 
     retrieved from radar measurements.
@@ -171,7 +161,7 @@ def rasta_dynamic(fname):
     return data
 
 
-def rasta_microphysics(fname):
+def read_rasta_microphysics(fname):
     '''
     Read in NetCDF data file containing Falcon microphysical properties.
 
@@ -313,7 +303,6 @@ def _get_dynamic_flight_name_map():
     name_map = {
                'latitude': 'latitude',
                'longitude': 'longitude',
-               'height': 'height',
                'altitude': 'altitude',
                'temperature': 'temperature',
                'pressure': 'pressure',
@@ -385,7 +374,7 @@ def _get_latmos_time(fname, ncFile, Good_Indices):
     Time = Time_unaware#.replace(tzinfo=pytz.UTC)
     return Time
 
-def _nc_var_masked(ndFile, ncvar, Good_Indices):
+def _nc_var_masked(ncFile, ncvar, Good_Indices):
     """Convert a NetCDF variable into a masked variable."""
     d = ncFile.variables[ncvar][Good_Indices]
     np.ma.masked_invalid(d)
