@@ -20,7 +20,7 @@ from mpl_toolkits.mplot3d import axes3d
 from matplotlib import ticker
 import numpy as np
 
-import awot2.graph.common as common
+import awot.graph.common as common
 
 def polar_sweep(Var,rot,range,nlevs=30,
                vmin=None,vmax=None,cmap=None,mask_outside=True,
