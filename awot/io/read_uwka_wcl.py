@@ -10,10 +10,12 @@ Tested 17 Aug 2015, may not be fully functional.
 # NOTES:: Testing was done on test data from 2014 flights.
 
 # Load the needed packages
+from __future__ import print_function
 from netCDF4 import Dataset, num2date, date2num
 import datetime
 import numpy as np
 import pytz
+
 
 def read_wcl(fname):
     '''
@@ -33,8 +35,8 @@ def read_wcl(fname):
             Aircraft longitude [decimal degrees]
         height : float
             Height of center of radar range gate [km]
-	    altitude : float
-    	    Aircraft altitude via GPS [km]
+            altitude : float
+            Aircraft altitude via GPS [km]
         tas : float
             Platform true airspeed [m/s]
         ground_speed : float
@@ -49,13 +51,13 @@ def read_wcl(fname):
             In situ wind component at platform altitude along WCR beam
             Positive is away from radar
 
-	    fields : Dictionary of variables in file
-    	    dBZ : float
-        	    Radar Equivalent Reflectivity Factor [dBZ]
-	        velocity : float
-    	        Mean Doppler radial velocity [m/s]
-	        mask : int
-    	        Target mask, see variable for notes
+            fields : Dictionary of variables in file
+            dBZ : float
+                    Radar Equivalent Reflectivity Factor [dBZ]
+                velocity : float
+                Mean Doppler radial velocity [m/s]
+                mask : int
+                Target mask, see variable for notes
         metadata : Dictionary of global attributes in file
         project : str
             Project Name
@@ -68,7 +70,7 @@ def read_wcl(fname):
     data = {}
 
     # Read the NetCDF
-    ncFile = Dataset(fname,'r')
+    ncFile = Dataset(fname, 'r')
     ncvars = ncFile.variables
 
     # Grab the metadata stored in global attributes as a dictionary
@@ -88,15 +90,16 @@ def read_wcl(fname):
     # Loop through the variables and pull data
     for varname in name_map_data:
         if name_map_data[varname] in ncvars:
-            data[varname] = _nc_var_masked(ncFile, name_map_data[varname], Good)
+            data[varname] = _nc_var_masked(
+                ncFile, name_map_data[varname], Good)
         else:
             data[varname] = None
-            print name_map_data[varname] + " does not exist in file..."
+            print(name_map_data[varname] + " does not exist in file...")
 
     if 'altrange' in ncvars:
         data['height'] = _nc_radar_var_to_dict(ncvars['altrange'], Good)
     else:
-        print "No height variable in the file"
+        print("No height variable in the file")
 
     # Add fields to their own dictionary
     fields = {}
@@ -107,11 +110,12 @@ def read_wcl(fname):
     # Loop through the variables and pull data
     for varname in name_map_fields:
         if name_map_fields[varname] in ncvars:
-            fields[varname] = _nc_radar_var_to_dict(ncvars[name_map_fields[varname]], Good)
-            print "Found " + name_map_fields[varname]
+            fields[varname] = _nc_radar_var_to_dict(
+                ncvars[name_map_fields[varname]], Good)
+            print("Found " + name_map_fields[varname])
         else:
             fields[varname] = None
-            print name_map_fields[varname] + " does not exist in file..."
+            print(name_map_fields[varname] + " does not exist in file...")
 
     # Save to output dictionary
     data['fields'] = fields
@@ -145,12 +149,13 @@ def read_wcl(fname):
 # Create Variable methods #
 ###########################
 
+
 def _get_wcl_name_map():
     '''Map out names used in RASTA microphysics NetCDF files to AWOT'''
     name_map = {
-               'latitude': 'LAT',
-               'longitude': 'LON',
-               'tas': 'TAS',
+        'latitude': 'LAT',
+        'longitude': 'LON',
+        'tas': 'TAS',
                'ground_speed': 'GS',
                'altitude': 'ALT',
                'range': 'Range',
@@ -173,14 +178,14 @@ def _get_wcl_name_map():
                'cross_saturation': 'CrossSatur',
                'zenith': 'Zenith',
                'attitude': 'BeamVector'
-               }
+    }
 
-    # get the id's of the variables to be read    
-    Time_id=ncdf_varid(cdfid,'Time')
-    timeSec_id=ncdf_varid(cdfid,'time')
+    # get the id's of the variables to be read
+    Time_id = ncdf_varid(cdfid, 'Time')
+    timeSec_id = ncdf_varid(cdfid, 'time')
 
     return name_map
-    
+
 
 def _get_wcr_field_name_map():
     '''
@@ -190,18 +195,21 @@ def _get_wcr_field_name_map():
         'wcrmask'      : Target mask
     '''
     name_map = {
-               'reflectivity': 'reflectivity',
-               'velocity': 'velocity',
-               'mask': 'wcrmask',
-               }
+        'reflectivity': 'reflectivity',
+        'velocity': 'velocity',
+        'mask': 'wcrmask',
+    }
     return name_map
+
 
 def _get_time(fname, ncFile, Good_Indices):
     """Pull the time from RASTA file and convert to AWOT useable."""
     # Pull out the date, convert the date to a datetime friendly string
     # Now convert the time array into a datetime instance
-    Time = num2date(ncFile.variables['time'][Good_Indices], 'seconds since 1970-01-01 00:00:00+0:00')
+    Time = num2date(ncFile.variables['time'][
+                    Good_Indices], 'seconds since 1970-01-01 00:00:00+0:00')
     return Time
+
 
 def _nc_var_masked(ncFile, ncvar, Good_Indices):
     """Convert a NetCDF variable into a masked variable."""
@@ -209,8 +217,9 @@ def _nc_var_masked(ncFile, ncvar, Good_Indices):
     np.ma.masked_invalid(d)
     return d
 
+
 def _nc_radar_var_to_dict(ncvar, Good_Indices):
-    """ Convert a NetCDF Dataset variable to a dictionary. 
+    """ Convert a NetCDF Dataset variable to a dictionary.
     Appropriated from PyArt package.
     """
     d = dict((k, getattr(ncvar, k)) for k in ncvar.ncattrs())

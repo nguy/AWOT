@@ -3,20 +3,22 @@ awot.io.read_ground_radar
 =========================
 
 These scripts are a wrapper using the pyart interface to access a large
-number of file formats.  
-.  
+number of file formats.
+.
 
 """
 # Load the needed packages
 import pyart
 
-def read_ground_radar(fname, map_to_awot=True, instrument=None, platform=None):
+
+def read_ground_radar(fname, map_to_awot=True,
+                      instrument=None, platform=None):
     """
     A wrapper using the Py-ART read interface.
-    
-    In this structure the 'fields' attribute will be 
+
+    In this structure the 'fields' attribute will be
     structured as in the PyArt package.
-    
+
     Parameters
     ----------
     fname : string
@@ -39,14 +41,14 @@ def read_ground_radar(fname, map_to_awot=True, instrument=None, platform=None):
 
         # Create a dictionary to transfer the data
         radar = {'metadata': rad.metadata,
-                'longitude': rad.longitude,
-                'latitude': rad.latitude,
-                'height': rad.altitude,
-                'fields': fields,
-                'platform': rad.metadata['instrument_name'],
-                'instrument': rad.metadata['instrument_name'],
-                'data_format': 'ground'
-                }
+                 'longitude': rad.longitude,
+                 'latitude': rad.latitude,
+                 'height': rad.altitude,
+                 'fields': fields,
+                 'platform': rad.metadata['instrument_name'],
+                 'instrument': rad.metadata['instrument_name'],
+                 'data_format': 'ground'
+                 }
         if instrument is not None:
             radar['instrument'] = instrument
         if platform is not None:
