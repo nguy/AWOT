@@ -13,13 +13,12 @@ import numpy as np
 import scipy.ndimage as scim
 
 from .common import find_nearest_indices, get_masked_data
-from .common import _check_basemap
+from .common import (_check_basemap, _get_earth_radius,
+                     _parse_ax_fig, _parse_ax)
 
 from .radar_3d import Radar3DPlot
 from .radar_vertical import RadarVerticalPlot
 
-# Define various constants that may be used for calculations
-RE = 6371.  # Earth radius (average)
 # ==============================================================
 # BEGIN FUNCTIONS
 # ==============================================================
@@ -105,7 +104,7 @@ class RadarHorizontalPlot(object):
         Defaults are established during DYNAMO project analysis.
         """
         # parse parameters
-        ax, fig = self._parse_ax_fig(ax, fig)
+        ax, fig = _parse_ax_fig(ax, fig)
 
         # Grab the variable dictionary of interest to plot
         Var = self.fields[field]
@@ -187,7 +186,7 @@ class RadarHorizontalPlot(object):
         V  is Perpendicular aircraft longitudinal axis wind.
         """
         # parse parameters
-        ax, fig = self._parse_ax_fig(ax, fig)
+        ax, fig = _parse_ax_fig(ax, fig)
 
         # Find the closest vertical point for desired wind field
         Htind = find_nearest_indices(self.height['data'][:], height_level)
@@ -266,7 +265,7 @@ class RadarHorizontalPlot(object):
             Figure on which to add the plot. None will use the current figure.
         """
         # parse parameters
-        ax, fig = self._parse_ax_fig(ax, fig)
+        ax, fig = _parse_ax_fig(ax, fig)
 
         # Grab the variable dictionary of interest to plot
         if field is None:
@@ -375,7 +374,7 @@ class RadarHorizontalPlot(object):
         """
         # parse parameters
         if ax is None:
-            ax = self._parse_ax(ax)
+            ax = _parse_ax(ax)
 
         x, y = self.basemap(line_lons, line_lats)
         self.basemap.plot(x, y, line_style, lw=lw, alpha=alpha, ax=ax)
@@ -514,27 +513,3 @@ class RadarHorizontalPlot(object):
         # Calculate the relative position
         pos = (value - self.longitude['data'][0]) / dp
         return pos
-
-########################
-#   Parsing methods   ##
-########################
-
-    def _parse_ax_fig(self, ax, fig):
-        """Parse and return ax and fig parameters."""
-        if ax is None:
-            ax = plt.gca()
-        if fig is None:
-            fig = plt.gcf()
-        return ax, fig
-
-    def _parse_ax(self, ax):
-        """Parse and return ax and fig parameters."""
-        if ax is None:
-            ax = plt.gca()
-        return ax
-
-    def _parse_fig(self, fig):
-        """ Parse and return ax and fig parameters."""
-        if fig is None:
-            fig = plt.gcf()
-        return fig

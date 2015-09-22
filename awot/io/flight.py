@@ -229,9 +229,9 @@ def _uwka_name_map():
 
 def _get_time(ncFile):
     # Pull out the start time
-    try:
+    if 'base_time' in ncFile.variables.keys():
         TimeSec = ncFile.variables['base_time'][:]
-    except:
+    elif 'time' in ncFile.variables.keys():
         TimeSec = ncFile.variables['time'][:]
     else:
         StartTime = ncFile.StartTime

@@ -20,10 +20,11 @@ from matplotlib.dates import DateFormatter, date2num
 from matplotlib import ticker
 import scipy.ndimage as scim
 
-from .common import _check_basemap, _get_earth_radius
-from .common import plot_polar_contour, get_masked_data
-from .common import _get_start_datetime, _get_end_datetime
-from .common import contour_date_ts
+from .common import (_check_basemap, _get_earth_radius,
+                     _parse_ax_fig, _parse_ax,
+                     plot_polar_contour, get_masked_data,
+                     _get_start_datetime, _get_end_datetime,
+                     contour_date_ts)
 from .coord_transform import radar_coords_to_cart_track_relative, \
     radar_coords_to_cart_earth_relative, radar_coords_to_cart_aircraft_relative
 
@@ -35,33 +36,48 @@ from .coord_transform import radar_coords_to_cart_track_relative, \
 class RadarSweepPlot(object):
     """Class to create plot from radar sweep data in RHI format."""
 
-    def __init__(self, radar, basemap=None, instrument=None):
+    def __init__(self, radar, map_type=None, basemap=None):
         '''Intitialize the class to create plots.'''
         # Check the instrument to see how to import airborne class
-        if instrument is None:
-            print("Trying tail Doppler radar, please specify instrument type!")
-            instrument = 'tdr_sweep'
-        elif instrument == 'tdr_sweep':
-            radar_data = airborne.tdr_sweep_radar_data
-        elif instrument == 'tdr_grid':
-            print("Use the radar_grid library (RadarHorizontalPlotPlot class)")
-            return
+        if radar['data_format'] is not 'tdr_sweep':
+            print("Check file type, procedure may not work!")
 
         # Now initialize the RadarHorizontalPlot Class
         self.radar = radar
         self.basemap = basemap
-        self.longitude = self.radar.longitude
-        self.latitude = self.radar.latitude
-        self.altitude = self.radar.altitude
-        self.fields = self.radar.fields
-        self.range = self.radar.range
-        self.rotation = self.radar.rotation
-        self.drift = self.radar.drift
-        self.heading = self.radar.heading
-        self.pitch = self.radar.pitch
-        self.roll = self.radar.roll
-        self.tilt = self.radar.tilt
-        _check_basemap(self)
+        
+        try:
+            self.radar['data_format']
+            map_type = 'awot'
+        except:
+            map_type = 'pyart'
+
+        if map_type is 'awot':
+            self.longitude = self.radar['longitude']
+            self.latitude = self.radar['latitude']
+            self.altitude = self.radar['altitude']
+            self.fields = self.radar['fields']
+            self.range = self.radar['range']
+            self.rotation = self.radar['rotation']
+            self.drift = self.radar['drift']
+            self.heading = self.radar['heading']
+            self.pitch = self.radar['pitch']
+            self.roll = self.radar['roll']
+            self.tilt = self.radar['tilt']
+#            _check_basemap(self)
+        elif map_type is 'pyart':
+            self.longitude = self.radar.longitude
+            self.latitude = self.radar.latitude
+            self.altitude = self.radar.altitude
+            self.fields = self.radar.fields
+            self.range = self.radar.range
+            self.rotation = self.radar.rotation
+            self.drift = self.radar.drift
+            self.heading = self.radar.heading
+            self.pitch = self.radar.pitch
+            self.roll = self.radar.roll
+            self.tilt = self.radar.tilt
+#            _check_basemap(self)
 
 ################################
 #   Plotting generate method  ##
@@ -699,7 +715,7 @@ class RadarVerticalPlot(object):
             self.time = self.radar['time']
         except:
             print("Warning: No time variable found")
-        _check_basemap(self)
+#        _check_basemap(self)
 
 #############################
 #  Vertical plot methods  ##
@@ -1249,34 +1265,3 @@ class MicrophysicalVerticalPlot(object):
         # Calculate the relative position
         pos = (value - self.longitude['data'][0]) / dp
         return pos
-
-######################
-#   Shared methods  ##
-######################
-
-
-def _parse_ax_fig(ax, fig):
-    """Parse and return ax and fig parameters."""
-    if ax is None:
-        ax = plt.gca()
-    else:
-        ax = ax
-    if fig is None:
-        fig = plt.gcf()
-    else:
-        fig = fig
-    return ax, fig
-
-
-def _parse_ax(ax):
-    """Parse and return ax and fig parameters."""
-    if ax is None:
-        ax = plt.gca()
-    return ax
-
-
-def _parse_fig(fig):
-    """Parse and return ax and fig parameters."""
-    if fig is None:
-        fig = plt.gcf()
-    return fig
