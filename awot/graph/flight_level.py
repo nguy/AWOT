@@ -22,33 +22,89 @@ from matplotlib import ticker
 from datetime import datetime
 import scipy.ndimage as scim
 
-from .common import plot_date_ts, contour_date_ts
+from .common import (plot_date_ts, contour_date_ts, _get_earth_radius,
+                     _check_basemap, _parse_ax_fig, _parse_ax)
 
 
 class FlightLevel(object):
     """Class for flight level plots."""
 
-    def __init__(self, flightdata, basemap=None):
-        '''Intitialize the class to create plots'''
-        self.longitude = flightdata['longitude']
-        self.latitude = flightdata['latitude']
-        self.altitude = flightdata['altitude']
+    def __init__(self, flightdata, basemap=None,
+                 lon_name=None, lat_name=None,
+                 alt_name=None, time_name=None,
+                 uwind_name=None, vwind_name=None,
+                 ):
+        '''
+        Intitialize the class to create plots.
+        
+        Parameters
+        ----------
+        flightdata : dict
+            AWOT flight data dictionary instance.
+        basemap : basemap instance
+            Basemap instance to use for plotting.
+        lon_name : str
+            Variable name to use for longitude array.
+            None uses AWOT default mapping.
+        lat_name : str
+            Variable name to use for latitude array.
+            None uses AWOT default mapping.
+        alt_name : str
+            Variable name to use for altitude array.
+            None uses AWOT default mapping.
+        time_name : str
+            Variable name to use for time array.
+            None uses AWOT default mapping.
+        uwind_name : str
+            Variable name to use for zonal wind array.
+            None uses AWOT default mapping.
+        vwind_name : str
+            Variable name to use for meridional wind array.
+            None uses AWOT default mapping.
+        '''
+        if lon_name is None:
+            lonkey = 'longitude'
+        else:
+            lonkey = lon_name
+        if lat_name is None:
+            latkey = 'latitude'
+        else:
+            latkey = lat_name
+        if alt_name is None:
+            altkey = 'altitude'
+        else:
+            altkey = alt_name
+        if time_name is None:
+            timekey = 'time'
+        else:
+            timekey = time_name
+        if uwind_name is None:
+            ukey = 'Uwind'
+        else:
+            ukey = uwind_name
+        if vwind_name is None:
+            vkey = 'Vwind'
+        else:
+            vkey = vwind_name
+        self.longitude = flightdata[lonkey]
+        self.latitude = flightdata[latkey]
+        self.altitude = flightdata[altkey]
         self.flight_number = flightdata['flight_number']
         self.project = flightdata['project']
         self.platform = flightdata['platform']
-        self.Uwind = flightdata['Uwind']
-        self.Vwind = flightdata['Vwind']
-        self.time = flightdata['time']
+        self.Uwind = flightdata[ukey]
+        self.Vwind = flightdata[vkey]
+        self.time = flightdata[timekey]
         self.flight_data = flightdata
         self.basemap = basemap
-        self._check_basemap()
+        _check_basemap(self)
 
         # Calculate x,y map position coordinates
         self.x, self.y = self.basemap(self.longitude, self.latitude)
 
-###################
-#   Track plots   #
-###################
+#################
+#  Track plots  #
+#################
 
     def plot_trackmap(
             self, color_by_altitude=False, track_cmap='spectral',
@@ -117,7 +173,7 @@ class FlightLevel(object):
           see Basemap and Matplotlib.
         """
         # parse parameters
-        ax, fig = self._parse_ax_fig(ax, fig)
+        ax, fig = _parse_ax_fig(ax, fig)
 
         # Check inputs
         if legLab is None:
@@ -239,7 +295,7 @@ class FlightLevel(object):
             field = 'temperature'
 
         # parse parameters
-        ax, fig = self._parse_ax_fig(ax, fig)
+        ax, fig = _parse_ax_fig(ax, fig)
 
         # Get start and end times (this deals with subsets)
         dt_start = self._get_datetime(start_time, get_start=True)
@@ -373,7 +429,7 @@ class FlightLevel(object):
             Figure which to add the plot. None will use the current figure.
         '''
         # parse parameters
-        ax, fig = self._parse_ax_fig(ax, fig)
+        ax, fig = _parse_ax_fig(ax, fig)
 
         # Get start and end times (this deals with subsets)
         dt_start = self._get_datetime(start_time, get_start=True)
@@ -415,9 +471,9 @@ class FlightLevel(object):
                 xsDist[ii] = 0.
             else:
                 Xdist[ii] = np.absolute(
-                    (np.pi * RE / 180.) * (lonSub[ii] - lonSub[ii - 1]))
+                    (np.pi * _get_earth_radius() / 180.) * (lonSub[ii] - lonSub[ii - 1]))
                 Ydist[ii] = np.absolute(
-                    (np.pi * RE / 180.) * (latSub[ii] - latSub[ii - 1]))
+                    (np.pi * _get_earth_radius() / 180.) * (latSub[ii] - latSub[ii - 1]))
                 xsDist[ii] = (np.sqrt(Xdist[ii]**2 + Ydist[ii]**2)
                               ) + xsDist[ii - 1]
 
@@ -476,9 +532,9 @@ class FlightLevel(object):
         # Add title
         ax.set_title(title, fontsize=title_size)
 
-##############################
-#   Basemap add-on methods   #
-##############################
+############################
+#  Basemap add-on methods  #
+############################
 
     def draw_boundary(self, **kwargs):
         """
@@ -679,7 +735,7 @@ class FlightLevel(object):
             Axis on which to plot.
         """
         # parse parameters
-        ax = self._parse_ax(ax)
+        ax = _parse_ax(ax)
 
         # Only plot every nth barb from the barbspacing parameter
         lon_offset, lat_offset = label_offset
@@ -746,7 +802,7 @@ class FlightLevel(object):
         """
 
         # parse parameters
-        ax = self._parse_ax(ax)
+        ax = _parse_ax(ax)
 
         # Only plot every nth barb from the barbspacing parameter
         lon_offset, lat_offset = label_offset
@@ -780,9 +836,9 @@ class FlightLevel(object):
             ax.text(xpos_text, ypos_text, label_text,
                     fontsize=size, color=color)
 
-###########################
-#   Time Series methods   #
-###########################
+#########################
+#  Time Series methods  #
+#########################
 
     def plot_timeseries(
             self, field, color='k', marker='o', msize=1.5, lw=2,
@@ -843,7 +899,7 @@ class FlightLevel(object):
             Axis on which to plot.
         """
         # parse parameters
-        ax = self._parse_ax(ax)
+        ax = _parse_ax(ax)
 
         # Get the subsetted data
         tSub, VarSub = self._get_time_var_time_subset(
@@ -886,7 +942,7 @@ class FlightLevel(object):
             (e.g. 2014-08-20 16:30:00)
         """
         # parse parameters
-        ax = self._parse_ax(ax)
+        ax = _parse_ax(ax)
 
         # Get the subsetted data
         tSub, VarSub = self._get_time_var_time_subset(
@@ -972,7 +1028,7 @@ class FlightLevel(object):
             Axis on which to plot.
         """
         # parse parameters
-        ax = self._parse_ax(ax)
+        ax = _parse_ax(ax)
         # Create contour level array
         clevels = np.linspace(vmin, vmax, clevs)
 
@@ -992,9 +1048,9 @@ class FlightLevel(object):
             ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad, ax=ax)
         return
 
-####################
-#   Line methods   #
-####################
+##################
+#  Line methods  #
+##################
     # Original Multiline color plotting found at
     # http://nbviewer.ipython.org/github/dpsanders/matplotlib-examples/blob/master/colorline.ipynb
     # Modified for this class#
@@ -1112,9 +1168,9 @@ class FlightLevel(object):
             self.basemap.plot(lon, lat, color=mcol, latlon=True,
                               marker=mstyle, markersize=msize)
 
-    ##################
-    # Get methods    #
-    ##################
+#################
+#  Get methods  #
+#################
 
     def _get_datetime(self, time_string, get_start=False, get_end=False):
         '''Get a start time as datetime instance for subsetting.'''
@@ -1260,9 +1316,9 @@ class FlightLevel(object):
         '''Get the variable from the fields dictionary'''
         Var, data = self.radarfields[field], self.radarfields[field]['data'][:]
 
-####################
-#   Save methods  ##
-####################
+##################
+#  Save methods  #
+##################
     def save_figure(self, figName='awot_plot', figType="png"):
         '''Save the current plot.
 
@@ -1274,30 +1330,3 @@ class FlightLevel(object):
             Figure format, default to .png
         '''
         plt.savefig(figName+'.'+figType, format=figType)
-
-########################
-#   Parsing methods   ##
-########################
-
-    def _parse_ax_fig(self, ax, fig):
-        """ Parse and return ax and fig parameters. """
-        if ax is None:
-            ax = plt.gca()
-        if fig is None:
-            fig = plt.gcf()
-        return ax, fig
-
-    def _parse_ax(self, ax):
-        """ Parse and return ax and fig parameters. """
-        if ax is None:
-            ax = plt.gca()
-        return ax
-
-#####################
-#   Check methods  ##
-#####################
-    def _check_basemap(self):
-        """ Check that basemap is not None, raise ValueError if it is. """
-        if self.basemap is None:
-            raise ValueError('Please supply basemap instance')
-            return
