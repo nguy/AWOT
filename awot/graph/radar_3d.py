@@ -1,27 +1,32 @@
 """
 awot.graph.radar_3d
 
-A group of scripts to create 3-dimensional plots. 
+A group of scripts to create 3-dimensional plots.
 
 Note that is experimental and not fully developed.
 """
 
+from __future__ import print_function
 from mpl_toolkits.mplot3d import axes3d
 import numpy as np
 
 from .common import find_nearest_indices, get_masked_data
-#===============================================================
+# ==============================================================
 # BEGIN FUNCTIONS
-#===============================================================
+# ==============================================================
+
+
 class Radar3DPlot(object):
     """
     To create a RadarHorizontalPlot instance:
-    new_instance = RadarHorizontalPlot() or new_instance = RadarHorizontalPlot(AirborneInstance)
-    
+    new_instance = RadarHorizontalPlot() or
+    new_instance = RadarHorizontalPlot(AirborneInstance)
+
     Notable attributes
     ------------------
 
     """
+
     def __init__(self, radardata):
         '''Intitialize the class to create plots'''
         self.radar_data = radardata
@@ -30,19 +35,20 @@ class Radar3DPlot(object):
         self.latitude = self.radar_data['latitude']
         self.height = self.radar_data['height']
         self.fields = self.radar_data['fields']
-    
+
 ####################
-##  Plot methods  ##
+#   Plot methods  ##
 ####################
 
     def DPJgrid_3d(self, surf_field,
-               surf_min=-5., surf_max=5., surf_cmap='RdBu_r',
-               rstride=5, cstride=5,
-               plot_contour=False, cont_field=None, ppi_height=2.,
-               cminmax=(0.,60.), clevs=25, vmin=15., vmax=60., cmap='gist_ncar', alpha=0.,
-               zlims=(-5.,5.), dlat=1.,dlon=1.,
-               plot_track=True,
-               title=" ", fig=None, ax=None):
+                   surf_min=-5., surf_max=5., surf_cmap='RdBu_r',
+                   rstride=5, cstride=5,
+                   plot_contour=False, cont_field=None, ppi_height=2.,
+                   cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
+                   cmap='gist_ncar', alpha=0.,
+                   zlims=(-5., 5.), dlat=1., dlon=1.,
+                   plot_track=True,
+                   title=" ", fig=None, ax=None):
         """
         Read in data from AWOT radar instance, create 3D plot.
 
@@ -108,40 +114,42 @@ class Radar3DPlot(object):
         ax = fig.gca(projection='3d')
 
         # Convert lats/lons to 2D grid
-        Lon2D, Lat2D = np.meshgrid(self.longitude['data'][:],self.latitude['data'][:])
+        Lon2D, Lat2D = np.meshgrid(self.longitude['data'][
+                                   :], self.latitude['data'][:])
 
-        # Plot the vertical velocity as a surface plot    
-        pS = ax.plot_surface(Lat2D, Lon2D, Data, 
-                            vmin=surf_min, vmax=surf_max, linewidth=0, alpha=alpha,
-                            rstride=rstride, cstride=cstride, cmap=surf_cmap)
+        # Plot the vertical velocity as a surface plot
+        pS = ax.plot_surface(Lat2D, Lon2D, Data,
+                             vmin=surf_min, vmax=surf_max, linewidth=0,
+                             alpha=alpha,
+                             rstride=rstride, cstride=cstride, cmap=surf_cmap)
 
-#    pW = ax.plot_wireframe(Lat2D,Lon2D,W,rstride=rstride,cstride=cstride,alpha=alf)
+#    pW = ax.plot_wireframe(
+#        Lat2D,Lon2D,W,rstride=rstride,cstride=cstride,alpha=alf)
         ax.set_xlim(Lat2D.min(), Lat2D.max())
         ax.set_ylim(Lon2D.min(), Lon2D.max())
         ax.set_zlim(zlim)
         ax.set_xlabel('Latitude')
         ax.set_ylabel('Longitude')
         ax.set_zlabel(' Altitude (km)')
-#    ax.view_init(20.,
-        cb = fig.colorbar(pS, shrink=0.6)
-        cb.set_label(Var['long_name'] + Var['units'])#r'(m s$^{-1}$)')
+#       ax.view_init(20., cb=fig.colorbar(pS, shrink=0.6)
+        cb.set_label(Var['long_name'] + Var['units'])  # r'(m s$^{-1}$)')
 
         # Plot the horizontal dBZ contour field
         if plot_contour:
-            if (con_field != None):
+            if (con_field is not None):
                 conVar = self._get_variable_dict(con_field)
 
-                # Find the closest vertical point 
+                # Find the closest vertical point
                 Zind = find_nearest_indices(self.height['data'][:], ppi_height)
 
-                ax.contourf(Lon2D, Lat2D, conVar['data'][Zind,:,:], clevels,
+                ax.contourf(Lon2D, Lat2D, conVar['data'][Zind, :, :], clevels,
                             vmin=vmin, vmax=vmax, cmap=cmap,
-                            zdir='z')#,offset=surf_min)
+                            zdir='z')  # ,offset=surf_min)
             else:
                 print("Need to set con_field and ppi_height")
 
         if plot_track:
-            ax.plot(self.latitude['data'][:], self.longitude['data'][:], 
-                    self.height['data'][:]/1000., zdir='z', c='k')
+            ax.plot(self.latitude['data'][:], self.longitude['data'][:],
+                    self.height['data'][:] / 1000., zdir='z', c='k')
 
         return

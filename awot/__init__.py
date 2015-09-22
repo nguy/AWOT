@@ -10,12 +10,12 @@ Probe Subpackage (:mod:'awot)
     :toctree: generated/
 
 """
-
-__all__ = [s for s in dir() if not s.startswith('_')]
-
+from __future__ import absolute_import
 
 # import subpackages
 from . import io
 from . import display
 from . import graph
 from . import dropsondes
+
+__all__ = [s for s in dir() if not s.startswith('_')]

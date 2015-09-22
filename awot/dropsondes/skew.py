@@ -1,4 +1,3 @@
-
 # This serves as an intensive exercise of matplotlib's transforms
 # and custom projection API. This example produces a so-called
 # SkewT-logP diagram, which is a common plot in meteorology for
@@ -17,21 +16,20 @@ import matplotlib.spines as mspines
 import matplotlib.path as mpath
 from matplotlib.projections import register_projection
 
-
-
-
 #############
-#SKEW Class#
-###########
+# SKEW Class#
+#############
+
 
 class SkewXTick(maxis.XTick):
     '''
-    The sole purpose of this class is to look at the 
-    upper, lower, or total interval as appropriate and see 
+    The sole purpose of this class is to look at the
+    upper, lower, or total interval as appropriate and see
     what parts of the tick to draw, if any.
     '''
     def draw(self, renderer):
-        if not self.get_visible(): return
+        if not self.get_visible():
+            return
         renderer.open_group(self.__name__)
 
         lower_interval = self.axes.xaxis.lower_interval
@@ -55,10 +53,11 @@ class SkewXTick(maxis.XTick):
 
         renderer.close_group(self.__name__)
 
+
 class SkewXAxis(maxis.XAxis):
     '''
-    This class exists to provide two separate sets of 
-    intervals to the tick, as well as create instances 
+    This class exists to provide two separate sets of
+    intervals to the tick, as well as create instances
     of the custom tick.
     '''
     def __init__(self, *args, **kwargs):
@@ -74,11 +73,12 @@ class SkewXAxis(maxis.XAxis):
 
     def get_view_interval(self):
         return self.upper_interval[0], self.axes.viewLim.intervalx[1]
-        
+
+
 class SkewSpine(mspines.Spine):
     '''
-    This class exists to calculate the separate data range of 
-    the upper X-axis and draw the spine there. It also provides 
+    This class exists to calculate the separate data range of
+    the upper X-axis and draw the spine there. It also provides
     this range to the X-axis artist for ticking and gridlines
     '''
     def _adjust_location(self):
@@ -90,17 +90,18 @@ class SkewSpine(mspines.Spine):
         left = trans.transform_point((0.0, yloc))[0]
         right = trans.transform_point((1.0, yloc))[0]
 
-        pts  = self._path.vertices
+        pts = self._path.vertices
         pts[0, 0] = left
         pts[1, 0] = right
         self.axis.upper_interval = (left, right)
 
+
 class SkewXAxes(Axes):
     '''
-    This class handles registration of the skew-xaxes as a 
-    projection as well as setting up the appropriate transformations. 
+    This class handles registration of the skew-xaxes as a
+    projection as well as setting up the appropriate transformations.
     It also overrides standard spines and axes instances as appropriate.
-     
+
     The projection must specify a name.  This will be used be the
     user to select the projection, i.e. ``subplot(111,
     projection='skewx')``.
@@ -108,7 +109,7 @@ class SkewXAxes(Axes):
     name = 'skewx'
 
     def _init_axis(self):
-        #Taken from Axes and modified to use our modified X-axis
+        # Taken from Axes and modified to use our modified X-axis
         self.xaxis = SkewXAxis(self)
         self.spines['top'].register_axis(self.xaxis)
         self.spines['bottom'].register_axis(self.xaxis)
@@ -117,22 +118,22 @@ class SkewXAxes(Axes):
         self.spines['right'].register_axis(self.yaxis)
 
     def _gen_axes_spines(self):
-        spines = {'top':SkewSpine.linear_spine(self, 'top'),
-                  'bottom':mspines.Spine.linear_spine(self, 'bottom'),
-                  'left':mspines.Spine.linear_spine(self, 'left'),
-                  'right':mspines.Spine.linear_spine(self, 'right')}
+        spines = {'top': SkewSpine.linear_spine(self, 'top'),
+                  'bottom': mspines.Spine.linear_spine(self, 'bottom'),
+                  'left': mspines.Spine.linear_spine(self, 'left'),
+                  'right': mspines.Spine.linear_spine(self, 'right')}
         return spines
 
     def _set_lim_and_transforms(self):
-    
+
         """
         This is called once when the plot is created to set up all the
         transforms for the data, text and grids.
         """
         rot = 30
 
-        #Get the standard transform setup from the Axes base class
-        
+        # Get the standard transform setup from the Axes base class
+
         Axes._set_lim_and_transforms(self)
 
         # Need to put the skew in the middle, after the scale and limits,
@@ -140,17 +141,17 @@ class SkewXAxes(Axes):
         # coordinates thus performing the transform around the proper origin
         # We keep the pre-transAxes transform around for other users, like the
         # spines for finding bounds
-        
-        self.transDataToAxes = self.transScale + (self.transLimits +
-                transforms.Affine2D().skew_deg(rot, 0))
+
+        self.transDataToAxes = self.transScale + (
+            self.transLimits + transforms.Affine2D().skew_deg(rot, 0))
 
         # Create the full transform from Data to Pixels
-        
+
         self.transData = self.transDataToAxes + self.transAxes
 
         # Blended transforms like this need to have the skewing applied using
         # both axes, in axes coords like before.
-        
+
         self._xaxis_transform = (transforms.blended_transform_factory(
                     self.transScale + self.transLimits,
                     transforms.IdentityTransform()) +

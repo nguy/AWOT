@@ -7,14 +7,16 @@ A group of scripts to create vertical radar plots.
 # polar_sweep - Plot polar coordinate data on polar coordinate axis
 # polar_sweep_grid - Plotting transformed data to Cartesian output
 # sweep_to_Cart - Polar coordinates transformed to Cartesian
-# sweep_aircraft_relative - Polar coord data transformed to aircraft-relative frame
+# sweep_aircraft_relative - Polar coord data transformed
+#                           to aircraft-relative frame
 # sweep_track_relative - Polar coord data transformed to track-relative frame
 # sweep_earth_relative - Polar coord data transformed to earth-relative frame
-#-------------------------------------------------------------------
+# ------------------------------------------------------------------
 # Load the needed packages
+from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
-from  matplotlib.dates import DateFormatter, date2num
+from matplotlib.dates import DateFormatter, date2num
 from matplotlib import ticker
 import scipy.ndimage as scim
 
@@ -23,24 +25,26 @@ from .common import plot_polar_contour, get_masked_data
 from .common import _get_start_datetime, _get_end_datetime
 from .common import contour_date_ts
 from .coord_transform import radar_coords_to_cart_track_relative, \
-       radar_coords_to_cart_earth_relative, radar_coords_to_cart_aircraft_relative
+    radar_coords_to_cart_earth_relative, radar_coords_to_cart_aircraft_relative
 
 ############################
-##  Vertical Sweep Class  ##
+#   Vertical Sweep Class  ##
 ############################
+
 
 class RadarSweepPlot(object):
     """Class to create plot from radar sweep data in RHI format."""
+
     def __init__(self, radar, basemap=None, instrument=None):
         '''Intitialize the class to create plots.'''
         # Check the instrument to see how to import airborne class
         if instrument is None:
-            print "Trying tail Doppler radar, please specify instrument type!"
+            print("Trying tail Doppler radar, please specify instrument type!")
             instrument = 'tdr_sweep'
         elif instrument == 'tdr_sweep':
             radar_data = airborne.tdr_sweep_radar_data
         elif instrument == 'tdr_grid':
-            print "Use the radar_grid library (RadarHorizontalPlotPlot class)"
+            print("Use the radar_grid library (RadarHorizontalPlotPlot class)")
             return
 
         # Now initialize the RadarHorizontalPlot Class
@@ -50,7 +54,7 @@ class RadarSweepPlot(object):
         self.latitude = self.radar.latitude
         self.altitude = self.radar.altitude
         self.fields = self.radar.fields
-        self.range =self.radar.range
+        self.range = self.radar.range
         self.rotation = self.radar.rotation
         self.drift = self.radar.drift
         self.heading = self.radar.heading
@@ -60,20 +64,20 @@ class RadarSweepPlot(object):
         _check_basemap(self)
 
 ################################
-##  Plotting generate method  ##
+#   Plotting generate method  ##
 ################################
 
     def plot_to_grid(self, Xcoord, Ycoord, Values,
-               vmin=-24., vmax=64., cmap='jet',
-               xlims=None, ylims=None,
-               xlab=None, ylab=None, title=None,
-               grid_on=True, plot_in_km=True,
-               cb_flag=True, cb_label=None,
-               cb_orient=None, cb_pad=None, cb_width=None,
-               ax=None, fig=None):
+                     vmin=-24., vmax=64., cmap='jet',
+                     xlims=None, ylims=None,
+                     xlab=None, ylab=None, title=None,
+                     grid_on=True, plot_in_km=True,
+                     cb_flag=True, cb_label=None,
+                     cb_orient=None, cb_pad=None, cb_width=None,
+                     ax=None, fig=None):
         """Plot a sweep of native (polar) projected on a Cartesian plane.
-        This method does the actual plotting and is called from the various other
-        projection methods.
+        This method does the actual plotting and is called from the
+        various other projection methods.
 
         Parameters
         ----------
@@ -102,13 +106,14 @@ class RadarSweepPlot(object):
         grid_on : bool
             True will add a grid to plot, False leaves off.
         plot_in_km : bool
-            If True (default) the X, Y coordinates are converted to km instead of m.
+            If True (default) the X, Y coordinates are converted to km
+            instead of m.
         cb_flag : bool
             True to add colorbar, False does not.
         cb_orient : str
             Location of colorbar if True, either 'horizontal' or 'vertical'.
         cb_pad : str
-            Pad to move colorbar, fraction in the form ".05", 
+            Pad to move colorbar, fraction in the form ".05",
             pos is to right for righthand location.
         cb_label : str
             Colorbar label.
@@ -119,7 +124,7 @@ class RadarSweepPlot(object):
 
         Notes
         -----
-        Plotting convention is to project the data onto a 2D surface 
+        Plotting convention is to project the data onto a 2D surface
         looking from the back of aircraft forward.
         """
         # parse parameters
@@ -135,32 +140,33 @@ class RadarSweepPlot(object):
             yunit = 'm'
 
         # Plot the data
-        p = ax.pcolormesh(Xcoord, Ycoord, Values, cmap=cmap, vmin=vmin, vmax=vmax)
+        p = ax.pcolormesh(Xcoord, Ycoord, Values,
+                          cmap=cmap, vmin=vmin, vmax=vmax)
 
         # Set the title
-        if title == None:
+        if title is None:
             pass
         else:
             ax.set_title(title)
 
         # Set the axes limits
-        if xlims == None:
+        if xlims is None:
             xlims = (-1.05 * Xcoord.max(), 1.05 * Xcoord.max())
         ax.set_xlim(xlims)
-        if ylims == None:
-            ylims = (-10.,30.)
+        if ylims is None:
+            ylims = (-10., 30.)
         ax.set_ylim(ylims)
 
-        print xlims, ylims
+        print(xlims, ylims)
         # Set the axes labels
-        if xlab == None:
+        if xlab is None:
             pass
         else:
-            ax.set_xlabel(xlab+' ('+xunit+')')
-        if ylab == None:
+            ax.set_xlabel(xlab + ' (' + xunit + ')')
+        if ylab is None:
             pass
         else:
-            ax.set_ylabel(ylab+' ('+yunit+')')
+            ax.set_ylabel(ylab + ' (' + yunit + ')')
 
         # Check if grid lines are desired
         if grid_on:
@@ -181,7 +187,7 @@ class RadarSweepPlot(object):
             cb = plt.colorbar(mappable=p, orientation=cb_orient, pad=cb_pad,
                               fraction=cb_width)
 
-            if cb_label == None:
+            if cb_label is None:
                 pass
             else:
                 cb.set_label(cb_label)
@@ -189,16 +195,18 @@ class RadarSweepPlot(object):
         return p
 
 ##########################
-##  Sweep plot modules  ##
+#   Sweep plot modules  ##
 ##########################
 
-    def plot_polar_sweep(self, field, nlevs=30, mask_procedure=None, mask_tuple=None,
-               vmin=None, vmax=None, cmap='gist_ncar',
-               rng_rings=None, rot_angs=None,
-               cb_flag=True, cb_orient=None, cb_label=None,
-               title=None, ax=None, fig=None):
+    def plot_polar_sweep(self, field, nlevs=30, mask_procedure=None,
+                         mask_tuple=None,
+                         vmin=None, vmax=None, cmap='gist_ncar',
+                         rng_rings=None, rot_angs=None,
+                         cb_flag=True, cb_orient=None, cb_label=None,
+                         title=None, ax=None, fig=None):
         """
-        Plot a sweep of native (polar) coordinate radar data on polar format plot
+        Plot a sweep of native (polar) coordinate radar data
+        on polar format plot
 
         Parameters
         ----------
@@ -208,7 +216,8 @@ class RadarSweepPlot(object):
             Number of contour levels to plot.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
-            'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'.
+            'less', 'less_equal', 'greater', 'greater_equal',
+            'equal', 'inside', 'outside'.
         mask_tuple : (str, float[, float])
             Tuple containing the field name and value(s) below which to mask
             field prior to plotting, for example to mask all data where.
@@ -246,7 +255,7 @@ class RadarSweepPlot(object):
         # Get variable
         Var, Data = self._get_variable_dict_data(field)
 
-        if mask_procedure != None:
+        if mask_procedure is not None:
             Data = get_masked_data(Data, mask_procedure, mask_tuple)
 
         if vmin is None:
@@ -260,51 +269,51 @@ class RadarSweepPlot(object):
 
         # Plot the polar coordinate radar data
         p = plot_polar_contour(Data, rotation, range,
-                           nlevs=nlevs, vmin=vmin, vmax=vmax, cmap=cmap)
+                               nlevs=nlevs, vmin=vmin, vmax=vmax, cmap=cmap)
 
         # Set the range and turn grid on
         ax.set_rmax(1.05 * range.max())
         ax.grid(True)
 
         # Set the title
-        if title == None:
+        if title is None:
             pass
         else:
             ax.set_title(title)
 
         # Set the range rings if set
-        if rng_rings == None:
+        if rng_rings is None:
             pass
         else:
-           plt.rgrids(rng_rings)
+            plt.rgrids(rng_rings)
 
         # Set the rotation angles (theta) if set
-        if rot_angs == None:
+        if rot_angs is None:
             pass
         else:
-           plt.thetagrids(rot_angs)
+            plt.thetagrids(rot_angs)
 
         # Set the colorbar if desired
         if cb_flag:
-            cb = plt.colorbar(mappable=p,orientation=cb_orient)
-            if cb_label == None:
-                cb_label = Var['long_name'] +' (' + Var['units'] + ')'
+            cb = plt.colorbar(mappable=p, orientation=cb_orient)
+            if cb_label is None:
+                cb_label = Var['long_name'] + ' (' + Var['units'] + ')'
             else:
                 cb.set_label(cb_label)
 
         return
 
-    def plot_aircraft_relative(self, field, mask_procedure=None, mask_tuple=None,
-               vmin=-24., vmax=64., cmap=None,
-               xlims=None, ylims=None,
-               xlab='Distance from aircraft', ylab='Altitude', title=None,
-               grid_on=True, plot_in_km=True,
-               cb_flag=True, cb_orient=None, cb_pad=None, cb_label=None,
-               ax=None, fig=None):
+    def plot_aircraft_relative(self, field, mask_procedure=None,
+                               mask_tuple=None, vmin=-24., vmax=64., cmap=None,
+                               xlims=None, ylims=None,
+                               xlab='Distance from aircraft', ylab='Altitude',
+                               title=None, grid_on=True, plot_in_km=True,
+                               cb_flag=True, cb_orient=None, cb_pad=None,
+                               cb_label=None, ax=None, fig=None):
         """
         Project native (polar) coordinate radar sweep data onto an
         aircraft-relative Cartesian coordinate grid.
-        See Lee et al. (1994) Journal of Atmospheric and Oceanic Technology 
+        See Lee et al. (1994) Journal of Atmospheric and Oceanic Technology
         for methodology and definitions.
 
         Parameters
@@ -313,7 +322,8 @@ class RadarSweepPlot(object):
             Variable name (e.g. 'reflectivity') to use in plot.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
-            'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'.
+            'less', 'less_equal', 'greater', 'greater_equal',
+            'equal', 'inside', 'outside'.
         mask_tuple : (str, float[, float])
             Tuple containing the field name and value(s) below which to mask
             field prior to plotting, for example to mask all data where.
@@ -339,13 +349,14 @@ class RadarSweepPlot(object):
         grid_on : bool
             True will add a grid to plot, False leaves off.
         plot_in_km : bool
-            If True (default) the X, Y coordinates are converted to km instead of m.
+            If True (default) the X, Y coordinates are converted
+            to km instead of m.
         cb_flag : boolean
             True to add colorbar, False does not.
         cb_orient : str
             Location of colorbar if True, either 'horizontal' or 'vertical'.
         cb_pad : str
-            Pad to move colorbar, fraction in the form ".05", 
+            Pad to move colorbar, fraction in the form ".05",
             pos is to right for righthand location.
         cb_label : str
             Colorbar label.
@@ -361,11 +372,12 @@ class RadarSweepPlot(object):
         Range along ray [m].
         Tilt angle with respect to platform [degrees].
 
-        Plotting convention is to project the data onto a 2D surface 
+        Plotting convention is to project the data onto a 2D surface
         looking from the back of aircraft forward.
-        X,Y,Z coordinates are a direct projection from polar to Cartesian coordinates.
+        X,Y,Z coordinates are a direct projection from
+        polar to Cartesian coordinates.
 
-        This mapping does NOT take into account corrections for 
+        This mapping does NOT take into account corrections for
         roll, pitch, or drift of the aircraft.
         """
         # parse parameters
@@ -374,7 +386,7 @@ class RadarSweepPlot(object):
         # Get variable
         Var, Data = self._get_variable_dict_data(field)
 
-        if mask_procedure != None:
+        if mask_procedure is not None:
             Data = get_masked_data(Data, mask_procedure, mask_tuple)
 
         if vmin is None:
@@ -387,32 +399,33 @@ class RadarSweepPlot(object):
         range, rotation = self._get_2D_var(self.rotation['data'][:])
         range, tilt = self._get_2D_var(self.tilt['data'][:])
 
-        X, Y, Z = radar_coords_to_cart_aircraft_relative(range / 1000.0, rotation, tilt)
+        X, Y, Z = radar_coords_to_cart_aircraft_relative(
+            range / 1000.0, rotation, tilt)
 
-        if cb_label == None:
-            cb_label = field +' (' + Var['units'] + ')'
+        if cb_label is None:
+            cb_label = field + ' (' + Var['units'] + ')'
 
-        p = self.plot_to_grid(X, Z, Data, 
-                         vmin=vmin, vmax=vmax, cmap=cmap,
-                         xlims=xlims, ylims=ylims,
-                         xlab=xlab, ylab=ylab, title=title,
-                         grid_on=grid_on,
-                         cb_flag=cb_flag, cb_orient=cb_orient, 
-                         cb_pad=cb_pad, cb_label=cb_label,
-                         ax=ax, fig=fig)
+        p = self.plot_to_grid(X, Z, Data,
+                              vmin=vmin, vmax=vmax, cmap=cmap,
+                              xlims=xlims, ylims=ylims,
+                              xlab=xlab, ylab=ylab, title=title,
+                              grid_on=grid_on,
+                              cb_flag=cb_flag, cb_orient=cb_orient,
+                              cb_pad=cb_pad, cb_label=cb_label,
+                              ax=ax, fig=fig)
         return p
 
     def plot_track_relative(self, field, mask_procedure=None, mask_tuple=None,
-               vmin=-24., vmax=64., cmap=None,
-               xlims=None, ylims=None,
-               xlab='Distance from track', ylab='Altitude', title=None,
-               grid_on=True, plot_in_km=True,
-               cb_flag=True, cb_orient=None, cb_pad=None, cb_label=None,
-               ax=None, fig=None):
+                            vmin=-24., vmax=64., cmap=None, xlims=None,
+                            ylims=None, xlab='Distance from track',
+                            ylab='Altitude', title=None,
+                            grid_on=True, plot_in_km=True,
+                            cb_flag=True, cb_orient=None, cb_pad=None,
+                            cb_label=None, ax=None, fig=None):
         """
-        Project native (polar) coordinate radar sweep data onto 
+        Project native (polar) coordinate radar sweep data onto
         track-relative Cartesian coordinate grid.
-        See Lee et al. (1994) Journal of Atmospheric and Oceanic Technology 
+        See Lee et al. (1994) Journal of Atmospheric and Oceanic Technology
         for methodology and definitions.
 
         Parameters
@@ -421,7 +434,8 @@ class RadarSweepPlot(object):
             Variable name (e.g. 'reflectivity') to use in plot.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
-            'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'.
+            'less', 'less_equal', 'greater', 'greater_equal',
+            'equal', 'inside', 'outside'.
         mask_tuple : (str, float[, float])
             Tuple containing the field name and value(s) below which to mask
             field prior to plotting, for example to mask all data where.
@@ -447,13 +461,14 @@ class RadarSweepPlot(object):
         grid_on : bool
             True will add a grid to plot, False leaves off.
         plot_in_km : bool
-            If True (default) the X, Y coordinates are converted to km instead of m.
+            If True (default) the X, Y coordinates are converted to km
+            instead of m.
         cb_flag : bool
             True to add colorbar, False does not.
         cb_orient : str
             Location of colorbar if True, either 'horizontal' or 'vertical'.
         cb_pad : str
-            Pad to move colorbar, fraction in the form ".05", 
+            Pad to move colorbar, fraction in the form ".05",
             pos is to right for righthand location.
         cb_label : str
             Colorbar label.
@@ -472,10 +487,10 @@ class RadarSweepPlot(object):
         Drift angle [degrees], between heading and track.
         Pitch angle [degrees], nose up positive.
 
-        Plotting convention is to project the data onto a 2D surface 
-        looking from the back of aircraft forward.  
+        Plotting convention is to project the data onto a 2D surface
+        looking from the back of aircraft forward.
 
-        X,Y,Z coordinates are a rotation of the data about the aircraft track, 
+        X,Y,Z coordinates are a rotation of the data about the aircraft track,
         following a direct projection from polar to Cartesian coordinates.
 
         This mapping corrects for roll, pitch, and drift of the aircraft.
@@ -488,7 +503,7 @@ class RadarSweepPlot(object):
         # Get variable
         Var, Data = self._get_variable_dict_data(field)
 
-        if mask_procedure != None:
+        if mask_procedure is not None:
             Data = get_masked_data(Data, mask_procedure, mask_tuple)
 
         if vmin is None:
@@ -504,34 +519,34 @@ class RadarSweepPlot(object):
         range, drift = self._get_2D_var(self.drift['data'][:])
         range, pitch = self._get_2D_var(self.pitch['data'][:])
 
-        X, Y, Z = radar_coords_to_cart_track_relative(range / 1000.0, rotation, roll, 
-                                                      drift, tilt, pitch)
+        X, Y, Z = radar_coords_to_cart_track_relative(
+            range / 1000.0, rotation, roll, drift, tilt, pitch)
 
-        if cb_label == None:
-            cb_label = field +' (' + Var['units'] + ')'
+        if cb_label is None:
+            cb_label = field + ' (' + Var['units'] + ')'
 
-        p = self.plot_to_grid(X, Z, Data, 
-                         vmin=vmin, vmax=vmax, cmap=cmap,
-                         xlims=xlims, ylims=ylims,
-                         xlab=xlab, ylab=ylab, title=title,
-                         grid_on=grid_on,
-                         cb_flag=cb_flag, cb_orient=cb_orient, 
-                         cb_pad=cb_pad, cb_label=cb_label,
-                         ax=ax, fig=fig)
+        p = self.plot_to_grid(X, Z, Data,
+                              vmin=vmin, vmax=vmax, cmap=cmap,
+                              xlims=xlims, ylims=ylims,
+                              xlab=xlab, ylab=ylab, title=title,
+                              grid_on=grid_on,
+                              cb_flag=cb_flag, cb_orient=cb_orient,
+                              cb_pad=cb_pad, cb_label=cb_label,
+                              ax=ax, fig=fig)
         return p
 
     def plot_earth_relative(self, field, mask_procedure=None, mask_tuple=None,
-               vmin=-24., vmax=64., cmap=None,
-               xlims=None, ylims=None,
-               xlab='Distance from aircraft', ylab='Altitude', title=None,
-               grid_on=True, plot_in_km=True,
-               cb_flag=True, cb_orient='horizontal', cb_pad=None, cb_label=None,
-               ax=None, fig=None):
+                            vmin=-24., vmax=64., cmap=None,
+                            xlims=None, ylims=None,
+                            xlab='Distance from aircraft', ylab='Altitude',
+                            title=None, grid_on=True, plot_in_km=True,
+                            cb_flag=True, cb_orient='horizontal', cb_pad=None,
+                            cb_label=None, ax=None, fig=None):
         """
-        Project native (polar) coordinate radar sweep data onto 
+        Project native (polar) coordinate radar sweep data onto
         earth-relative Cartesian coordinate grid.
-       See Lee et al. (1994) Journal of Atmospheric and Oceanic Technology 
-       for methodology and definitions.
+        See Lee et al. (1994) Journal of Atmospheric and Oceanic Technology
+        for methodology and definitions.
 
         Parameters
         ----------
@@ -539,7 +554,8 @@ class RadarSweepPlot(object):
             Variable name (e.g. 'reflectivity') to use in plot.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
-            'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'.
+            'less', 'less_equal', 'greater', 'greater_equal',
+            'equal', 'inside', 'outside'.
         mask_tuple : (str, float[, float])
             Tuple containing the field name and value(s) below which to mask
             field prior to plotting, for example to mask all data where.
@@ -565,13 +581,14 @@ class RadarSweepPlot(object):
         grid_on : bool
             True will add a grid to plot, False leaves off.
         plot_in_km : boolean
-            If True (default) the X, Y coordinates are converted to km instead of m.
+            If True (default) the X, Y coordinates are converted to km
+            instead of m.
         cb_flag : bool
             True to add colorbar, False does not.
         cb_orient : str
             Location of colorbar if True, either 'horizontal' or 'vertical'.
         cb_pad : str
-            Pad to move colorbar, fraction in the form ".05", 
+            Pad to move colorbar, fraction in the form ".05",
             pos is to right for righthand location.
         cb_label : str
             Colorbar label.
@@ -590,11 +607,11 @@ class RadarSweepPlot(object):
         Heading angle [degrees], clockwise from North.
         Pitch angle [degrees], nose up positive.
 
-        Plotting convention is to project the data onto a 2D surface 
-        looking from the back of aircraft forward.  
+        Plotting convention is to project the data onto a 2D surface
+        looking from the back of aircraft forward.
 
-        X,Y,Z coordinates are a rotation of the data about an 
-        earth-relative azimuth, following a direct projection from polar to 
+        X,Y,Z coordinates are a rotation of the data about an
+        earth-relative azimuth, following a direct projection from polar to
         Cartesian coordinates.
 
         This mapping corrects for roll, pitch, and drift of the aircraft.
@@ -607,7 +624,7 @@ class RadarSweepPlot(object):
         # Get variable
         Var, Data = self._get_variable_dict_data(field)
 
-        if mask_procedure != None:
+        if mask_procedure is not None:
             Data = get_masked_data(Data, mask_procedure, mask_tuple)
 
         if vmin is None:
@@ -623,25 +640,25 @@ class RadarSweepPlot(object):
         range, pitch = self._get_2D_var(self.pitch['data'][:])
         range, heading = self._get_2D_var(self.heading['data'][:])
 
-        X, Y, Z = radar_coords_to_cart_earth_relative(range / 1000.0, rotation, roll, 
-                                                      heading, tilt, pitch)
+        X, Y, Z = radar_coords_to_cart_earth_relative(
+            range / 1000.0, rotation, roll, heading, tilt, pitch)
 
-        if cb_label == None:
-            cb_label = field +' (' + Var['units'] + ')'
+        if cb_label is None:
+            cb_label = field + ' (' + Var['units'] + ')'
 
-        p = self.plot_to_grid(X, Z, Data, 
-                         vmin=vmin, vmax=vmax, cmap=cmap,
-                         xlims=xlims, ylims=ylims,
-                         xlab=xlab, ylab=ylab, title=title,
-                         grid_on=grid_on,
-                         cb_flag=cb_flag, cb_orient=cb_orient, 
-                         cb_pad=cb_pad, cb_label=cb_label,
-                         ax=ax, fig=fig)
+        p = self.plot_to_grid(X, Z, Data,
+                              vmin=vmin, vmax=vmax, cmap=cmap,
+                              xlims=xlims, ylims=ylims,
+                              xlab=xlab, ylab=ylab, title=title,
+                              grid_on=grid_on,
+                              cb_flag=cb_flag, cb_orient=cb_orient,
+                              cb_pad=cb_pad, cb_label=cb_label,
+                              ax=ax, fig=fig)
         return p
 
 ###################
-##  Get methods  ##
-################### 
+#   Get methods  ##
+###################
 
     def _get_variable_dict(self, field):
         '''Get the variable from the fields dictionary.'''
@@ -654,18 +671,20 @@ class RadarSweepPlot(object):
         return Var, data
 
     def _get_2D_var(self, Var):
-        '''Return a 2D variable 
+        '''Return a 2D variable
         Useful for coordinate transformations.
         '''
         rg2D, Var2D = np.meshgrid(self.range['data'][:], Var)
         return rg2D, Var2D
-        
+
 ###########################
-##  Vertical Plot Class  ##
+#  Vertical Plot Class  ##
 ###########################
+
 
 class RadarVerticalPlot(object):
     """Create vertical plot of radar data."""
+
     def __init__(self, radar, basemap=None, instrument=None):
         '''Intitialize the class to create plots'''
         self.radar = radar
@@ -679,20 +698,20 @@ class RadarVerticalPlot(object):
         try:
             self.time = self.radar['time']
         except:
-            print "Warning: No time variable found"
+            print("Warning: No time variable found")
         _check_basemap(self)
 
 #############################
-##  Vertical plot methods  ##
+#  Vertical plot methods  ##
 #############################
 
     def plot_cross_section(self, field, start_pt, end_pt, xs_length=500,
                            mask_procedure=None, mask_tuple=None,
                            title=" ", title_size=20,
-                           cminmax=(0.,60.), clevs=25, vmin=15., vmax=60.,
+                           cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
                            cmap='gist_ncar', clabel='dBZ',
-                           color_bar=True, cb_pad=.05, cb_orient='vertical', cb_tick_int=2,
-                           ax=None, fig=None):
+                           color_bar=True, cb_pad=.05, cb_orient='vertical',
+                           cb_tick_int=2, ax=None, fig=None):
         '''
         Plot a cross-section between two points.
 
@@ -706,7 +725,8 @@ class RadarVerticalPlot(object):
             Number of to use for the cross section.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
-            'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'.
+            'less', 'less_equal', 'greater', 'greater_equal',
+            'equal', 'inside', 'outside'.
         mask_tuple : (str, float[, float])
             Tuple containing the field name and value(s) below which to mask
             field prior to plotting, for example to mask all data where.
@@ -729,12 +749,14 @@ class RadarVerticalPlot(object):
         color_bar : bool
             True to add colorbar, False does not.
         cb_pad : str
-            Pad to move colorbar, in the form "5%", pos is to right for righthand location.
+            Pad to move colorbar, in the form "5%", pos is to right for
+            righthand location.
         cb_loc : str
-            Location of colorbar, default is 'right', also available: 
+            Location of colorbar, default is 'right', also available:
             'bottom', 'top', 'left'.
         cb_tick_int : int
-            Interval to use for colorbar tick labels, higher number "thins" labels.
+            Interval to use for colorbar tick labels,
+            higher number "thins" labels.
         ax : Matplotlib axis instance
             Axis to plot. None will use the current axis.
         fig : Matplotlib figure instance
@@ -745,7 +767,7 @@ class RadarVerticalPlot(object):
 
         # Return masked or unmasked variable
         Var, Data = self._get_variable_dict_data(field)
-        if mask_procedure != None:
+        if mask_procedure is not None:
             Data = get_masked_data(Data, mask_procedure, mask_tuple)
 
         # Create contour level array
@@ -770,13 +792,16 @@ class RadarVerticalPlot(object):
         # Loop through each level to create cross-section and stack them
         for nlev in range(len(self.height['data'][:])):
             # Extract the values along the line, using cubic interpolation
-            xs_data[:,nlev] = scim.map_coordinates(Data[nlev,:,:],
-                                                  np.vstack((xsY, xsX)),
-                                                  prefilter=False)#, mode='nearest')
+            xs_data[:, nlev] = scim.map_coordinates(Data[nlev, :, :],
+                                                    np.vstack((xsY, xsX)),
+                                                    prefilter=False)
+            # , mode='nearest')
 
         # Calculate the distance array along the cross-section
-        Xdist = np.absolute((np.pi * _get_earth_radius() / 180.) * (xslon - xslon[0]))
-        Ydist = np.absolute((np.pi * _get_earth_radius() / 180.) * (xslat - xslat[0]))
+        Xdist = np.absolute(
+            (np.pi * _get_earth_radius() / 180.) * (xslon - xslon[0]))
+        Ydist = np.absolute(
+            (np.pi * _get_earth_radius() / 180.) * (xslat - xslat[0]))
         xsDist = np.sqrt(Xdist**2 + Ydist**2)
 
         # Define the angle of the cross-secton
@@ -788,10 +813,11 @@ class RadarVerticalPlot(object):
         else:
             AngNref = Ang
 
-        # Convert Height, distance arrays to 2D 
+        # Convert Height, distance arrays to 2D
         Ht2D, Dist2D = np.meshgrid(self.height['data'][:], xsDist)
 
-        p = ax.pcolormesh(Dist2D, Ht2D, np.ma.masked_less_equal(xs_data, -800.), 
+        p = ax.pcolormesh(Dist2D, Ht2D,
+                          np.ma.masked_less_equal(xs_data, -800.),
                           vmin=vmin, vmax=vmax, cmap=cmap)
 
         ax.set_xlabel('Distance along track (km)')
@@ -802,11 +828,13 @@ class RadarVerticalPlot(object):
 
         # Add Colorbar
         if color_bar:
-            cbStr = Var['long_name'] +' ('+ Var['units'] +')'
-            cb = fig.colorbar(p, orientation=cb_orient, pad=cb_pad, ax=ax)#,ticks=clevels)
+            cbStr = Var['long_name'] + ' (' + Var['units'] + ')'
+            cb = fig.colorbar(p, orientation=cb_orient,
+                              pad=cb_pad, ax=ax)  # ,ticks=clevels)
             cb.set_label(cbStr)
-            # Set the number of ticks in the colorbar based upon number of contours
-            tick_locator = ticker.MaxNLocator(nbins=int(clevs/cb_tick_int))
+            # Set the number of ticks in the colorbar based upon number of
+            # contours
+            tick_locator = ticker.MaxNLocator(nbins=int(clevs / cb_tick_int))
             cb.locator = tick_locator
             cb.update_ticks()
 
@@ -816,22 +844,21 @@ class RadarVerticalPlot(object):
     def contour_timeseries(self, field,
                            mask_procedure=None, mask_tuple=None,
                            ptype='pcolormesh', plot_log10_var=False,
-                           cminmax=(0.,60.), clevs=25, vmin=15., vmax=60.,
-                           cmap='gist_ncar',
-                           color_bar=True, cb_orient='vertical',
-                           cb_pad=.05, cb_tick_int=2,
-                           cb_label=None, 
-                           dForm='%H:%M',tz=None, xdate=True,
+                           cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
+                           cmap='gist_ncar', color_bar=True,
+                           cb_orient='vertical',
+                           cb_pad=.05, cb_tick_int=2, cb_label=None,
+                           dForm='%H:%M', tz=None, xdate=True,
                            date_MinTicker='minute',
                            other_MajTicks=None, other_MinTicks=None,
                            other_min=None, other_max=None,
                            start_time=None, end_time=None,
-                           title=None,
-                           xlab=' ', xlabFontSize=16, xpad=7,
+                           title=None, xlab=' ', xlabFontSize=16, xpad=7,
                            ylab=' ', ylabFontSize=16, ypad=7,
                            ax=None, fig=None):
         """
-        Wrapper function to produce a contoured time series plot of variable indicated.
+        Wrapper function to produce a contoured time series plot
+        of variable indicated.
 
         Parameters
         ----------
@@ -839,7 +866,8 @@ class RadarVerticalPlot(object):
             Variable to plot as time series.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
-            'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'.
+            'less', 'less_equal', 'greater', 'greater_equal',
+            'equal', 'inside', 'outside'.
         mask_tuple : (str, float[, float])
             Tuple containing the field name and value(s) below which to mask
             field prior to plotting, for example to mask all data where.
@@ -854,18 +882,20 @@ class RadarVerticalPlot(object):
         ptype : str
             Type of plot to make, takes 'plot', 'contour', or 'pcolormesh'.
         plot_log10_var : bool
-        	True plots the log base 10 of Data field.
+                True plots the log base 10 of Data field.
         cmap : string
             Matplotlib color map to use.
         color_bar : bool
             True to add colorbar, False does not.
         cb_pad : str
-            Pad to move colorbar, in the form "5%", pos is to right for righthand location.
+            Pad to move colorbar, in the form "5%",
+            pos is to right for righthand location.
         cb_loc : str
-            Location of colorbar, default is 'right', also available: 
+            Location of colorbar, default is 'right', also available:
             'bottom', 'top', 'left'.
         cb_tick_int : int
-            Interval to use for colorbar tick labels, higher number "thins" labels.
+            Interval to use for colorbar tick labels,
+            higher number "thins" labels.
         cb_label : str
             Label for colorbar (e.g. units 'dBZ').
         dForm : str
@@ -911,8 +941,9 @@ class RadarVerticalPlot(object):
 
         # Return masked or unmasked variable
         # Subsetted if desired
-        Var, tsub, Data = self._get_variable_dict_data_time_subset(field, start_time, end_time)
-        if mask_procedure != None:
+        Var, tsub, Data = self._get_variable_dict_data_time_subset(
+            field, start_time, end_time)
+        if mask_procedure is not None:
             Data = get_masked_data(Data, mask_procedure, mask_tuple)
 
         if plot_log10_var:
@@ -926,24 +957,25 @@ class RadarVerticalPlot(object):
         tSub2D, Ht2D = np.meshgrid(date2num(tsub), self.height['data'][:])
 
         # Plot the time series
-        ts = contour_date_ts(tSub2D, Ht2D, Data.T, 
-                vmin=vmin, vmax=vmax, clevs=clevs,
-                color_bar=color_bar, cb_orient=cb_orient,
-                cb_pad=cb_pad, cb_tick_int=cb_tick_int,
-                cb_label=cb_label,
-                dForm=dForm,tz=tz, xdate=xdate, 
-                date_MinTicker=date_MinTicker,
-                other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
-                other_min=other_min, other_max=other_max,
-                title=title,
-                xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
-                ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
-                ax=ax, fig=fig)
+        ts = contour_date_ts(tSub2D, Ht2D, Data.T,
+                             vmin=vmin, vmax=vmax, clevs=clevs,
+                             color_bar=color_bar, cb_orient=cb_orient,
+                             cb_pad=cb_pad, cb_tick_int=cb_tick_int,
+                             cb_label=cb_label,
+                             dForm=dForm, tz=tz, xdate=xdate,
+                             date_MinTicker=date_MinTicker,
+                             other_MajTicks=other_MajTicks,
+                             other_MinTicks=other_MinTicks,
+                             other_min=other_min, other_max=other_max,
+                             title=title,
+                             xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
+                             ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
+                             ax=ax, fig=fig)
         return
 
 ###################
-##  Get methods  ##
-################### 
+#   Get methods  ##
+###################
 
     def _get_variable_dict(self, field):
         '''Get the variable from the fields dictionary.'''
@@ -974,7 +1006,7 @@ class RadarVerticalPlot(object):
         # Find the spacing
         dp = self.latitude['data'][1] - self.latitude['data'][0]
 
-        # Calculate the relative position 
+        # Calculate the relative position
         pos = (value - self.latitude['data'][0]) / dp
         return pos
 
@@ -983,17 +1015,19 @@ class RadarVerticalPlot(object):
         # Find the spacing
         dp = self.longitude['data'][1] - self.longitude['data'][0]
 
-        # Calculate the relative position 
+        # Calculate the relative position
         pos = (value - self.longitude['data'][0]) / dp
         return pos
+
 
 class MicrophysicalVerticalPlot(object):
     """
     Create a vertical plot of microphysical data.
-    
+
     This class was created for microphysical retrievals from radar systems,
     for example the LATMOS French Falcon.
     """
+
     def __init__(self, microphysdata, basemap=None):
         '''Intitialize the class to create plots.'''
 
@@ -1009,42 +1043,41 @@ class MicrophysicalVerticalPlot(object):
         try:
             self.time = microphys_data['time']
         except:
-            print "Warning: No time variable found"
+            print("Warning: No time variable found")
 
 #############################
-##  Vertical plot methods  ##
+#   Vertical plot methods  ##
 #############################
-    
+
     def contour_timeseries(self, field,
                            mask_procedure=None, mask_tuple=None,
                            ptype='pcolormesh', plot_log10_var=False,
-                           cminmax=(0.,60.), clevs=25, vmin=None, vmax=None,
+                           cminmax=(0., 60.), clevs=25, vmin=None, vmax=None,
                            cmap='gist_ncar',
                            color_bar=True, cb_orient='vertical',
                            cb_pad=.05, cb_tick_int=2,
-                           cb_label=None, 
-     
-                           dForm='%H:%M',tz=None, xdate=True,
+                           cb_label=None,
+                           dForm='%H:%M', tz=None, xdate=True,
                            date_MinTicker='minute',
                            other_MajTicks=None, other_MinTicks=None,
                            other_min=None, other_max=None,
-                
                            start_time=None, end_time=None,
-                 
                            title=None,
                            xlab=' ', xlabFontSize=16, xpad=7,
                            ylab=' ', ylabFontSize=16, ypad=7,
                            ax=None, fig=None):
         """
-        Wrapper function to produce a contoured time series plot of variable indicated
-        
+        Wrapper function to produce a contoured time series plot
+        of variable indicated
+
         Parameters::
         ----------
         field : float
             Variable to plot as time series
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
-            'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'
+            'less', 'less_equal', 'greater', 'greater_equal',
+            'equal', 'inside', 'outside'
         mask_tuple : (str, float[, float])
             Tuple containing the field name and value(s) below which to mask
             field prior to plotting, for example to mask all data where
@@ -1056,26 +1089,28 @@ class MicrophysicalVerticalPlot(object):
             Minimum contour value to display
         vmax : float
             Maximum contour value to display
-        
+
         ptype : str
             Type of plot to make, takes 'plot', 'contour', or 'pcolormsh'
         plot_log10_var : boolean
-        	True plots the log base 10 of Data field
-            
+                True plots the log base 10 of Data field
+
         cmap : string
             Matplotlib color map to use
         color_bar : boolean
             True to add colorbar, False does not
         cb_pad : str
-            Pad to move colorbar, in the form "5%", pos is to right for righthand location
+            Pad to move colorbar, in the form "5%",
+            pos is to right for righthand location
         cb_loc : str
-            Location of colorbar, default is 'right', also available: 
+            Location of colorbar, default is 'right', also available:
             'bottom', 'top', 'left'
         cb_tick_int : int
-            Interval to use for colorbar tick labels, higher number "thins" labels
+            Interval to use for colorbar tick labels,
+            higher number "thins" labels
         cb_label : string
             Label for colorbar (e.g. units 'dBZ')
-            
+
         dForm : str
             Format of the time string for x-axis labels
         tz : str
@@ -1093,14 +1128,14 @@ class MicrophysicalVerticalPlot(object):
             Minimum value for non-date axis
         other_max : float
             Maximum value for non-date axis
-    
+
         start_time : string
             UTC time to use as start time for subsetting in datetime format
             (e.g. 2014-08-20 12:30:00)
         end_time : string
             UTC time to use as an end time for subsetting in datetime format
             (e.g. 2014-08-20 16:30:00)
-    
+
         title : str
             Plot title
         xlab : str
@@ -1121,8 +1156,9 @@ class MicrophysicalVerticalPlot(object):
 
         # Return masked or unmasked variable
         # Subsetted if desired
-        Var, tsub, Data = self._get_variable_dict_data_time_subset(field, start_time, end_time)
-        if mask_procedure != None:
+        Var, tsub, Data = self._get_variable_dict_data_time_subset(
+            field, start_time, end_time)
+        if mask_procedure is not None:
             Data = get_masked_data(Data, mask_procedure, mask_tuple)
 
         if plot_log10_var:
@@ -1131,8 +1167,8 @@ class MicrophysicalVerticalPlot(object):
                 cb_label = r'log$_{10}$[' + cb_label + ']'
 
         # Print out min and max values to screen
-        print "Minimum value of %s = %g" % (field, np.ma.min(Data))
-        print "Maximum value of %s = %g" % (field, np.ma.max(Data))
+        print("Minimum value of %s = %g" % (field, np.ma.min(Data)))
+        print("Maximum value of %s = %g" % (field, np.ma.max(Data)))
 
         # Get vmin/vmax if not given
         if vmin is None:
@@ -1146,26 +1182,27 @@ class MicrophysicalVerticalPlot(object):
         tSub2D, Ht2D = np.meshgrid(date2num(tsub), self.height['data'][:])
 
         # Plot the time series
-        ts = contour_date_ts(tSub2D, Ht2D, Data, 
-                ptype=ptype, 
-                vmin=vmin, vmax=vmax, clevs=clevs,
-                color_bar=color_bar, cb_orient=cb_orient,
-                cb_pad=cb_pad, cb_tick_int=cb_tick_int,
-                cb_label=cb_label,
-                dForm=dForm,tz=tz, xdate=xdate, 
-                date_MinTicker=date_MinTicker,
-                other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
-                other_min=other_min, other_max=other_max,
-                title=title,
-                xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
-                ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
-                ax=ax, fig=fig)
+        ts = contour_date_ts(tSub2D, Ht2D, Data,
+                             ptype=ptype,
+                             vmin=vmin, vmax=vmax, clevs=clevs,
+                             color_bar=color_bar, cb_orient=cb_orient,
+                             cb_pad=cb_pad, cb_tick_int=cb_tick_int,
+                             cb_label=cb_label,
+                             dForm=dForm, tz=tz, xdate=xdate,
+                             date_MinTicker=date_MinTicker,
+                             other_MajTicks=other_MajTicks,
+                             other_MinTicks=other_MinTicks,
+                             other_min=other_min, other_max=other_max,
+                             title=title,
+                             xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
+                             ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
+                             ax=ax, fig=fig)
 
         return
 
 ###################
-##  Get methods  ##
-################### 
+#   Get methods  ##
+###################
 
     def _get_variable_dict(self, field):
         '''Get the variable from the fields dictionary.'''
@@ -1200,7 +1237,7 @@ class MicrophysicalVerticalPlot(object):
         # Find the spacing
         dp = self.latitude['data'][1] - self.latitude['data'][0]
 
-        # Calculate the relative position 
+        # Calculate the relative position
         pos = (value - self.latitude['data'][0]) / dp
         return pos
 
@@ -1209,14 +1246,15 @@ class MicrophysicalVerticalPlot(object):
         # Find the spacing
         dp = self.longitude['data'][1] - self.longitude['data'][0]
 
-        # Calculate the relative position 
+        # Calculate the relative position
         pos = (value - self.longitude['data'][0]) / dp
         return pos
 
 ######################
-##  Shared methods  ##
+#   Shared methods  ##
 ######################
-    
+
+
 def _parse_ax_fig(ax, fig):
     """Parse and return ax and fig parameters."""
     if ax is None:
@@ -1228,13 +1266,15 @@ def _parse_ax_fig(ax, fig):
     else:
         fig = fig
     return ax, fig
-        
+
+
 def _parse_ax(ax):
     """Parse and return ax and fig parameters."""
     if ax is None:
         ax = plt.gca()
     return ax
-        
+
+
 def _parse_fig(fig):
     """Parse and return ax and fig parameters."""
     if fig is None:

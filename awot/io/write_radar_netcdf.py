@@ -7,7 +7,7 @@ Especially that collected by the NOAA P-3 aircraft.
 Supports both tail Doppler and lower fuselage radars.
 
 Note: This has only been tested with DYNAMO data files, versions
-may change and another function may be needed. 
+may change and another function may be needed.
 """
 # Load the needed packages
 import netCDF4 as nc4
@@ -16,6 +16,8 @@ import numpy as np
 ######################
 # TDR file methods #
 ######################
+
+
 def radar2nc(radar, Outfile=None):
     """
     Write a NetCDF data file with data in a radar dictionary.
@@ -23,7 +25,7 @@ def radar2nc(radar, Outfile=None):
     Parameters
     ----------
     radar : dict
-        Dictionary of data retrieved from an input reader 
+        Dictionary of data retrieved from an input reader
         (e.g. read_p3_radar.py)
     Outfile : str
         String name for output netcdf file
@@ -76,7 +78,8 @@ def radar2nc(radar, Outfile=None):
     # Loop through the fields to create variables for each
     for variable in radar['fields'].keys():
         if radar['fields'][variable] is not None:
-            vid = nc_fid.createVariable(variable, np.float32, ('height', 'lat', 'lon'))
+            vid = nc_fid.createVariable(variable, np.float32,
+                                        ('height', 'lat', 'lon'))
             vid.units = radar['fields'][variable]['units']
             vid.long_name = radar['fields'][variable]['long_name']
             vid.fill_value = radar['fields'][variable]['_FillValue']

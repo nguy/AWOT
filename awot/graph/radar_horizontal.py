@@ -1,7 +1,7 @@
 """
 awot.graph.radar_horizontal
 
-A group of scripts create various plots of gridded products from 
+A group of scripts create various plots of gridded products from
 data collected by the NOAA P-3 tail Doppler radar.
 """
 
@@ -20,11 +20,14 @@ from .radar_vertical import RadarVerticalPlot
 
 # Define various constants that may be used for calculations
 RE = 6371.  # Earth radius (average)
-#===============================================================
+# ==============================================================
 # BEGIN FUNCTIONS
-#===============================================================
+# ==============================================================
+
+
 class RadarHorizontalPlot(object):
     """Class to plot a horizontal radar image."""
+
     def __init__(self, radar, basemap=None):
         '''Intitialize the class to create plots.'''
 
@@ -40,15 +43,14 @@ class RadarHorizontalPlot(object):
         _check_basemap(self)
 
 ####################
-##  Plot modules  ##
+#   Plot modules  ##
 ####################
 
-    def plot_ppi(self, field, ppi_height=2., mask_procedure=None, mask_tuple=None, 
-                cminmax=(0.,60.), clevs=25, vmin=15., vmax=60., clabel='dBZ',
-                title=" ", title_size=20, 
-                cmap='gist_ncar',
-                color_bar=True, cb_pad="5%", cb_loc='right', cb_tick_int=2,
-                ax=None, fig=None):
+    def plot_ppi(self, field, ppi_height=2., mask_procedure=None,
+                 mask_tuple=None, cminmax=(0., 60.), clevs=25, vmin=15.,
+                 vmax=60., clabel='dBZ', title=" ", title_size=20,
+                 cmap='gist_ncar', color_bar=True, cb_pad="5%",
+                 cb_loc='right', cb_tick_int=2, ax=None, fig=None):
         """
         Produce a CAPPI (constant altitude plan position indicator) plot
         using the Tail Doppler Radar data.
@@ -61,7 +63,8 @@ class RadarHorizontalPlot(object):
             Height at which to plot the horizontal field.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
-            'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'.
+            'less', 'less_equal', 'greater', 'greater_equal',
+            'equal', 'inside', 'outside'.
         mask_tuple : (str, float[, float])
             Tuple containing the field name and value(s) below which to mask
             field prior to plotting, for example to mask all data where.
@@ -87,10 +90,11 @@ class RadarHorizontalPlot(object):
             Pad to move colorbar, in the form "5%", pos is to
             right for righthand location.
         cb_loc : str
-            Location of colorbar, default is 'right', also available: 
+            Location of colorbar, default is 'right', also available:
             'bottom', 'top', 'left'.
         cb_tick_int : int
-            Interval to use for colorbar tick labels, higher number "thins" labels.
+            Interval to use for colorbar tick labels,
+            higher number "thins" labels.
         ax : Matplotlib axis instance
             Axis to plot. None will use the current axis.
         fig : Matplotlib figure instance
@@ -108,33 +112,36 @@ class RadarHorizontalPlot(object):
 
         # Return masked or unmasked variable
         Var, Data = self._get_variable_dict_data(field)
-        if mask_procedure != None:
+        if mask_procedure is not None:
             Data = get_masked_data(Data, mask_procedure, mask_tuple)
 
         # Create contour level array
         clevels = np.linspace(cminmax[0], cminmax[1], clevs)
 
-        # Find the closest vertical point 
+        # Find the closest vertical point
         Zind = find_nearest_indices(self.height['data'][:], ppi_height)
 
         # Convert lats/lons to 2D grid
-        Lon2D, Lat2D = np.meshgrid(self.longitude['data'][:], self.latitude['data'][:])
+        Lon2D, Lat2D = np.meshgrid(self.longitude['data'][
+                                   :], self.latitude['data'][:])
         # Convert lats/lons to map projection coordinates
         x, y = self.basemap(Lon2D, Lat2D)
 
-        #Plot the contours
-#    cs = m.contourf(x,y,Z[Zind,:,:],clevels,vmin=vmin,vmax=vmax,cmap=cmap)
-        cs = self.basemap.pcolormesh(x, y, Data[Zind,:,:], 
+        # Plot the contours
+#        cs = m.contourf(x,y,Z[Zind,:,:],clevels,vmin=vmin,vmax=vmax,cmap=cmap)
+        cs = self.basemap.pcolormesh(x, y, Data[Zind, :, :],
                                      vmin=vmin, vmax=vmax, cmap=cmap)
 #    plt.colors.colormap.set_under('white')
         # Add Colorbar
         if color_bar:
-            cbStr = Var['long_name'] + ' at ' + str("%4.1f" % ppi_height) + self.height['units']
-            cb = self.basemap.colorbar(cs, location=cb_loc, pad=cb_pad)#,ticks=clevels)
+            cbStr = Var['long_name'] + ' at ' + \
+                str("%4.1f" % ppi_height) + self.height['units']
+            cb = self.basemap.colorbar(
+                cs, location=cb_loc, pad=cb_pad)  # ,ticks=clevels)
             cb.set_label(cbStr)
-            # Set the number of ticks in the colorbar based upon number of contours
-            # and the tick interval selected
-            tick_locator = ticker.MaxNLocator(nbins=int(clevs/cb_tick_int))
+            # Set the number of ticks in the colorbar based upon
+            # number of contours and the tick interval selected
+            tick_locator = ticker.MaxNLocator(nbins=int(clevs / cb_tick_int))
             cb.locator = tick_locator
             cb.update_ticks()
 
@@ -143,11 +150,9 @@ class RadarHorizontalPlot(object):
 
         return
 
-    def overlay_wind_vector(self, height_level=2., 
-                                vtrim=4, vlw=1.3, vhw=2.5, vscale=400,
-                                refVec=True, refU=10., refUposX=1.05, refUposY=1.015,
-                                qcolor='k',
-                                ax=None, fig=None):
+    def overlay_wind_vector(self, height_level=2., vtrim=4, vlw=1.3, vhw=2.5,
+                            vscale=400, refVec=True, refU=10., refUposX=1.05,
+                            refUposY=1.015, qcolor='k', ax=None, fig=None):
         """
         Overlays a 2-D wind field at specified height onto map
 
@@ -175,7 +180,7 @@ class RadarHorizontalPlot(object):
             Axis to plot. None will use the current axis.
         fig : Matplotlib figure instance
             Figure on which to add the plot. None will use the current figure.
-  
+
         Notes
         -----
         U  is Along aircraft longitudinal axis wind.
@@ -185,30 +190,31 @@ class RadarHorizontalPlot(object):
         ax, fig = self._parse_ax_fig(ax, fig)
 
         # Find the closest vertical point for desired wind field
-        Htind = find_nearest_indices(self.height['data'][:],height_level)
+        Htind = find_nearest_indices(self.height['data'][:], height_level)
 
         # transform to porjection grid
-        U = self.fields['Uwind']['data'][Htind,:,:]
-        V = self.fields['Vwind']['data'][Htind,:,:]
+        U = self.fields['Uwind']['data'][Htind, :, :]
+        V = self.fields['Vwind']['data'][Htind, :, :]
         lon = self.longitude['data'][:]
         lat = self.latitude['data'][:]
-        uproj, vproj, xx, yy = self.basemap.transform_vector(U, V,
-                                        lon, lat ,
-                                        len(lon)/vtrim, len(lat)/vtrim,
-                                        returnxy=True, masked=True)
+        uproj, vproj, xx, yy = self.basemap.transform_vector(
+            U, V, lon, lat, len(lon) / vtrim, len(lat) / vtrim,
+            returnxy=True, masked=True)
 
         # Overplot the vectors
-        Q = self.basemap.quiver(xx, yy, uproj, vproj, scale=vscale, 
+        Q = self.basemap.quiver(xx, yy, uproj, vproj, scale=vscale,
                                 headwidth=vhw, linewidths=vlw, color=qcolor)
 
         # Make a quiver key to attach to figure.
-        qkLab = str("%4.1f"%refU) + 'm/s at '+str("%4.1f"%height_level)+' km'
-        qk = ax.quiverkey(Q, refUposX, refUposY, refU, qkLab)#, fontproperties={'weight': 'bold'})
+        qkLab = str("%4.1f" % refU) + 'm/s at ' + \
+            str("%4.1f" % height_level) + ' km'
+        # , fontproperties={'weight': 'bold'})
+        qk = ax.quiverkey(Q, refUposX, refUposY, refU, qkLab)
 
         return
 
-    def plot_lf(self, field=None, mask_procedure=None, mask_tuple=None, 
-                cminmax=(0.,60.), clevs=25, vmin=15., vmax=60., clabel='dBZ',
+    def plot_lf(self, field=None, mask_procedure=None, mask_tuple=None,
+                cminmax=(0., 60.), clevs=25, vmin=15., vmax=60., clabel='dBZ',
                 title=" ", title_size=20, cmap='gist_ncar',
                 color_bar=True, cb_pad="5%", cb_loc='right', cb_tick_int=2,
                 ax=None, fig=None):
@@ -222,7 +228,8 @@ class RadarHorizontalPlot(object):
             3-D variable (e.g. Reflectivity [dBZ]) to use in plot
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
-            'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'.
+            'less', 'less_equal', 'greater', 'greater_equal',
+            'equal', 'inside', 'outside'.
         mask_tuple : (str, float[, float])
             Tuple containing the field name and value(s) below which to mask
             field prior to plotting, for example to mask all data where.
@@ -248,10 +255,11 @@ class RadarHorizontalPlot(object):
             Pad to move colorbar, in the form "5%", pos is to right
             for righthand location.
         cb_loc : str
-            Location of colorbar, default is 'right', also available: 
+            Location of colorbar, default is 'right', also available:
             'bottom', 'top', 'left'.
         cb_tick_int : int
-            Interval to use for colorbar tick labels, higher number "thins" labels.
+            Interval to use for colorbar tick labels,
+            higher number "thins" labels.
         ax : Matplotlib axis instance
             Axis to plot. None will use the current axis.
         fig : Matplotlib figure instance
@@ -266,33 +274,36 @@ class RadarHorizontalPlot(object):
 
         # Return masked or unmasked variable
         Var, Data = self._get_variable_dict_data(field)
-        if mask_procedure != None:
+        if mask_procedure is not None:
             Data = get_masked_data(Data, mask_procedure, mask_tuple)
 
         # Create contour level array
         clevels = np.linspace(cminmax[0], cminmax[1], clevs)
 
         # Convert lats/lons to 2D grid
-        Lon2D, Lat2D = np.meshgrid(self.longitude['data'][:], self.latitude['data'][:])
+        Lon2D, Lat2D = np.meshgrid(self.longitude['data'][
+                                   :], self.latitude['data'][:])
         # Convert lats/lons to map projection coordinates
         x, y = self.basemap(Lon2D, Lat2D)
 
-        p = self.basemap.pcolormesh(x, y, Data, 
+        p = self.basemap.pcolormesh(x, y, Data,
                                     vmin=vmin, vmax=vmax, cmap=cmap)
 
         # Add Colorbar
         if color_bar:
-            cbStr = Var['long_name'] +' '+ self.height['units']
-            cb = self.basemap.colorbar(p, location=cb_loc, pad=cb_pad)#,ticks=clevels)
+            cbStr = Var['long_name'] + ' ' + self.height['units']
+            cb = self.basemap.colorbar(
+                p, location=cb_loc, pad=cb_pad)  # ,ticks=clevels)
             cb.set_label(cbStr)
-            # Set the number of ticks in the colorbar based upon number of contours
-            tick_locator = ticker.MaxNLocator(nbins=int(clevs/cb_tick_int))
+            # Set the number of ticks in the colorbar based upon number of
+            # contours
+            tick_locator = ticker.MaxNLocator(nbins=int(clevs / cb_tick_int))
             cb.locator = tick_locator
             cb.update_ticks()
 
         # Add title
         ax.set_title(title, fontsize=title_size)
-    
+
     def plot_point(self, lon, lat, symbol='ro', label_text=None,
                    label_offset=(None, None), **kwargs):
         """
@@ -333,7 +344,7 @@ class RadarHorizontalPlot(object):
 
     def plot_line_geo(self, line_lons, line_lats,
                       line_style='r-', lw=3, alpha=0.2,
-                      label0=True, label_offset = (0.01, 0.01),
+                      label0=True, label_offset=(0.01, 0.01),
                       ax=None, fig=None, **kwargs):
         """
         Plot a line segments on the current map given values in lat and lon.
@@ -372,48 +383,49 @@ class RadarHorizontalPlot(object):
         # Overplot the 0 point
         if label0:
             self.plot_point(line_lons[0], line_lats[0], 'ko',
-                            label_text='0', label_offset=label_offset, markersize=0.5)
+                            label_text='0', label_offset=label_offset,
+                            markersize=0.5)
 
 ########################
-##  3-D plot methods  ##
+#   3-D plot methods  ##
 ########################
-    def DPJgrid_3d(self, surf_field,
-               surf_min=-5., surf_max=5., surf_cmap='RdBu_r',
-               rstride=5, cstride=5,
-               plot_contour=False, cont_field=None, ppi_height=2.,
-               cminmax=(0.,60.), clevs=25, vmin=15., vmax=60., cmap='gist_ncar', alpha=0.,
-               zlims=(-5.,5.), dlat=1.,dlon=1.,
-               plot_track=True,
-               title=" ", fig=None, ax=None):
+
+    def DPJgrid_3d(self, surf_field, surf_min=-5., surf_max=5.,
+                   surf_cmap='RdBu_r', rstride=5, cstride=5,
+                   plot_contour=False, cont_field=None, ppi_height=2.,
+                   cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
+                   cmap='gist_ncar', alpha=0., zlims=(-5., 5.), dlat=1.,
+                   dlon=1., plot_track=True, title=" ", fig=None, ax=None):
         """
         Wrapper to call the 3D plotting function for backwards compatability.
         """
         r3d = Radar3DPlot(self.radar_data, basemap=self.basemap)
 
-        r3d.DPJgrid_3d(self.airborne, surf_field,
-               surf_min=surf_min, surf_max=surf_max, surf_cmap=surf_cmap,
-               rstride=rstride, cstride=cstride,
-               plot_contour=plot_contour, cont_field=cont_field, 
-               ppi_height=ppi_height,
-               cminmax=cminmax, clevs=clevs, vmin=vmin, vmax=vmax, 
-               cmap=cmap, alpha=alpha,
-               zlims=zlims, dlat=dlat,dlon=dlon,
-               plot_track=plot_track,
-               title=title, fig=fig, ax=ax)
+        r3d.DPJgrid_3d(self.airborne, surf_field, surf_min=surf_min,
+                       surf_max=surf_max, surf_cmap=surf_cmap,
+                       rstride=rstride, cstride=cstride,
+                       plot_contour=plot_contour, cont_field=cont_field,
+                       ppi_height=ppi_height,
+                       cminmax=cminmax, clevs=clevs, vmin=vmin, vmax=vmax,
+                       cmap=cmap, alpha=alpha,
+                       zlims=zlims, dlat=dlat, dlon=dlon,
+                       plot_track=plot_track,
+                       title=title, fig=fig, ax=ax)
 
 #############################
-##  Vertical plot methods  ##
+#   Vertical plot methods  ##
 #############################
+
     def plot_cross_section(self, field, start_pt, end_pt, xs_length=500,
                            mask_procedure=None, mask_tuple=None,
-                           title=" ", title_size=20,
-                           cminmax=(0.,60.), clevs=25, vmin=15., vmax=60.,
-                           cmap='gist_ncar', clabel='dBZ',
-                           color_bar=True, cb_pad=.05, cb_orient='vertical', cb_tick_int=2,
+                           title=" ", title_size=20, cminmax=(0., 60.),
+                           clevs=25, vmin=15., vmax=60., cmap='gist_ncar',
+                           clabel='dBZ', color_bar=True, cb_pad=.05,
+                           cb_orient='vertical', cb_tick_int=2,
                            ax=None, fig=None):
         '''
         Plot a cross-section between two points.
-        
+
         Parameters
         ----------
         field : str
@@ -424,7 +436,8 @@ class RadarHorizontalPlot(object):
             Number of to use for the cross section.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
-            'less', 'less_equal', 'greater', 'greater_equal', 'equal', 'inside', 'outside'.
+            'less', 'less_equal', 'greater', 'greater_equal',
+            'equal', 'inside', 'outside'.
         mask_tuple : (str, float[, float])
             Tuple containing the field name and value(s) below which to mask
             field prior to plotting, for example to mask all data where.
@@ -450,10 +463,11 @@ class RadarHorizontalPlot(object):
             Pad to move colorbar, in the form "5%", pos is to
             right for righthand location.
         cb_loc : str
-            Location of colorbar, default is 'right', also available: 
+            Location of colorbar, default is 'right', also available:
             'bottom', 'top', 'left'.
         cb_tick_int : int
-            Interval to use for colorbar tick labels, higher number "thins" labels.
+            Interval to use for colorbar tick labels,
+            higher number "thins" labels.
         ax : Matplotlib axis instance
             Axis to plot. None will use the current axis.
         fig : Matplotlib figure instance
@@ -461,19 +475,17 @@ class RadarHorizontalPlot(object):
         '''
         rvp = RadarVerticalPlot(self.radar_data, basemap=self.basemap)
 
-        rvp.plot_cross_section(field, start_pt, end_pt, 
-                           xs_length=xs_length,
-                           mask_procedure=mask_procedure, mask_tuple=mask_tuple,
-                           title=title, title_size=title_size,
-                           cminmax=cminmax, clevs=clevs, vmin=vmin, vmax=vmax,
-                           cmap=cmap, clabel=clabel,
-                           color_bar=color_bar, cb_pad=cb_pad, 
-                           cb_orient=cb_orient, cb_tick_int=cb_tick_int,
-                           ax=ax, fig=fig)
+        rvp.plot_cross_section(
+            field, start_pt, end_pt, xs_length=xs_length,
+            mask_procedure=mask_procedure, mask_tuple=mask_tuple,
+            title=title, title_size=title_size,
+            cminmax=cminmax, clevs=clevs, vmin=vmin, vmax=vmax,
+            cmap=cmap, clabel=clabel, color_bar=color_bar, cb_pad=cb_pad,
+            cb_orient=cb_orient, cb_tick_int=cb_tick_int, ax=ax, fig=fig)
 
 ###################
-##  Get methods  ##
-################### 
+#   Get methods  ##
+###################
 
     def _get_variable_dict(self, field):
         '''Get the variable from the fields dictionary'''
@@ -490,7 +502,7 @@ class RadarHorizontalPlot(object):
         # Find the spacing
         dp = self.latitude['data'][1] - self.latitude['data'][0]
 
-        # Calculate the relative position 
+        # Calculate the relative position
         pos = (value - self.latitude['data'][0]) / dp
         return pos
 
@@ -499,12 +511,12 @@ class RadarHorizontalPlot(object):
         # Find the spacing
         dp = self.longitude['data'][1] - self.longitude['data'][0]
 
-        # Calculate the relative position 
+        # Calculate the relative position
         pos = (value - self.longitude['data'][0]) / dp
         return pos
 
 ########################
-##  Parseing methods  ##
+#   Parsing methods   ##
 ########################
 
     def _parse_ax_fig(self, ax, fig):
