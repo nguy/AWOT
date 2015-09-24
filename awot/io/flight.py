@@ -26,7 +26,7 @@ def read_netcdf(fname, mapping_dict=None, platform=None):
     Parameters
     ----------
     fname : string
-        Filename [string]
+        Filename.
     mapping_dict : dict
         Dictionary to use for mapping variable names. Use if provided.
         If None, use default.
@@ -107,14 +107,14 @@ def read_netcdf_variable(fname, Rec):
     Parameters
     ----------
      fname : string
-         Filename [string]
+         Filename.
      Rec : string
-         Variable name to be pulled out [string]
+         Variable name to be pulled out [string].
 
     Output
     ------
      VarOut : float
-         Masked array containing variable data
+         Masked array containing variable data.
       """
     # Read the NetCDF, grab the variable, close file
     ncFile = Dataset(fname, 'r')
@@ -276,7 +276,7 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
     Parameters
     ----------
     filename : str
-        Name of file (long path okay)
+        Name of file (long path okay).
     mapping_dict : dict
         Dictionary to use for mapping variable names. Use if provided.
         If None, use skip the dictionary and use names in file.

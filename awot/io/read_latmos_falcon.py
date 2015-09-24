@@ -15,20 +15,22 @@ import datetime
 import numpy as np
 import pytz
 
+from ..io.common import (_ncvar_subset_to_dict, _ncvar_subset_masked,
+                         _ncvar_to_dict, _var_not_found)
 
-def read_rasta_wind(fname):
+def read_rasta_wind(fname, field_mapping=None):
     '''A wrapper to call the read_rasta_dynamic module.'''
-    data = read_rasta_dynamic(fname)
+    data = read_rasta_dynamic(fname, field_mapping=None)
     return data
 
 
-def read_rasta_radar(fname):
+def read_rasta_radar(fname, field_mapping=None):
     '''A wrapper to call the read_rasta_dynamic module.'''
-    data = read_rasta_dynamic(fname)
+    data = read_rasta_dynamic(fname, field_mapping=None)
     return data
 
 
-def read_rasta_dynamic(fname):
+def read_rasta_dynamic(fname, field_mapping=None):
     '''
     Read in NetCDF data file containing Falcon dynamic properties
     retrieved from radar measurements.
@@ -36,54 +38,58 @@ def read_rasta_dynamic(fname):
     Parameters
     ----------
     fname : string
-        Filename [string]
+        Filename [string].
+    field_mapping : dict
+        Mapping dictionary to use for field variable data.
+        If None, then the default mapping is used.
 
     Output
     ------
-    data : Dictionary of the following values
-
-            latitude : float
-            Aircraft latitude [decimal degrees]
-            longitude : float
-            Aircraft longitude [decimal degrees]
-            altitude : float
-            Aircraft altitude via GPS [km]
-            height : float
-            Height [km]
-            temperature : float
-            Temperature at aircraft altitude [degrees C]
-            pressure: float
-            Pressure at aircraft altitude [hPa]
-            Vx_flight_level : float
-            Vx at flight level from in situ measurements [m/s]
-            Vy_flight_level : float
-            Vy at flight level from in situ measurements [m/s]
-            Vz_flight_level : float
-            Vz at flight level from in situ measurements [m/s]
-            zonal_wind : float
-            Zonal wind component [m/s]
-            meridional_wind : float
-            Meriodional wind component [m/s]
-            fields : Dictionary of variables in file
+    data : dict
+        AWOT dictionary instance.
+        latitude : float
+            Aircraft latitude [decimal degrees].
+        longitude : float
+            Aircraft longitude [decimal degrees].
+        altitude : float
+            Aircraft altitude via GPS [km].
+        height : float
+            Height [km].
+        temperature : float
+            Temperature at aircraft altitude [degrees C].
+        pressure: float
+            Pressure at aircraft altitude [hPa].
+        Vx_flight_level : float
+            Vx at flight level from in situ measurements [m/s].
+        Vy_flight_level : float
+            Vy at flight level from in situ measurements [m/s].
+        Vz_flight_level : float
+            Vz at flight level from in situ measurements [m/s].
+        zonal_wind : float
+            Zonal wind component [m/s].
+        meridional_wind : float
+            Meriodional wind component [m/s].
+        fields : dict
             reflectivity : float
-                    Radar Reflectivity [dBZ]
-                Uwind : float
-                Wind along aircraft longitudinal axis wind [m/s]
-                Vwind : float
-                Wind perpendicular to aircraft longitudinal axis wind [m/s]
-                Wwind : float
-                    Vertical wind component [m/s]
+                Radar Reflectivity [dBZ].
+            Uwind : float
+                Wind along aircraft longitudinal axis wind [m/s].
+            Vwind : float
+                Wind perpendicular to aircraft longitudinal axis wind [m/s].
+            Wwind : float
+                Vertical wind component [m/s].
             term_fall_speed : float
-                    Terminal fall speed [m/s]
-                term_fall_speed_weighted : float
-                Terminal fall speed weighted by Vt-Z [m/s]
-        metadata : Dictionary of global attributes in file
+                Terminal fall speed [m/s].
+            term_fall_speed_weighted : float
+                Terminal fall speed weighted by Vt-Z [m/s].
+        metadata : dict
+            Dictionary of global attributes in file.
         project : str
-            Project Name
+            Project Name.
         platform : str
-            Platform name or identifier
+            Platform name or identifier.
         flight_number : str
-            Flight number or identifer
+            Flight number or identifier.
     '''
     # Read the NetCDF
     ncFile = Dataset(fname, 'r')
@@ -110,30 +116,34 @@ def read_rasta_dynamic(fname):
     # Loop through the variables and pull data
     for varname in name_map_data:
         if varname in ncvars:
-            data[varname] = _nc_var_masked(
+            data[varname] = _ncvar_subset_masked(
                 ncFile, name_map_data[varname], Good)
             if varname is 'altitude':
                 data[varname] = data[varname] * 1000.
         else:
             data[varname] = None
+            _var_not_found(varname)
 
     try:
-        Ht = _nc_height_var_to_dict(ncvars['height'])
+        data['height'] = _ncvar_to_dict(ncvars['height'])
+        data['height']['data'][:] = data['height']['data'][:] * 1000.
+        data['height']['units'] = 'meters'
     except:
-        Ht = None
-    data['height'] = Ht
+        data['height'] = None
 
     try:
-        mask_hydro = _nc_radar_var_to_dict(ncvars['Mask'], Good)
+        data['mask_hydro'] = _ncvar_subset_to_dict(ncvars['Mask'], Good)
     except:
-        mask_hydro = None
-    data['mask_hydro'] = mask_hydro
+        data['mask_hydro'] = None
 
     # Add fields to their own dictionary
     fields = {}
 
     # Grab a name map for RASTA dynamic field data
-    name_map_fields = _get_dynamic_field_name_map()
+    if field_mapping is None:
+        name_map_fields = _get_dynamic_field_name_map()
+    else:
+        name_map_fields = field_mapping
 
     # Loop through the variables and pull data
     for varname in name_map_fields:
@@ -142,18 +152,17 @@ def read_rasta_dynamic(fname):
                 ncvars[name_map_fields[varname]], Good)
         except:
             fields[varname] = None
+            _var_not_found(varname)
 
     # Save to output dictionary
     data['fields'] = fields
 
     # Pull out global attributes
     try:
-        ncFile.ProjectName
         data['project'] = ncFile.ProjectName
     except:
         data['project'] = fname.split("_")[0]
     try:
-        ncFile.FlightNumber
         data['flight_number'] = ncFile.FlightNumber
     except:
         data['flight_number'] = fname.split("_")[2]
@@ -166,58 +175,63 @@ def read_rasta_dynamic(fname):
     return data
 
 
-def read_rasta_microphysics(fname):
+def read_rasta_microphysics(fname, field_mapping=None):
     '''
     Read in NetCDF data file containing Falcon microphysical properties.
 
     Parameters
     ----------
     fname : string
-        Filename [string]
+        Filename [string].
+    field_mapping : dict
+        Mapping dictionary to use for field variable data.
+        If None, then the default mapping is used.
 
     Output
     ------
-    data : Dictionary of the following values
+    data : dict
+        AWOT dictionary instance.
         latitude : float
-            Aircraft latitude [decimal degrees]
+            Aircraft latitude [decimal degrees].
         longitude : float
-            Aircraft longitude [decimal degrees]
+            Aircraft longitude [decimal degrees].
         height : float
-            Height [km]
+            Height [km].
         fields : Dictionary of variables in file
             extinction : float
-                Visible extinction [1/m]
+                Visible extinction [1/m].
             time : float
-                Aircraft time array
+                Aircraft time array.
             n0start : float
-                Normalized concentration parameter [m^-4]
+                Normalized concentration parameter [m^-4].
             iwc : float
-                Ice water content [kg m^-3]
+                Ice water content [kg m^-3].
             effective_radius : float
-                Effective radius [micron]
+                Effective radius [micron].
             Dm : float
-                Equivalen volume weighted diameter [micron]
+                Equivalen volume weighted diameter [micron].
             Nt : float
-                Number_concentration [m^-3]
+                Number_concentration [m^-3].
             dBZ : float
-                Radar reflectivity [dBZ]
+                Radar reflectivity [dBZ].
             Z_fwd : float
-                Forward-modelled radar reflectivity [dBZ]
+                Forward-modelled radar reflectivity [dBZ].
             term_velocity : float
-                Terminal fall velocity [m s^-1]
+                Terminal fall velocity [m s^-1].
             term_velocity_fwd : float
-                Forward-modelled terminal fall velocity [m s^-1]
+                Forward-modelled terminal fall velocity [m s^-1].
             temperature : float
-                Temperature [degrees C]
+                Temperature [degrees C].
             aM : float
-                Retrieved aM (M (D)=aD^b) [unitless]
-            metadata : Dictionary of global attributes in file
-            project : str
-                Project Name
-            platform : str
-                Platform name or identifier
-            flight_number : str
-                Flight number or identifer
+                Retrieved aM (M (D)=aD^b) [unitless].
+        metadata : dict
+            Dictionary of global attributes in file.
+        project : str
+            Project name.
+        platform : str
+            Platform name or identifier.
+        flight_number : str
+            Flight number or identifier.
     '''
 
     # Read the NetCDF
@@ -241,18 +255,17 @@ def read_rasta_microphysics(fname):
 
     # Pull out each variable
     try:
-        Lat = ncFile.variables['latitude'][Good]
-        data['latitude'] = Lat
+        data['latitude'] = ncFile.variables['latitude'][Good]
     except:
         data['latitude'] = None
     try:
-        Lon = ncFile.variables['longitude'][Good]
-        data['longitude'] = Lon
+        data['longitude'] = ncFile.variables['longitude'][Good]
     except:
         data['longitude'] = None
     try:
-        Ht = _nc_height_var_to_dict(ncvars['height'])
-        data['height'] = Ht
+        data['height'] = _ncvar_to_dict(ncvars['height'])
+        data['height']['data'][:] = data['height']['data'][:] * 1000.
+        data['height']['units'] = 'meters'
     except:
         data['height'] = None
 
@@ -260,7 +273,10 @@ def read_rasta_microphysics(fname):
     fields = {}
 
     # Grab a name map for RASTA microphysics field data
-    name_map = _get_microphysics_field_name_map()
+    if field_mapping is None:
+        name_map = _get_microphysics_field_name_map()
+    else:
+        name_map = field_mapping
 
     # Loop through the variables and pull data
     for varname in name_map:
@@ -269,6 +285,7 @@ def read_rasta_microphysics(fname):
                 ncvars[name_map[varname]], Good)
         except:
             fields[varname] = None
+            _var_not_found(varname)
 
     if fields['Dm'] is not None:
         fields['Dm']['data'][:] = fields['Dm']['data'][:] * 1000.
@@ -277,21 +294,19 @@ def read_rasta_microphysics(fname):
 
     # Pull out global attributes
     try:
-        ncFile.ProjectName
         data['project'] = ncFile.ProjectName
     except:
         data['project'] = fname.split("_")[0]
     try:
-        ncFile.FlightNumber
         data['flight_number'] = ncFile.FlightNumber
     except:
         data['flight_number'] = fname.split("_")[2]
 
     # Now mask missing values
-    if Lat is not None:
-        np.ma.masked_invalid(Lat)
-    if Lon is not None:
-        np.ma.masked_invalid(Lon)
+    if data['latitude'] is not None:
+        np.ma.masked_invalid(data['latitude'])
+    if data['longitude'] is not None:
+        np.ma.masked_invalid(data['longitude'])
 
     # Create a dictionary to transfer the data
     data['platform'] = 'falcon'
@@ -308,26 +323,26 @@ def read_rasta_microphysics(fname):
 def _get_dynamic_flight_name_map():
     '''Map RASTA dynamic variables to AWOT structure.'''
     name_map = {
-        'latitude': 'latitude',
-        'longitude': 'longitude',
-        'altitude': 'altitude',
-        'temperature': 'temperature',
-        'pressure': 'pressure',
-        'Vx_flight_level': 'Vx_insitu',
-        'Vy_flight_level': 'Vy_insitu',
-        'Vz_flight_level': 'Vz_insitu',
-        'zonal_wind':  'VE',
-        'meridional_wind': 'VN',
-    }
+               'latitude': 'latitude',
+               'longitude': 'longitude',
+               'altitude': 'altitude',
+               'temperature': 'temperature',
+               'pressure': 'pressure',
+               'Vx_flight_level': 'Vx_insitu',
+               'Vy_flight_level': 'Vy_insitu',
+               'Vz_flight_level': 'Vz_insitu',
+               'zonal_wind':  'VE',
+               'meridional_wind': 'VN',
+               }
     return name_map
 
 
 def _get_microphysics_field_name_map():
     '''Map RASTA microphysics variables to AWOT structure..'''
     name_map = {
-        'extinction': 'extinction',
-        'n0star': 'n0star',
-        'iwc': 'iwc',
+               'extinction': 'extinction',
+               'n0star': 'n0star',
+               'iwc': 'iwc',
                'effective_radius': 'effective_radius',
                'Dm': 'Dm',
                'Nt': 'Nt',
@@ -337,7 +352,7 @@ def _get_microphysics_field_name_map():
                'term_velocity_fwd': 'vt_fwd',
                'temperature': 'T',
                'aM': 'aM',
-    }
+               }
     return name_map
 
 
@@ -352,13 +367,13 @@ def _get_dynamic_field_name_map():
         'Vt_weighted : Weighted Terminal velocity
     '''
     name_map = {
-        'reflectivity': 'Z',
-        'Uwind': 'Vx',
-        'Vwind': 'Vy',
-        'Wwind': 'Vz',
-        'term_fall_speed': 'Vt',
-        'term_fall_speed_weighted': 'Vt_weighted'
-    }
+                'reflectivity': 'Z',
+                'Uwind': 'Vx',
+                'Vwind': 'Vy',
+                'Wwind': 'Vz',
+                'term_fall_speed': 'Vt',
+                'term_fall_speed_weighted': 'Vt_weighted'
+                }
     return name_map
 
 
@@ -384,44 +399,3 @@ def _get_latmos_time(fname, ncFile, Good_Indices):
     Time_unaware = num2date(TimeSec, 'seconds since 1970-01-01 00:00:00+0:00')
     Time = Time_unaware  # .replace(tzinfo=pytz.UTC)
     return Time
-
-
-def _nc_var_masked(ncFile, ncvar, Good_Indices):
-    """Convert a NetCDF variable into a masked variable."""
-    d = ncFile.variables[ncvar][Good_Indices]
-    np.ma.masked_invalid(d)
-    return d
-
-
-def _nc_radar_var_to_dict(ncvar, Good_Indices):
-    """
-    Convert a NetCDF Dataset variable to a dictionary.
-    Appropriated from Py-ART package.
-    """
-    d = dict((k, getattr(ncvar, k)) for k in ncvar.ncattrs())
-    d['data'] = ncvar[:]
-    if np.isscalar(d['data']):
-        # netCDF4 1.1.0+ returns a scalar for 0-dim array, we always want
-        # 1-dim+ arrays with a valid shape.
-        d['data'] = np.array(d['data'][Good_Indices, :])
-        d['data'].shape = (1, )
-    return d
-
-
-def _nc_height_var_to_dict(ncvar):
-    """
-    Convert a NetCDF Dataset variable to a dictionary.
-    Appropriated from Py-ART package.
-    """
-    d = dict((k, getattr(ncvar, k)) for k in ncvar.ncattrs())
-    d['data'] = ncvar[:]
-    if np.isscalar(d['data']):
-        # netCDF4 1.1.0+ returns a scalar for 0-dim array, we always want
-        # 1-dim+ arrays with a valid shape.
-        d['data'] = np.array(d['data'][:])
-        d['data'].shape = (1, )
-
-    d['data'][:] = Ht['data'][:] * 1000.
-    d['units'] = 'meters'
-
-    return d
