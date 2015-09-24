@@ -14,12 +14,13 @@ import pytz
 from datetime import datetime
 import pyart
 
+from ..io.common import _ncvar_to_dict, _var_not_found
 ########################
 #   TDR file methods  ##
 ########################
 
 
-def read_windsyn_tdr_netcdf(fname, mapping=None):
+def read_windsyn_tdr_netcdf(fname, field_mapping=None):
     """
     Read in a NetCDF data file containing a pseudo-dual-Doppler
     analysis of NOAA P-3 tail radar data from the windsyn program.
@@ -29,54 +30,67 @@ def read_windsyn_tdr_netcdf(fname, mapping=None):
     Parameters
     ----------
     fname : str
-        Long path filename [string]
-    mapping : str
-            Mapping dictionary to use for pulling data in
-            If not set, equivalent to None, then the basic variables
-            are input.
-            However, if 'extended' is selected then
-            additional variables are mapped.
+        Long path filename [string].
+    field_mapping : dict
+        Mapping dictionary to use for field variable data.
+        If None, then the default mapping is used.
 
     Output
     ------
-    data : Dictionary of the following values
-
-    metadata : Dictionary of global attributes in file
-    longitude : dict
-        Longitude array [degrees]
-    latitude : dict
-        Latitude array [degrees]
-    height : dict
-        Height array [km]
-    fields : Dictionary of variables in file
-        reflectivity : float
-            Radar Reflectivity [dBZ]
-        Uwind : float
-            Wind along aircraft longitudinal axis wind [m/s]
-        Vwind : float
-            Wind perpendicular to aircraft longitudinal axis wind [m/s]
-        Wwind : float
-            Vertical wind component [m/s]
-        divergene : float
-            Divergence x 10^3 [1/s]
-        term_fall_speed : float
-            Terminal fall speed [m/s]
-        time_diff : float
-            Time difference from nominal [s]
+    data : dict
+        AWOT dictionary instance.
+        metadata : dict
+            Dictionary of global attributes in file.
+        longitude : dict
+            Longitude array [degrees].
+        latitude : dict
+            Latitude array [degrees].
+        height : dict
+            Height array [km].
+        project : str
+            Project name.
+        platform : str
+            Platform name or identifier.
+        flight_number : str
+            Flight number or identifier.
         datetime_start : datetime object
-            HHNN (Hour Minute) module start time
+            HHNN (Hour Minute) module start time.
         datetime_end : datetime object
-            HHNN (Hour Minute) module end time
+            HHNN (Hour Minute) module end time.
+        data_format: str
+            AWOT identifying string.
+        fields : dict
+            reflectivity : float
+                Radar Reflectivity [dBZ].
+            Uwind : float
+                Wind along aircraft longitudinal axis wind [m/s].
+            Vwind : float
+                Wind perpendicular to aircraft longitudinal axis wind [m/s].
+            Wwind : float
+                Vertical wind component [m/s].
+            divergene : float
+                Divergence x 10^3 [1/s].
+            term_fall_speed : float
+                Terminal fall speed [m/s].
+            time_diff : float
+                Time difference from nominal [s].
     """
     # Read in NetCDF
     ncFile = Dataset(fname, 'r')
     ncvars = ncFile.variables
 
+    # Create a data dictionary
+    radar = {}
     # Grab the metadata stored in global attributes as a dictionary
-    metadata = ncFile.__dict__
+    radar['metadata'] = ncFile.__dict__
+
+    radar['longitude'] = _ncvar_to_dict(ncvars['Lon'])
+    radar['latitude'] = _ncvar_to_dict(ncvars['Lat'])
+    radar['height'] = _ncvar_to_dict(ncvars['Height'])
 
     # Make a Datetime start/end instances to pass
-    dt_start = datetime(ncFile.variables['YYstart'][:],
+    radar['datetime_start'] = datetime(
+                        ncFile.variables['YYstart'][:],
                         ncFile.variables['MMstart'][:],
                         ncFile.variables['DDstart'][:],
                         ncFile.variables['HHstart'][:],
@@ -84,7 +98,8 @@ def read_windsyn_tdr_netcdf(fname, mapping=None):
                         ncFile.variables['SSstart'][:],
                         0
                         )
-    dt_end = datetime(ncFile.variables['YYend'][:],
+    radar['datetime_end'] = datetime(
+                      ncFile.variables['YYend'][:],
                       ncFile.variables['MMend'][:],
                       ncFile.variables['DDend'][:],
                       ncFile.variables['HHend'][:],
@@ -108,40 +123,29 @@ def read_windsyn_tdr_netcdf(fname, mapping=None):
             fields[varname] = _ncvar_to_dict(ncvars[name_map[varname]])
         except:
             fields[varname] = None
+            _var_not_found(varname)
 
     # Mask bad data values
     # badval = float(ncFile.MissingValue)
     # np.ma.masked_values()
+    radar['fields'] = fields
 
     # Pull out specific information on platform/instrument
     try:
-        ncFile.Platform
-        platform = ncFile.title
+        radar['platform'] = ncFile.title # ncFile.Platform??
     except:
-        platform = 'p3'
+        radar['platform'] = 'p3'
 
     try:
-        ncFile.Instrument
-        instrument = ncFile.instrument
+        radar['instrument'] = ncFile.instrument #ncFile.Instrument??
     except:
-        instrument = 'tdr_grid'
+        radar['instrument'] = 'tdr_grid'
 
-    # Create a dictionary to transfer the data
-    radar = {'metadata': metadata,
-             'longitude': _ncvar_to_dict(ncvars['Lon']),
-             'latitude': _ncvar_to_dict(ncvars['Lat']),
-             'height': _ncvar_to_dict(ncvars['Height']),
-             'fields': fields,
-             'datetime_start': dt_start,
-             'datetime_end': dt_end,
-             'platform': platform,
-             'instrument': instrument,
-             'data_format': 'windsyn_grid',
-             }
+    # Set the format for AWOT
+    radar['data_format'] = 'windsyn_grid'
 
     ncFile.close()
     return radar
-
 
 def read_tdr_grid_variable(fname, Rec):
     """
@@ -151,12 +155,17 @@ def read_tdr_grid_variable(fname, Rec):
     Parameters
     ----------
     fname : str
-        Long path filename
+        Long path filename.
     VarName : str
-        Variable name to access
+        Variable name to access.
 
-    Usage::
-    -----
+    Output
+    ------
+    VarOut : Array
+        Numpy array object.
+
+    Useage
+    ------
         VarOut = tdr_grid_variable(fname, Rec)
     """
     # Read the NetCDF
@@ -168,7 +177,6 @@ def read_tdr_grid_variable(fname, Rec):
     ncFile.close()
     return VarOut
 
-
 def read_windsyn_binary(fname, platform=None, instrument=None, radar_num=None):
     """
     Read in unformatted Fortran binary data files
@@ -177,17 +185,18 @@ def read_windsyn_binary(fname, platform=None, instrument=None, radar_num=None):
     Parameters
     ----------
     fname : str
-        Long path filename [string]
+        Long path filename.
     platform : str
-        Name of platform that instrument is aboard
+        Name of platform that instrument is aboard.
     instrument : str
-        Name of instrument taking observations
+        Name of instrument taking observations.
     radar_num : int
-        Number of radar from which to pull datetime start/finish information
+        Number of radar from which to pull datetime start/finish information.
 
     Output
     ------
-    data : Dictionary of the following values
+    data : dict
+        AWOT dictionary instance.
 
     Notes
     -----
@@ -328,32 +337,41 @@ def read_lf_grid(fname):
 
     Output
     ------
-    data : Dictionary of the following values
+    data : dict
+        AWOT dictionary instance.
 
-    metadata: Dictionary of metadata in file
-    longitude : float
-        Longitude array [degrees]
-    latitude : float
-        Latitude array [degrees]
-    height : float
-        Height array [km]
-    fields: Dictionary of variables
-        reflectivity : float
-            Radar Reflectivity [dBZ]
-    datetime_start : datetime object
-        HHNN (Hour Minute) module start time
-    datetime_end : datetime object
-        HHNN (Hour Minute) module end time
+        metadata: dict
+            Dictionary of metadata in file.
+        longitude : float
+            Longitude array [degrees].
+        latitude : float
+            Latitude array [degrees].
+        height : float
+            Height array [km].
+        fields: Dictionary of variables.
+            reflectivity : float
+                Radar Reflectivity [dBZ].
+        datetime_start : datetime object
+            HHNN (Hour Minute) module start time.
+        datetime_end : datetime object
+            HHNN (Hour Minute) module end time.
     """
     # Read in NetCDF
     ncFile = Dataset(fname, 'r')
     ncvars = ncFile.variables
 
+    # Create a data dictionary
+    radar = {}
     # Grab the metadata stored in global attributes as a dictionary
-    metadata = ncFile.__dict__
+    radar['metadata'] = ncFile.__dict__
 
-    # Make a Datetime instance to pass
-    dt_start = datetime(ncFile.variables['YYstart'][:],
+    radar['longitude'] = _ncvar_to_dict(ncvars['Lon'])
+    radar['latitude'] = _ncvar_to_dict(ncvars['Lat'])
+    radar['height'] = _ncvar_to_dict(ncvars['Zlev'])
+
+    # Make a Datetime start/end instances to pass
+    radar['datetime_start'] = datetime(
+                        ncFile.variables['YYstart'][:],
                         ncFile.variables['MMstart'][:],
                         ncFile.variables['DDstart'][:],
                         ncFile.variables['HHstart'][:],
@@ -361,7 +379,8 @@ def read_lf_grid(fname):
                         ncFile.variables['SSstart'][:],
                         0
                         )
-    dt_end = datetime(ncFile.variables['YYend'][:],
+    radar['datetime_end'] = datetime(
+                      ncFile.variables['YYend'][:],
                       ncFile.variables['MMend'][:],
                       ncFile.variables['DDend'][:],
                       ncFile.variables['HHend'][:],
@@ -373,71 +392,22 @@ def read_lf_grid(fname):
     fields = {'reflectivity': _ncvar_to_dict(ncvars['dBZ'])}
     # badval = float(ncFile.MissingValue)
     # np.ma.masked_values(fields['dBZ']['data'], badval)
+    radar['fields'] = fields
 
     # Pull out specific information on platform/instrument
     try:
-        ncFile.Platform
-        platform = ncFile.title
+        radar['platform'] = ncFile.title #ncFile.Platform??
     except:
-        platform = 'p3'
+        radar['platform'] = 'p3'
     try:
-        ncFile.Instrument
-        instrument = ncFile.instrument
+        radar['instrument'] = ncFile.instrument  #ncFile.Instrument??
     except:
-        instrument = 'lf'
+        radar['instrument'] = 'lf'
 
     # Create a dictionary to transfer the data
-    radar = {'metadata': metadata,
-             'longitude': _ncvar_to_dict(ncvars['Lon']),
-             'latitude': _ncvar_to_dict(ncvars['Lat']),
-             'height': _ncvar_to_dict(ncvars['Zlev']),
-             'fields': fields,
-             'datetime_start': dt_start,
-             'datetime_end': dt_end,
-             'platform': platform,
-             'instrument': instrument,
-             'data_format': 'lower_fuselage_grid',
-             }
+    radar['data_format'] = 'lower_fuselage_grid'
 
     ncFile.close()
-    return radar
-
-##########################
-#   Sweep file methods  ##
-##########################
-
-
-def read_tdr_sweep(fname):
-    """Read in a tail radar sweep file using the PyArt interface.
-    Both cfradial and raw Sigmet formats are accepted.
-
-    Parameters
-    ----------
-    fname : str
-        Long path filename [string]
-
-    Output
-    ------
-    data : Dictionary of the following values
-    """
-    radar = pyart.io.read(fname)
-    return radar
-
-
-def read_lf_sweep(fname):
-    """Read in a lower fuselage radar sweep file using the PyArt interface.
-    Both cfradial and raw Sigmet formats are accepted.
-
-    Parameters
-    ----------
-    fname : str
-        Long path filename [string]
-
-    Output
-    ------
-    data : Dictionary of the following values
-    """
-    radar = pyart.io.read(fname)
     return radar
 
 ###############################################
@@ -528,20 +498,6 @@ def _get_metadata_from_header(hdr):
 ###############################
 #   Create Variable methods  ##
 ###############################
-
-
-def _ncvar_to_dict(ncvar):
-    """ Convert a NetCDF Dataset variable to a dictionary.
-    Appropriated from PyArt package.
-    """
-    d = dict((k, getattr(ncvar, k)) for k in ncvar.ncattrs())
-    d['data'] = ncvar[:]
-    if np.isscalar(d['data']):
-        # netCDF4 1.1.0+ returns a scalar for 0-dim array, we always want
-        # 1-dim+ arrays with a valid shape.
-        d['data'] = np.array(d['data'])
-        d['data'].shape = (1, )
-    return d
 
 
 def _get_tdr_name_map():
