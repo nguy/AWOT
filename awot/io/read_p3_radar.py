@@ -112,10 +112,10 @@ def read_windsyn_tdr_netcdf(fname, field_mapping=None):
     fields = {}
 
     # Grab a name map for NOAA P-3 TDR data
-    if mapping is None:
+    if field_mapping is None:
         name_map = _get_tdr_name_map()
     else:
-        name_map = mapping
+        name_map = field_mapping
 
     # Loop through the variables and pull data
     for varname in name_map:
@@ -139,7 +139,7 @@ def read_windsyn_tdr_netcdf(fname, field_mapping=None):
     try:
         radar['instrument'] = ncFile.instrument #ncFile.Instrument??
     except:
-        radar['instrument'] = 'tdr_grid'
+        radar['instrument'] = 'windsyn_grid'
 
     # Set the format for AWOT
     radar['data_format'] = 'windsyn_grid'
@@ -218,14 +218,10 @@ def read_windsyn_binary(fname, platform=None, instrument=None, radar_num=None):
 
     # Store the platform information or set with default guess
     if platform is None:
-        print("Guessing that platform is P-3,",
-              "this can be set with platform keyword")
-        platform = 'p3'
+        platform = 'unknown_windsyn'
 
     if instrument is None:
-        print("Guessing that instrument is TDR,",
-              "this can be set with platform keyword")
-        instrument = 'tdr_grid'
+        instrument = 'windsyn_grid'
 
     # Read in the .hdr file
     hdr_dict = _construct_windsyn_hdr_dict(fname)

@@ -22,7 +22,7 @@ from matplotlib import ticker
 from datetime import datetime
 import scipy.ndimage as scim
 
-from .common import (plot_date_ts, contour_date_ts, _get_earth_radius,
+from .common import (plot_date_ts, image_2d_date, _get_earth_radius,
                      _check_basemap, _parse_ax_fig, _parse_ax)
 
 
@@ -1039,7 +1039,7 @@ class FlightLevel(object):
         tSub2D, Ht2D = np.meshgrid(tsub, self.flight_data['height'])
 
         # Plot the time series
-        ts = contour_date_ts(
+        ts = image_2d_date(
             tSub2D, Ht2D, VarSub, vmin=vmin, vmax=vmax,
             dForm=dForm, tz=tz, xdate=xdate, date_MinTicker=date_MinTicker,
             other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
