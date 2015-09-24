@@ -3,9 +3,6 @@ awot.graph.common
 ==================
 
 Common graphing routines.
-
-Author:
-    20 Aug 2014 - Created by Nick Guy, NOAA/NSSL/WRDD, NRC.
 """
 # ------------------------------------------------------------------
 # Load the needed packages
@@ -259,7 +256,7 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
     return
 
 
-def contour_date_ts(Time, AxVar, PlotVar,
+def image_2d_date(Time, AxVar, PlotVar,
                     ptype='pcolormesh', plot_log10_var=False,
                     vmin=None, vmax=None, clevs=25,
                     cmap=None,
@@ -512,13 +509,15 @@ def _set_ts_axes(dForm='%H:%M', tz=None, xdate=True,
 
 
 def find_nearest_indices(array, values):
-    """Find the nearest value indices in an array to input value(s)
+    """
+    Find the nearest value indices in an array to input value(s).
+    
     Parameters
-    ------------
+    ----------
     array : float array
-        Input array to search
+        Input array to search.
     values  : float (array)
-        Value(s) to search for
+        Value(s) for which to search.
     """
     # Set the values to a 1D structure
     values = np.atleast_1d(values)
@@ -528,15 +527,17 @@ def find_nearest_indices(array, values):
 
 
 def create_polar_fig_ax(nrows=1, ncols=1, figsize=(5, 5)):
-    ''' Returns the figure and axes instance of a polar plot
+    '''
+    Returns the figure and axes instance of a polar plot.
+    
     Parameters
     ----------
     nrows : int
-        Number of rows
+        Number of rows.
     ncols : int
-        Number of columns
+        Number of columns.
     figsize : tuple
-        (xsize, ysize) in inches of figure
+        (xsize, ysize) in inches of figure.
     '''
     fig, ax = plt.subplots(nrows=nrows, ncols=ncols,
                            subplot_kw=dict(projection='polar'),
@@ -544,9 +545,9 @@ def create_polar_fig_ax(nrows=1, ncols=1, figsize=(5, 5)):
 
     return fig, ax
 
-###########################
-#   Get masking methods  ##
-###########################
+#################
+#  Get methods  #
+#################
 
 
 def get_masked_data(data, mask_procedure, mask_tuple):
@@ -578,7 +579,6 @@ def get_masked_data(data, mask_procedure, mask_tuple):
         print("Check the mask_procedure operation string!")
     return data
 
-
 def _get_start_datetime(time, start_time):
     '''Get a start time as datetime instance for subsetting.'''
     # Check to see if time is subsetted
@@ -595,10 +595,9 @@ def _get_start_datetime(time, start_time):
                 startInt[4], startInt[5], startInt[6])
         except:
             print(
-                "Check the format of date string (e.g. '2014-08-20 12:30:00')")
+                "Format of date string should be e.g. '2014-08-20 12:30:00'")
             return
     return dt_start
-
 
 def _get_end_datetime(time, end_time):
     '''Get a start time as datetime instance for subsetting.'''
@@ -618,7 +617,16 @@ def _get_end_datetime(time, end_time):
             return
     return dt_end
 
+def _get_variable_dict(dict, field):
+    '''Get the variable from the fields dictionary.'''
+    Var = dict[field]
+    return Var
 
+def _get_variable_dict_data(dict, field):
+    '''Get the variable from the fields dictionary.'''
+    Var, data = dict[field], dict[field]['data'][:]
+    return Var, data
+        
 def _get_earth_radius():
     return 6371.
 
@@ -628,7 +636,7 @@ def _get_earth_radius():
 
 
 def _parse_ax_fig(ax, fig):
-    """ Parse and return ax and fig parameters. """
+    """Parse and return ax and fig parameters."""
     if ax is None:
         ax = plt.gca()
     if fig is None:
@@ -637,14 +645,14 @@ def _parse_ax_fig(ax, fig):
 
 
 def _parse_ax(ax):
-    """ Parse and return ax parameters. """
+    """Parse and return ax parameters."""
     if ax is None:
         ax = plt.gca()
     return ax
 
 
 def _parse_fig(fig):
-    """ Parse and return fig parameters. """
+    """Parse and return fig parameters."""
     if fig is None:
         fig = plt.gcf()
     return fig

@@ -27,25 +27,55 @@ from .radar_vertical import RadarVerticalPlot
 class RadarHorizontalPlot(object):
     """Class to plot a horizontal radar image."""
 
-    def __init__(self, radar, basemap=None):
-        '''Intitialize the class to create plots.'''
+    def __init__(self, radar, basemap=None,
+                lon_name=None, lat_name=None, height_name=None,
+                time_name=None):
+        '''
+        Parameters
+        ----------
+        radar : dict
+            AWOT radar instance.
+        basemap : basemap instance
+        lon_name : str
+            Key in radar instance for longitude variable.
+            None uses AWOT default.
+        lat_name : str
+            Key in radar instance for latitude variable.
+            None uses AWOT default.
+        height_name : str
+            Key in radar instance for height variable.
+            None uses AWOT default.
+        time_name : str
+            Key in radar instance for time variable.
+            None uses AWOT default.
+        
+        Initialize the class to create plots.
+        '''
 
         # Save the airborne class to this class in case cross-section is passed
-        self.radar_data = radar
+        self.radar = radar
         self.basemap = basemap
+#        _check_basemap(self)
+        self.fields = self.radar['fields']
 
-        # Now initialize the RadarHorizontalPlot Class
-        self.longitude = self.radar_data['longitude']
-        self.latitude = self.radar_data['latitude']
-        self.height = self.radar_data['height']
-        self.fields = self.radar_data['fields']
-        _check_basemap(self)
+        if lon_name is None:
+            self.longitude = self.radar['longitude']
+        else:
+            self.longitude = self.radar[lon_name]
+        if lat_name is None:
+            self.latitude = self.radar['latitude']
+        else:
+            self.latitude = self.radar[lat_name]
+        if height_name is None:
+            self.height = self.radar['height']
+        else:
+            self.height = self.radar[height_name]
 
 ####################
 #   Plot modules  ##
 ####################
 
-    def plot_ppi(self, field, ppi_height=2., mask_procedure=None,
+    def plot_cappi(self, field, cappi_height, mask_procedure=None,
                  mask_tuple=None, cminmax=(0., 60.), clevs=25, vmin=15.,
                  vmax=60., clabel='dBZ', title=" ", title_size=20,
                  cmap='gist_ncar', color_bar=True, cb_pad="5%",
@@ -58,8 +88,8 @@ class RadarHorizontalPlot(object):
         ----------
         field : str
             3-D variable (e.g. Reflectivity [dBZ]) to use in plot.
-        ppi_height : float
-            Height at which to plot the horizontal field.
+        cappi_height : float
+            Height in kilometers at which to plot the horizontal field.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
             'less', 'less_equal', 'greater', 'greater_equal',
@@ -95,9 +125,11 @@ class RadarHorizontalPlot(object):
             Interval to use for colorbar tick labels,
             higher number "thins" labels.
         ax : Matplotlib axis instance
-            Axis to plot. None will use the current axis.
+            Axis to plot.
+            None will use the current axis.
         fig : Matplotlib figure instance
-            Figure on which to add the plot. None will use the current figure.
+            Figure on which to add the plot.
+            None will use the current figure.
 
         Notes
         -----
@@ -118,7 +150,8 @@ class RadarHorizontalPlot(object):
         clevels = np.linspace(cminmax[0], cminmax[1], clevs)
 
         # Find the closest vertical point
-        Zind = find_nearest_indices(self.height['data'][:], ppi_height)
+        Zind = find_nearest_indices(self.height['data'][:], cappi_height)
+        print("Closest level: %4.1f" % self.height['data'][Zind])
 
         # Convert lats/lons to 2D grid
         Lon2D, Lat2D = np.meshgrid(self.longitude['data'][
@@ -133,8 +166,8 @@ class RadarHorizontalPlot(object):
 #    plt.colors.colormap.set_under('white')
         # Add Colorbar
         if color_bar:
-            cbStr = Var['long_name'] + ' at ' + \
-                str("%4.1f" % ppi_height) + self.height['units']
+            cbStr = "%s at %4.1f %s" % (Var['long_name'], 
+                        self.height['data'][Zind], self.height['units'])
             cb = self.basemap.colorbar(
                 cs, location=cb_loc, pad=cb_pad)  # ,ticks=clevels)
             cb.set_label(cbStr)
@@ -391,20 +424,20 @@ class RadarHorizontalPlot(object):
 
     def DPJgrid_3d(self, surf_field, surf_min=-5., surf_max=5.,
                    surf_cmap='RdBu_r', rstride=5, cstride=5,
-                   plot_contour=False, cont_field=None, ppi_height=2.,
+                   plot_contour=False, cont_field=None, cappi_height=2.,
                    cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
                    cmap='gist_ncar', alpha=0., zlims=(-5., 5.), dlat=1.,
                    dlon=1., plot_track=True, title=" ", fig=None, ax=None):
         """
         Wrapper to call the 3D plotting function for backwards compatability.
         """
-        r3d = Radar3DPlot(self.radar_data, basemap=self.basemap)
+        r3d = Radar3DPlot(self.radar, basemap=self.basemap)
 
         r3d.DPJgrid_3d(self.airborne, surf_field, surf_min=surf_min,
                        surf_max=surf_max, surf_cmap=surf_cmap,
                        rstride=rstride, cstride=cstride,
                        plot_contour=plot_contour, cont_field=cont_field,
-                       ppi_height=ppi_height,
+                       cappi_height=cappi_height,
                        cminmax=cminmax, clevs=clevs, vmin=vmin, vmax=vmax,
                        cmap=cmap, alpha=alpha,
                        zlims=zlims, dlat=dlat, dlon=dlon,
@@ -472,7 +505,7 @@ class RadarHorizontalPlot(object):
         fig : Matplotlib figure instance
             Figure on which to add the plot. None will use the current figure.
         '''
-        rvp = RadarVerticalPlot(self.radar_data, basemap=self.basemap)
+        rvp = RadarVerticalPlot(self.radar, basemap=self.basemap)
 
         rvp.plot_cross_section(
             field, start_pt, end_pt, xs_length=xs_length,
