@@ -662,8 +662,37 @@ def _parse_fig(fig):
 #####################
 
 
-def _check_basemap(self):
-    """Check that basemap is not None, raise ValueError if it is."""
-    if self.basemap is None:
-        raise ValueError('Please supply basemap instance')
+def _check_basemap(instance, strong=True):
+    """
+    Check for a basemap instance.
+    
+    Parameters
+    ----------
+    instance: Class instance
+        An instance to check for a basemap instance attached.
+    strong: bool
+        If True and the check finds no basemap instance,
+        a ValueError is raised.
+        If False and the check finds no basemap instance,
+        a Warning is issued.
+    """
+    if instance.basemap is None:
+        if strong:
+            raise ValueError('Please supply basemap instance')
+            return
+        else:
+            print("WARNING: A basemap instance may be required for some plots")
+
+def _check_field(instance, field):
+    """
+    Check to see if a field has a value, return if it does not
+    Parameters
+    ----------
+    instance: dict
+        A data dictionary to check.
+    field : string
+        The key name of the field to check
+    """
+    if instance[field] is None:
+        print("This field has no value!!")
         return

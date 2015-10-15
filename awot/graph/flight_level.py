@@ -23,7 +23,8 @@ from datetime import datetime
 import scipy.ndimage as scim
 
 from .common import (plot_date_ts, image_2d_date, _get_earth_radius,
-                     _check_basemap, _parse_ax_fig, _parse_ax)
+                     _check_basemap, _check_field,
+                     _parse_ax_fig, _parse_ax)
 
 
 class FlightLevel(object):
@@ -97,10 +98,11 @@ class FlightLevel(object):
         self.time = flightdata[timekey]
         self.flight_data = flightdata
         self.basemap = basemap
-        _check_basemap(self)
+        _check_basemap(self, strong=False)
 
-        # Calculate x,y map position coordinates
-        self.x, self.y = self.basemap(self.longitude, self.latitude)
+        if self.basemap is not None:
+            # Calculate x,y map position coordinates
+            self.x, self.y = self.basemap(self.longitude, self.latitude)
 
 #################
 #  Track plots  #
@@ -766,6 +768,7 @@ class FlightLevel(object):
             # This causes fatal error when trying to save figure later
             if np.logical_and(np.isfinite(xpos_mrkr[nn]),
                               np.isfinite(ypos_mrkr[nn])):
+
                 # Plot the symbol
                 ax.plot(xpos_mrkr[nn], ypos_mrkr[nn], symbol, **kwargs)
                 label_text = labeltimes[nn].strftime("%H:%M")
@@ -901,6 +904,9 @@ class FlightLevel(object):
         # parse parameters
         ax = _parse_ax(ax)
 
+        # Check to see if field exists
+        _check_field(self.flight_data, field)
+
         # Get the subsetted data
         tSub, VarSub = self._get_time_var_time_subset(
             field, start_time=start_time, end_time=end_time)
@@ -943,6 +949,9 @@ class FlightLevel(object):
         """
         # parse parameters
         ax = _parse_ax(ax)
+
+        # Check to see if field exists
+        _check_field(self.flight_data, field)
 
         # Get the subsetted data
         tSub, VarSub = self._get_time_var_time_subset(
@@ -1031,6 +1040,9 @@ class FlightLevel(object):
         ax = _parse_ax(ax)
         # Create contour level array
         clevels = np.linspace(vmin, vmax, clevs)
+
+        # Check to see if field exists
+        _check_field(self.flight_data, field)
 
         # Get the subsetted data
         tSub, VarSub = self._get_time_var_time_subset(
