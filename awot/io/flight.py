@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 flight.py - Routines for reading flight data from file
 """
@@ -18,11 +17,9 @@ from ..io.common import _get_time_units
 def read_netcdf(fname, mapping_dict=None, platform=None):
     """
     Read in NetCDF formatted flight data.
-
     Output variable names are controlled by mapping_dict and platform
     keywords. If nothing is chosen a direct copy of names in file will
     be output.
-
     Parameters
     ----------
     fname : string
@@ -34,12 +31,16 @@ def read_netcdf(fname, mapping_dict=None, platform=None):
     # Read the NetCDF
     ncFile = Dataset(fname, 'r')
 
-    # If this is a T-28 file, use a separate read function
-    t28_names = ['t28', 't-28', 'sdsmt', 'sdsmtt28', 'sdsm&t',
-                 'sdsm&tt-28', 'sdsmtt-28', 'sdsm&tt28']
-    if platform.lower().replace(" ", "") in t28_names:
-        from .read_t28 import read_t28_netcdf
-        return read_t28_netcdf(ncFile)
+    # Check to see if this file follows RAF Nimbus conventions
+    try:
+        conven = ncFile.Conventions
+    except:
+        isRAF = None
+
+    # This next block may be very UWKA specific - followup
+    if 'nimbus' in conven.lower():
+        drate = fname.split('.')[-2][1::]
+        isRAF = ('sps' + drate, int(drate))
 
     # Grab a name map for data
     if mapping_dict is not None:
@@ -53,27 +54,21 @@ def read_netcdf(fname, mapping_dict=None, platform=None):
                       'n2uw', 'raf']
 
         latmos_names = ['safire', 'latmos', 'french_falcon']
-        if platform.lower().replace(" ", "") in p3_names:
-            name_map = _p3_flight_namemap()
+        if platform is not None:
+            if platform.lower().replace(" ", "") in p3_names:
+                name_map = _p3_flight_namemap()
 
-        elif platform.lower().replace(" ", "") in uwka_names:
-            name_map = _uwka_name_map()
+            elif platform.lower().replace(" ", "") in uwka_names:
+                name_map = _uwka_name_map()
 
-        elif platform.lower().replace(" ", "") in latmos_names:
-            name_map = _latmos_name_map()
+            elif platform.lower().replace(" ", "") in latmos_names:
+                name_map = _latmos_name_map()
 
         else:
-            _make_name_map_from_varlist(ncFile.variables.keys())
+            name_map = _make_name_map_from_varlist(ncFile.variables.keys())
 
     # Cycle to through variables in file
-    data = _make_data_dictionary(ncFile, name_map)
-#    data = {}
-#    for var in name_map:
-#        try:
-#            data[var] = ncFile.variables[name_map[var]][:]
-#            np.ma.masked_invalid(data[var])
-#        except:
-#            data[var] = None
+    data = _make_data_dictionary(ncFile, name_map, isRAF)
 
     # Calculate U,V wind if not present
     if 'Uwind' not in name_map:
@@ -82,8 +77,9 @@ def read_netcdf(fname, mapping_dict=None, platform=None):
         data['Uwind'] = Uwind
         data['Vwind'] = Vwind
 
-    # Get the time
-    Time = _get_time(ncFile)
+    # Time can be a fickle little beast, so even if it is in name
+    # map, we need to massage it into a format we can work with
+    Time = _get_time(ncFile, isRAF)
     data['time'] = Time
 
     # Pull out global attributes
@@ -110,14 +106,12 @@ def read_netcdf(fname, mapping_dict=None, platform=None):
 def read_netcdf_variable(fname, Rec):
     """
     Read a single variable from a NetCDF data file.
-
     Parameters
     ----------
      fname : string
          Filename.
      Rec : string
          Variable name to be pulled out [string].
-
     Output
     ------
      VarOut : float
@@ -133,7 +127,6 @@ def read_netcdf_variable(fname, Rec):
 def _p3_flight_namemap():
     '''
     Map NOAA P3 variables to AWOT structure
-
     Available variables (not full list) :
      LonGPS.3      = Novatel GPS Longitude
      LatGPS.3      = Novatel GPS Latitude
@@ -183,7 +176,7 @@ def _p3_flight_namemap():
 def _uwka_name_map():
     '''Map UWyo King Air variables to AWOT'''
     name_map = {
-        'time': 'time',
+                'time': 'time',
                 # Aircraft Position
                 'longitude': 'LONC',
                 'latitude': 'LATC',
@@ -234,35 +227,58 @@ def _uwka_name_map():
     return name_map
 
 
-def _get_time(ncFile):
+def _get_time(ncFile, isRAF):
     # Pull out the start time
     if 'base_time' in ncFile.variables.keys():
         TimeSec = ncFile.variables['base_time'][:]
+        try:
+            time_units = ncFile.variables['base_time'].units
+        except:
+            time_units = _get_time_units()
     elif 'time' in ncFile.variables.keys():
         TimeSec = ncFile.variables['time'][:]
+        try:
+            time_units = ncFile.variables['time'].units
+        except:
+            time_units = _get_time_units()
     else:
         StartTime = ncFile.StartTime
         length = len(ncFile.dimensions['Time'])
         # Create a time array
         TimeSec = np.linspace(StartTime, StartTime + length, length)
+        time_units = _get_time_units()
 
-    Time_unaware = num2date(TimeSec, _get_time_units())
+    if isRAF is not None:
+        Timehirate = np.linspace(TimeSec[0], TimeSec[-1], len(TimeSec) * isRAF[1])
+        TimeSec = Timehirate
+
+    Time_unaware = num2date(TimeSec, time_units)
     Time = Time_unaware
     return Time
 
 
-def _make_data_dictionary(ncFile, name_map):
+def _make_data_dictionary(ncFile, name_map, isRAF):
     data = {}
+
     for var in name_map:
-        try:
-            data[var] = ncFile.variables[name_map[var]][:]
+        if name_map[var] in ncFile.variables.keys():
+            if (isRAF is not None) & (
+            len(ncFile.dimensions[isRAF[0]]) in ncFile.variables[name_map[var]].shape):
+                data[var] = ncFile.variables[name_map[var]][:].ravel()
+            else:
+                data[var] = ncFile.variables[name_map[var]][:]
             np.ma.masked_invalid(data[var])
-        except:
+
+            try:
+                mask = data[var].mask
+            except:
+                data[var] = np.ma.masked_array(data[var], mask=False)
+        else:
             data[var] = None
-        try:
-            mask = data[var].mask
-        except:
-            data[var] = np.ma.masked_array(data[var], mask=False)
+#        try:
+#            mask = data[var].mask
+#        except:
+#            data[var] = np.ma.masked_array(data[var], mask=False)
     return data
 
 #########################
@@ -275,11 +291,9 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
     Read NASA AMES FFI 1001 formatted data files.
     The header tells all about the file. Find format here:
     https://espoarchive.nasa.gov/content/Ames_Format_Specification_v20#tth_sEc5.1
-
     Output variable names are controlled by mapping_dict and platform
     keywords. If nothing is chosen a direct copy of names in file will
     be output.
-
     Parameters
     ----------
     filename : str
@@ -482,14 +496,14 @@ def _und_citation_name_map():
         'mixing_ratio': 'MixingRatio',
         'frost_point_temp': 'FrostPoint',
         'lwc': 'King_LWC_ad',
-        'twc': 'Nev_TWC',
-        'Conc_2DC': '2-DC_Conc',
-        'Dmean_2DC': '2-DC_MenD',
-        'Dvol_2DC': '2-DC_VolDia',
-        'Deff_2DC': '2-DC_EffRad',
-        'Conc_CPC': 'CPCConc',
-        'air_vertical_velocity': 'Wind_Z',
-        'turb': 'TURB',
+               'twc': 'Nev_TWC',
+               'Conc_2DC': '2-DC_Conc',
+               'Dmean_2DC': '2-DC_MenD',
+               'Dvol_2DC': '2-DC_VolDia',
+               'Deff_2DC': '2-DC_EffRad',
+               'Conc_CPC': 'CPCConc',
+               'air_vertical_velocity': 'Wind_Z',
+               'turb': 'TURB',
     }
     return name_map
 
