@@ -34,6 +34,13 @@ def read_netcdf(fname, mapping_dict=None, platform=None):
     # Read the NetCDF
     ncFile = Dataset(fname, 'r')
 
+    # If this is a T-28 file, use a separate read function
+    t28_names = ['t28', 't-28', 'sdsmt', 'sdsmtt28', 'sdsm&t',
+                 'sdsm&tt-28', 'sdsmtt-28', 'sdsm&tt28']
+    if platform.lower().replace(" ", "") in t28_names:
+        from .read_t28 import read_t28_netcdf
+        return read_t28_netcdf(ncFile)
+
     # Grab a name map for data
     if mapping_dict is not None:
         name_map = mapping_dict
@@ -475,14 +482,14 @@ def _und_citation_name_map():
         'mixing_ratio': 'MixingRatio',
         'frost_point_temp': 'FrostPoint',
         'lwc': 'King_LWC_ad',
-               'twc': 'Nev_TWC',
-               'Conc_2DC': '2-DC_Conc',
-               'Dmean_2DC': '2-DC_MenD',
-               'Dvol_2DC': '2-DC_VolDia',
-               'Deff_2DC': '2-DC_EffRad',
-               'Conc_CPC': 'CPCConc',
-               'air_vertical_velocity': 'Wind_Z',
-               'turb': 'TURB',
+        'twc': 'Nev_TWC',
+        'Conc_2DC': '2-DC_Conc',
+        'Dmean_2DC': '2-DC_MenD',
+        'Dvol_2DC': '2-DC_VolDia',
+        'Deff_2DC': '2-DC_EffRad',
+        'Conc_CPC': 'CPCConc',
+        'air_vertical_velocity': 'Wind_Z',
+        'turb': 'TURB',
     }
     return name_map
 
