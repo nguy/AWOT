@@ -8,7 +8,7 @@ def read_t28_netcdf(ncFile):
     """
     T-28 has enough differences from other aircraft netCDF files to
     warrant its own read script.
-    
+
     Key differences are the large number of non-standard variables
     (e.g., from the electric field meters) and how time is handled by
     in the netCDF file.
@@ -101,9 +101,11 @@ def _t28_flight_namemap():
         'FSSP_LIQUID_WATER': 'FSSP_LIQUID_WATER',
         'FSSP_TOTAL_COUNTS': 'FSSP_TOTAL_COUNTS',
         'FSSP_AVERAGE_DIAMETER': 'FSSP_AVERAGE_DIAMETER',
-        'FSSP_TOTAL_PARTICLE_CONCENTRATION': 'FSSP_TOTAL_PARTICLE_CONCENTRATION',
+        'FSSP_TOTAL_PARTICLE_CONCENTRATION':
+            'FSSP_TOTAL_PARTICLE_CONCENTRATION',
         'FSSP_EQUIVALENT_DIAMETER': 'FSSP_EQUIVALENT_DIAMETER',
-        'FSSP_EQUIVALENT_DIAMETER_VARIANCE': 'FSSP_EQUIVALENT_DIAMETER_VARIANCE',
+        'FSSP_EQUIVALENT_DIAMETER_VARIANCE':
+            'FSSP_EQUIVALENT_DIAMETER_VARIANCE',
         'FSSP_LIQUID_WATER_MIXING_RATIO': 'FSSP_LIQUID_WATER_MIXING_RATIO',
         'FSSP_GATED_STROBES': 'FSSP_LIQUID_WATER_MIXING_RATIO',
         'FSSP_TOTAL_STROBES': 'FSSP_TOTAL_STROBES',
