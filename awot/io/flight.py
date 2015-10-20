@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 flight.py - Routines for reading flight data from file
 """
@@ -18,11 +17,9 @@ from ..io.common import _get_time_units
 def read_netcdf(fname, mapping_dict=None, platform=None):
     """
     Read in NetCDF formatted flight data.
-
     Output variable names are controlled by mapping_dict and platform
     keywords. If nothing is chosen a direct copy of names in file will
     be output.
-
     Parameters
     ----------
     fname : string
@@ -33,6 +30,13 @@ def read_netcdf(fname, mapping_dict=None, platform=None):
     """
     # Read the NetCDF
     ncFile = Dataset(fname, 'r')
+
+    # If this is a T-28 file, use a separate read function
+    t28_names = ['t28', 't-28', 'sdsmt', 'sdsmtt28', 'sdsm&t',
+                 'sdsm&tt-28', 'sdsmtt-28', 'sdsm&tt28']
+    if platform.lower().replace(" ", "") in t28_names:
+        from .read_t28 import read_t28_netcdf
+        return read_t28_netcdf(ncFile)
 
     # Check to see if this file follows RAF Nimbus conventions
     try:
@@ -109,14 +113,12 @@ def read_netcdf(fname, mapping_dict=None, platform=None):
 def read_netcdf_variable(fname, Rec):
     """
     Read a single variable from a NetCDF data file.
-
     Parameters
     ----------
      fname : string
          Filename.
      Rec : string
          Variable name to be pulled out [string].
-
     Output
     ------
      VarOut : float
@@ -132,7 +134,6 @@ def read_netcdf_variable(fname, Rec):
 def _p3_flight_namemap():
     '''
     Map NOAA P3 variables to AWOT structure
-
     Available variables (not full list) :
      LonGPS.3      = Novatel GPS Longitude
      LatGPS.3      = Novatel GPS Latitude
@@ -182,53 +183,53 @@ def _p3_flight_namemap():
 def _uwka_name_map():
     '''Map UWyo King Air variables to AWOT'''
     name_map = {
-                'time': 'time',
-                # Aircraft Position
-                'longitude': 'LONC',
-                'latitude': 'LATC',
-                'altitude': 'ztrue',
-                'pressure_altitude': 'PALT',
-                'tas': 'tas',
-                'ias': 'aias',
-                'true_heading': 'AVthead',
-                'pitch': 'AVpitch',
-                'roll_angle': 'AVroll',
-                # Atmospheric State
-                'pressure': 'pmb',
-                'temperature': 'trf',
-                'dewpoint_temperature': 'tdplicor',
-                'thetad': 'thetad',
-                'thetae': 'thetae',
-                'relative_humidity': 'rh',
-                'mixing_ratio': 'mr',
-                'lwc': 'lwc100',
-                'turb': 'turb',
-                # Radiometric
-                'irtop': 'irtc',
-                'irbottom': 'irbc',
-                'swtop': 'swt',
-                'swbottom': 'swb',
-                # Wind derivations
-                'Uwind': 'AVuwind',
-                'Vwind': 'AVvwind',
-                'Wwind': 'AVwwind',
-                'longitudinal_wind': 'AVux',
-                'latitudinal_wind': 'AVvy',
-                'wind_dir': 'AVwdir',
-                'wind_spd': 'AVwmag',
-                # Licor Concentrations
-                'co2_conc': 'co21s',
-                'h2o_conc': 'h2o1s',
-                # Aerosol
-                'pcasp_num': 'AS200_OBR',
-                'pcasp_conc': 'CS200_OBR',
-                'pcasp_mean_diam': 'DBARP_OBR',
-                'pcasp_surf_area_conc': 'PSFCP_OBR',
-                'pcasp_vol_conc': 'PVOLP_OBR',
-                # Cloud Physics
-                'conc_cpc': 'cpc_conc',
-                # Miscellaneous
-                'topo': 'topo',
+        'time': 'time',
+        # Aircraft Position
+        'longitude': 'LONC',
+        'latitude': 'LATC',
+        'altitude': 'ztrue',
+        'pressure_altitude': 'PALT',
+        'tas': 'tas',
+        'ias': 'aias',
+        'true_heading': 'AVthead',
+        'pitch': 'AVpitch',
+        'roll_angle': 'AVroll',
+        # Atmospheric State
+        'pressure': 'pmb',
+        'temperature': 'trf',
+        'dewpoint_temperature': 'tdplicor',
+        'thetad': 'thetad',
+        'thetae': 'thetae',
+        'relative_humidity': 'rh',
+        'mixing_ratio': 'mr',
+        'lwc': 'lwc100',
+        'turb': 'turb',
+        # Radiometric
+        'irtop': 'irtc',
+        'irbottom': 'irbc',
+        'swtop': 'swt',
+        'swbottom': 'swb',
+        # Wind derivations
+        'Uwind': 'AVuwind',
+        'Vwind': 'AVvwind',
+        'Wwind': 'AVwwind',
+        'longitudinal_wind': 'AVux',
+        'latitudinal_wind': 'AVvy',
+        'wind_dir': 'AVwdir',
+        'wind_spd': 'AVwmag',
+        # Licor Concentrations
+        'co2_conc': 'co21s',
+        'h2o_conc': 'h2o1s',
+        # Aerosol
+        'pcasp_num': 'AS200_OBR',
+        'pcasp_conc': 'CS200_OBR',
+        'pcasp_mean_diam': 'DBARP_OBR',
+        'pcasp_surf_area_conc': 'PSFCP_OBR',
+        'pcasp_vol_conc': 'PVOLP_OBR',
+        # Cloud Physics
+        'conc_cpc': 'cpc_conc',
+        # Miscellaneous
+        'topo': 'topo',
     }
     return name_map
 
@@ -255,7 +256,8 @@ def _get_time(ncFile, isRAF):
         time_units = _get_time_units()
 
     if isRAF is not None:
-        Timehirate = np.linspace(TimeSec[0], TimeSec[-1], len(TimeSec) * isRAF[1])
+        Timehirate = np.linspace(
+            TimeSec[0], TimeSec[-1], len(TimeSec) * isRAF[1])
         TimeSec = Timehirate
 
     Time_unaware = num2date(TimeSec, time_units)
@@ -269,7 +271,8 @@ def _make_data_dictionary(ncFile, name_map, isRAF):
     for var in name_map:
         if name_map[var] in ncFile.variables.keys():
             if (isRAF is not None) & (
-            len(ncFile.dimensions[isRAF[0]]) in ncFile.variables[name_map[var]].shape):
+                    len(ncFile.dimensions[isRAF[0]])
+                    in ncFile.variables[name_map[var]].shape):
                 data[var] = ncFile.variables[name_map[var]][:].ravel()
             else:
                 data[var] = ncFile.variables[name_map[var]][:]
@@ -297,11 +300,9 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
     Read NASA AMES FFI 1001 formatted data files.
     The header tells all about the file. Find format here:
     https://espoarchive.nasa.gov/content/Ames_Format_Specification_v20#tth_sEc5.1
-
     Output variable names are controlled by mapping_dict and platform
     keywords. If nothing is chosen a direct copy of names in file will
     be output.
-
     Parameters
     ----------
     filename : str
@@ -504,14 +505,14 @@ def _und_citation_name_map():
         'mixing_ratio': 'MixingRatio',
         'frost_point_temp': 'FrostPoint',
         'lwc': 'King_LWC_ad',
-               'twc': 'Nev_TWC',
-               'Conc_2DC': '2-DC_Conc',
-               'Dmean_2DC': '2-DC_MenD',
-               'Dvol_2DC': '2-DC_VolDia',
-               'Deff_2DC': '2-DC_EffRad',
-               'Conc_CPC': 'CPCConc',
-               'air_vertical_velocity': 'Wind_Z',
-               'turb': 'TURB',
+        'twc': 'Nev_TWC',
+        'Conc_2DC': '2-DC_Conc',
+        'Dmean_2DC': '2-DC_MenD',
+        'Dvol_2DC': '2-DC_VolDia',
+        'Deff_2DC': '2-DC_EffRad',
+        'Conc_CPC': 'CPCConc',
+        'air_vertical_velocity': 'Wind_Z',
+        'turb': 'TURB',
     }
     return name_map
 
