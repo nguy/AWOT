@@ -6,76 +6,72 @@ import os
 import numpy as np
 
 from datetime import datetime
-from netCDF4 import Dataset, num2date
-from ..io.common import _get_time_units
+from netCDF4 import Dataset, num2date, date2num
+from ..io.common import (_get_epoch_units,
+                         _ncvar_to_dict, _var_not_found)
+from ..io.name_maps_flight import _get_name_map
 
 #########################
 #   NetCDF Methods      #
 #########################
 
 
-def read_netcdf(fname, mapping_dict=None, platform=None):
+def read_netcdf(fname, time_var=None, mapping_dict=None, platform=None):
     """
     Read in NetCDF formatted flight data.
     Output variable names are controlled by mapping_dict and platform
     keywords. If nothing is chosen a direct copy of names in file will
     be output.
+
+    This reader checks to see if NCAR Research Aircraft Facility
+    (RAF) Nimbus conventions are followed. This convention packs 
+    data with a higher rate than 1 Hz into a 2-dimensional array.
+    See the following website for a description of this data
+    convention: http://www.eol.ucar.edu/raf/Software/netCDF.html
+
     Parameters
     ----------
-    fname : string
+    fname : str
         Filename.
+    time_var : str
+        Name of time variable. Choosing this overrides any mapping 
+        dictionary that is used.
     mapping_dict : dict
         Dictionary to use for mapping variable names. Use if provided.
         If None, use default.
+    platform: str
+        Platform name. If no mapping dictionary is provided, then
+        this can provide an internal default mapping dictionary.
     """
     # Read the NetCDF
     ncFile = Dataset(fname, 'r')
 
     # If this is a T-28 file, use a separate read function
-    t28_names = ['t28', 't-28', 'sdsmt', 'sdsmtt28', 'sdsm&t',
-                 'sdsm&tt-28', 'sdsmtt-28', 'sdsm&tt28']
-    if platform.lower().replace(" ", "") in t28_names:
-        from .read_t28 import read_t28_netcdf
-        return read_t28_netcdf(ncFile)
+##    t28_names = ['t28', 't-28', 'sdsmt', 'sdsmtt28', 'sdsm&t',
+##                 'sdsm&tt-28', 'sdsmtt-28', 'sdsm&tt28']
+##    if platform.lower().replace(" ", "") in t28_names:
+##        from .read_t28 import read_t28_netcdf
+##        return read_t28_netcdf(ncFile)
 
     # Check to see if this file follows RAF Nimbus conventions
     try:
-        conven = ncFile.Conventions
+        jnk = ncFile.Conventions
+        isRAF, RAFrate, RAFdim = _determine_RAF(ncFile)
     except:
-        isRAF = None
-
-    # This next block may be very UWKA specific - followup
-    if 'nimbus' in conven.lower():
-        drate = fname.split('.')[-2][1::]
-        isRAF = ('sps' + drate, int(drate))
+        isRAF, RAFrate, RAFdim = False, None, None
 
     # Grab a name map for data
     if mapping_dict is not None:
         name_map = mapping_dict
     else:
         # Check to see if platform is specified
-        p3_names = ['p3', 'p-3', 'noaap3', 'aoc',
-                    'noaa42', 'noaa43', 'gv']
-
-        uwka_names = ['uwka', 'uwkingair', 'kingair',
-                      'n2uw', 'raf']
-
-        latmos_names = ['safire', 'latmos', 'french_falcon']
         if platform is not None:
-            if platform.lower().replace(" ", "") in p3_names:
-                name_map = _p3_flight_namemap()
-
-            elif platform.lower().replace(" ", "") in uwka_names:
-                name_map = _uwka_name_map()
-
-            elif platform.lower().replace(" ", "") in latmos_names:
-                name_map = _latmos_name_map()
-
+            name_map = _get_name_map(platform)
         else:
             name_map = _make_name_map_from_varlist(ncFile.variables.keys())
 
     # Cycle to through variables in file
-    data = _make_data_dictionary(ncFile, name_map, isRAF)
+    data = _make_data_dictionary(ncFile, name_map, isRAF, RAFrate=RAFrate)
 
     # Calculate U,V wind if not present
     if 'Uwind' not in name_map:
@@ -86,8 +82,17 @@ def read_netcdf(fname, mapping_dict=None, platform=None):
 
     # Time can be a fickle little beast, so even if it is in name
     # map, we need to massage it into a format we can work with
-    Time = _get_time(ncFile, isRAF)
-    data['time'] = Time
+
+    if time_var is not None:
+        data['time'] = _get_time(
+            ncFile, isRAF, RAFrate=RAFrate, timevar=time_var)
+    else:
+        if 'time' in data.keys():
+            data['time'] = _get_time(
+                ncFile, isRAF, RAFrate=RAFrate, timevar=name_map['time'])
+        else:
+            data['time'] = _get_time(
+                ncFile, isRAF, RAFrate=RAFrate, timevar=None)
 
     # Pull out global attributes
     try:
@@ -126,168 +131,88 @@ def read_netcdf_variable(fname, Rec):
       """
     # Read the NetCDF, grab the variable, close file
     ncFile = Dataset(fname, 'r')
-    VarOut = ncFile.variables[Rec]
+    VarOut = _ncvar_to_dict(ncFile.variables[Rec])
     ncFile.close()
     return VarOut
 
 
-def _p3_flight_namemap():
-    '''
-    Map NOAA P3 variables to AWOT structure
-    Available variables (not full list) :
-     LonGPS.3      = Novatel GPS Longitude
-     LatGPS.3      = Novatel GPS Latitude
-     AltGPS.3      = Novatel GPS Altitude [m]
-     THdgI-GPS.1   = True heading [deg]
-     TRK.1         = Track [deg]
-     AltPaADDU.1   = Pressure altitude [m]
-     WSZ_DPJ       = Vertical wind via D Jorgensen calculation [m/s]
-     TA.1          = Ambient Temperature [C]
-     TD.1          = Dewpoint Temperature [C]
-     TVIRT.1       = Virtual Temperature [K]
-     THETA.1       = Potential Temperature [K]
-     THETAE.1      = Equivalent Potential Temperature [K]
-     THETAV.1      = Virtual Potential Temperature [K]
-     WS.1          = Wind Speed [m/s]
-     WD.1          = Wind Direction [deg]
-     HUM_REL.1     = Relative Humidity [%]
-     HUM_SPEC.1    = Specific Humidity [g/kg]
-     MR.1          = Mixing ratio [g] [g/g?]
-     EE.1          = Vapor Pressure [hPa]
-     EW.1          = Saturated Vapor Pressure [hPa]
-    '''
-    name_map = {
-        'latitude': 'LatGPS.3',
-        'longitude': 'LonGPS.3',
-        'altitude': 'AltGPS.3',
-        'pressure_altitude': 'AltPaADDU.1',
-        'true_heading': 'THdgI-GPS.1',
-        'track': 'TRK.1',
-        'vert_vel_DPJ': 'WSZ_DPJ',
-        'temperature': 'TA.1',
-        'dewpoint_temperature': 'TD.1',
-        'virtual_temperature': 'TVIRT.1',
-        'potential_temp': 'THETA.1',
-        'equiv_potential_temp': 'THETAE.1',
-        'virtual_potential_temp': 'THETAV.1',
-        'wind_spd': 'WS.1',
-        'wind_dir': 'WD.1',
-        'relative_humidity': 'HUM_REL.1',
-        'specific_humidity': 'HUM_SPEC.1',
-        'mixing_ratio': 'MR.1',
-        'vapor_pressure': 'EE.1',
-        'sat_vapor_pressure': 'EW.1', }
-    return name_map
-
-
-def _uwka_name_map():
-    '''Map UWyo King Air variables to AWOT'''
-    name_map = {
-        'time': 'time',
-        # Aircraft Position
-        'longitude': 'LONC',
-        'latitude': 'LATC',
-        'altitude': 'ztrue',
-        'pressure_altitude': 'PALT',
-        'tas': 'tas',
-        'ias': 'aias',
-        'true_heading': 'AVthead',
-        'pitch': 'AVpitch',
-        'roll_angle': 'AVroll',
-        # Atmospheric State
-        'pressure': 'pmb',
-        'temperature': 'trf',
-        'dewpoint_temperature': 'tdplicor',
-        'thetad': 'thetad',
-        'thetae': 'thetae',
-        'relative_humidity': 'rh',
-        'mixing_ratio': 'mr',
-        'lwc': 'lwc100',
-        'turb': 'turb',
-        # Radiometric
-        'irtop': 'irtc',
-        'irbottom': 'irbc',
-        'swtop': 'swt',
-        'swbottom': 'swb',
-        # Wind derivations
-        'Uwind': 'AVuwind',
-        'Vwind': 'AVvwind',
-        'Wwind': 'AVwwind',
-        'longitudinal_wind': 'AVux',
-        'latitudinal_wind': 'AVvy',
-        'wind_dir': 'AVwdir',
-        'wind_spd': 'AVwmag',
-        # Licor Concentrations
-        'co2_conc': 'co21s',
-        'h2o_conc': 'h2o1s',
-        # Aerosol
-        'pcasp_num': 'AS200_OBR',
-        'pcasp_conc': 'CS200_OBR',
-        'pcasp_mean_diam': 'DBARP_OBR',
-        'pcasp_surf_area_conc': 'PSFCP_OBR',
-        'pcasp_vol_conc': 'PVOLP_OBR',
-        # Cloud Physics
-        'conc_cpc': 'cpc_conc',
-        # Miscellaneous
-        'topo': 'topo',
-    }
-    return name_map
-
-
-def _get_time(ncFile, isRAF):
-    # Pull out the start time
-    if 'base_time' in ncFile.variables.keys():
-        TimeSec = ncFile.variables['base_time'][:]
+def _determine_RAF(ncFile):
+    if 'nimbus' in ncFile.Conventions.lower():
+        coord0 = ncFile.coordinates.split(' ')[0]
         try:
-            time_units = ncFile.variables['base_time'].units
+            RAFrate = ncFile.variables[coord0].shape[1]
         except:
-            time_units = _get_time_units()
-    elif 'time' in ncFile.variables.keys():
-        TimeSec = ncFile.variables['time'][:]
-        try:
-            time_units = ncFile.variables['time'].units
-        except:
-            time_units = _get_time_units()
+            RAFrate = 1
+        RAFdim = ('sps' + str(RAFrate))
+        return True, RAFrate, RAFdim
     else:
+        return False, None, None
+
+
+def _get_time(ncFile, isRAF, RAFrate=None, timevar=None):
+    # Pull out the start time
+    if timevar is not None:
+        varname = timevar
+    elif (timevar is None) & ('base_time' in ncFile.variables.keys()):
+        varname = 'base_time'
+    elif (timevar is None) & ('time' in ncFile.variables.keys()):
+        varname = 'time'
+    elif (timevar is None) & ('Time' in ncFile.variables.keys()):
+        varname = 'Time'
+
+    # Sanity check on the time variable in case a dummy time variable
+    # is used - yes this really happens...Ugh
+    if varname is not None:
+        if np.array(ncFile.variables[varname][:]).min() < 0:
+            varname = None
+
+    if varname is not None:
+        print("Using '%s' to make AWOT time variable" % varname)
+        TimeSec = np.array(ncFile.variables[varname][:]).ravel()
+
+        # Check if it is a high rate file and 2D - yep instances of this
+        # out there as well...
+        if (isRAF) & (RAFrate > 1) & (RAFrate not in ncFile.variables[varname].shape):
+            Timehirate = np.linspace(
+            TimeSec[0], TimeSec[-1], len(TimeSec) * RAFrate)
+            TimeSec = Timehirate
+    else:
+        print("No time variable found, using StarTime to make AWOT time variable")
         StartTime = ncFile.StartTime
         length = len(ncFile.dimensions['Time'])
         # Create a time array
         TimeSec = np.linspace(StartTime, StartTime + length, length)
-        time_units = _get_time_units()
+        
+    try:
+        time_units = ncFile.variables[varname].units
+    except:
+        time_units = _get_epoch_units()        
 
-    if isRAF is not None:
-        Timehirate = np.linspace(
-            TimeSec[0], TimeSec[-1], len(TimeSec) * isRAF[1])
-        TimeSec = Timehirate
-
-    Time_unaware = num2date(TimeSec, time_units)
-    Time = Time_unaware
+    # Now convert the time array into a datetime instance
+    dtHrs = num2date(TimeSec, time_units)
+    # Now convert this datetime instance into a number of seconds since Epoch
+    TimeSec = date2num(dtHrs, _get_epoch_units())
+    # Now once again convert this data into a datetime instance
+    Time_unaware = num2date(TimeSec, _get_epoch_units())
+    Time = {'data': Time_unaware, 'units': _get_epoch_units(),
+            'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time
 
 
-def _make_data_dictionary(ncFile, name_map, isRAF):
+def _make_data_dictionary(ncFile, name_map, isRAF, RAFrate=None):
     data = {}
 
     for var in name_map:
         if name_map[var] in ncFile.variables.keys():
-            if (isRAF is not None) & (
-                    len(ncFile.dimensions[isRAF[0]])
-                    in ncFile.variables[name_map[var]].shape):
-                data[var] = ncFile.variables[name_map[var]][:].ravel()
-            else:
-                data[var] = ncFile.variables[name_map[var]][:]
-            np.ma.masked_invalid(data[var])
-
+            data[var] = _ncvar_to_dict(ncFile.variables[name_map[var]])
+            if (isRAF) & (RAFrate in ncFile.variables[name_map[var]].shape):
+                data[var]['data'] = np.array(ncFile.variables[name_map[var]][:]).ravel()
             try:
-                mask = data[var].mask
+                mask = data[var]['data'].mask
             except:
-                data[var] = np.ma.masked_array(data[var], mask=False)
+                data[var]['data'] = np.ma.masked_array(data[var]['data'], mask=False)
         else:
             data[var] = None
-#        try:
-#            mask = data[var].mask
-#        except:
-#            data[var] = np.ma.masked_array(data[var], mask=False)
     return data
 
 #########################
@@ -330,12 +255,7 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
     else:
         # Check to see if platform is specified
         if platform is not None:
-            if platform.lower().replace(" ", "") in ['safire', 'latmos']:
-                name_map = _latmos_name_map()
-
-            elif platform.lower().replace(" ", "") in ['citation', 'und']:
-                name_map = _und_citation_name_map()
-
+            name_map = _get_name_map(platform)
         else:
             name_map = _make_name_map_from_varlist(hdr['VNAME'])
 
@@ -354,10 +274,10 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
     StartTime = datetime(hdr['DATE'][0], hdr['DATE'][
                          1], hdr['DATE'][2], 0, 0, 0)
     TimeSec = np.array(readfile['time'][:]) + date2num(
-        StartTime, units=_get_time_units())
+        StartTime, units=_get_epoch_units())
 
     # Finally convert this back to a standard used by this package (Epoch)
-    Time_unaware = num2date(TimeSec[:], units=_get_time_units())
+    Time_unaware = num2date(TimeSec[:], units=_get_epoch_units())
     Time = Time_unaware  # .replace(tzinfo=pytz.UTC)
 
     del readfile['time']
@@ -540,11 +460,19 @@ def _winduv(data):
         V wind : positive blowing towards north
     """
     try:
-        U = -np.cos(np.radians(data['wind_dir'])) * data['wind_spd']
+        U = {}
+        U['data'] = -np.cos(np.radians(data['wind_dir']['data'][:])) * data['wind_spd']['data'][:]
+        U['units'] = data['wind_spd']['units']
+        U['title'] = "U Wind"
+        U['full_name'] = "Zonal Wind, positive blowing towards east"
     except:
         U = None
     try:
-        V = -np.sin(np.radians(data['wind_dir'])) * data['wind_spd']
+        V = {}
+        V ['data']= -np.sin(np.radians(data['wind_dir']['data'][:])) * data['wind_spd']['data'][:]
+        V['units'] = data['wind_spd']['units']
+        V['title'] = "V Wind"
+        V['full_name'] = "Meridional Wind, positive blowing towards east"
     except:
         V = None
     return U, V

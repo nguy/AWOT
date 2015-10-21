@@ -102,7 +102,7 @@ class FlightLevel(object):
 
         if self.basemap is not None:
             # Calculate x,y map position coordinates
-            self.x, self.y = self.basemap(self.longitude, self.latitude)
+            self.x, self.y = self.basemap(self.longitude['data'][:], self.latitude['data'][:])
 
 #################
 #  Track plots  #
@@ -182,10 +182,10 @@ class FlightLevel(object):
             legLab = self.flight_number
 
         if min_altitude is None:
-            min_altitude = self.altitude.min()
+            min_altitude = self.altitude['data'][:].min()
 
         if max_altitude is None:
-            max_altitude = self.altitude.max()
+            max_altitude = self.altitude['data'][:].max()
 
         # Get start and end times (this deals with subsets)
         dt_start = self._get_datetime(start_time, get_start=True)
@@ -632,17 +632,17 @@ class FlightLevel(object):
         dt_end = self._get_datetime(end_time, get_end=True)
 
         # Subset the data
-        X = self.x[(self.time >= dt_start) & (self.time <= dt_end)]
-        Y = self.y[(self.time >= dt_start) & (self.time <= dt_end)]
-        Uwnd = self.Uwind[(self.time >= dt_start) & (self.time <= dt_end)]
-        Vwnd = self.Vwind[(self.time >= dt_start) & (self.time <= dt_end)]
+        X = self.x[(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
+        Y = self.y[(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
+        Uwnd = self.Uwind['data'][(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
+        Vwnd = self.Vwind['data'][(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
 
         # Only plot every nth barb from the barbspacing parameter
         self.basemap.barbs(X[::barbspacing], Y[::barbspacing],
                            Uwnd[::barbspacing], Vwnd[::barbspacing],
                            barbcolor=barbcolor, flagcolor=flagcolor,
                            linewidth=lw, **kwargs)
-#        self.basemap.barbs(self.longitude[::barbspacing],
+#        self.basemap.barbs(self.longitude['data'][:][::barbspacing],
 #                           self.latitude[::barbspacing],
 #                           Uwnd[::barbspacing], self.Vwd[::barbspacing],
 #                           latlon=True, barbcolor=barbcolor,
@@ -750,9 +750,9 @@ class FlightLevel(object):
         dt_start = self._get_datetime(start_time, get_start=True)
         dt_end = self._get_datetime(end_time, get_end=True)
 
-        time = self.time[(self.time >= dt_start) & (self.time <= dt_end)]
-        lon = self.longitude[(self.time >= dt_start) & (self.time <= dt_end)]
-        lat = self.latitude[(self.time >= dt_start) & (self.time <= dt_end)]
+        time = self.time['data'][(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
+        lon = self.longitude['data'][(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
+        lat = self.latitude['data'][(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
 
         # Find the number of points to plot
         labeltimes = time[::labelspacing]
@@ -817,9 +817,9 @@ class FlightLevel(object):
         # Get start and end times (this deals with subsets)
         dt_point = self._get_datetime(label_time)
 
-        time = self.time[(self.time >= dt_point)]
-        lon = self.longitude[(self.time >= dt_point)]
-        lat = self.latitude[(self.time >= dt_point)]
+        time = self.time[(self.time['data'][:] >= dt_point)]
+        lon = self.longitude['data'][(self.time['data'][:] >= dt_point)]
+        lat = self.latitude[(self.time['data'][:] >= dt_point)]
 
         xpos_mrkr, ypos_mrkr = self.basemap(lon[0], lat[0])
         xpos_text, ypos_text = self.basemap(
@@ -1101,7 +1101,7 @@ class FlightLevel(object):
 
         # Set the data to be plotted:
         if z is None:
-            data = self.altitude.copy()
+            data = self.altitude['data'][:].copy()
         else:
             data = z.copy()
 
@@ -1174,8 +1174,9 @@ class FlightLevel(object):
         # was not working.  No display and I have no idea why!
         # This is SLOW and not recommended.
         for lon, lat, alt in zip(
-                self.longitude.compressed(), self.latitude.compressed(),
-                self.altitude.compressed()):
+                self.longitude['data'][:].compressed(),
+                self.latitude['data'][:].compressed(),
+                self.altitude['data'][:].compressed()):
             mcol = get_marker_color(alt)
             self.basemap.plot(lon, lat, color=mcol, latlon=True,
                               marker=mstyle, markersize=msize)
@@ -1189,9 +1190,9 @@ class FlightLevel(object):
         # Check to see if time is subsetted
         if time_string is None:
                 if get_start is True:
-                    dt = self.time.min()
+                    dt = self.time['data'][:].min()
                 if get_end is True:
-                    dt = self.time.max()
+                    dt = self.time['data'][:].max()
         else:
             tStr = [time_string[0:4], time_string[5:7], time_string[8:10],
                     time_string[11:13], time_string[14:16],
@@ -1213,7 +1214,7 @@ class FlightLevel(object):
         '''
         # Check to see if time is subsetted
         if start_time is None:
-            dt_start = self.time.min()
+            dt_start = self.time['data'][:].min()
         else:
             startStr = [start_time[0:4], start_time[5:7], start_time[8:10],
                         start_time[11:13], start_time[14:16],
@@ -1236,7 +1237,7 @@ class FlightLevel(object):
         '''
         # Check to see if the time is subsetted
         if end_time is None:
-            dt_end = self.time.max()
+            dt_end = self.time['data'][:].max()
         else:
             endStr = [end_time[0:4], end_time[5:7], end_time[8:10],
                       end_time[11:13], end_time[14:16], end_time[17:19], '0']
@@ -1259,11 +1260,11 @@ class FlightLevel(object):
         dt_start = self._get_datetime(start_time, get_start=True)
         dt_end = self._get_datetime(end_time, get_end=True)
 
-        x = self.x[(self.time >= dt_start) & (self.time <= dt_end)]
-        y = self.y[(self.time >= dt_start) & (self.time <= dt_end)]
+        x = self.x[(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
+        y = self.y[(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
 
         if return_time:
-            time = self.time[(self.time >= dt_start) & (self.time <= dt_end)]
+            time = self.time[(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
 
             return x, y, time
         else:
@@ -1278,8 +1279,8 @@ class FlightLevel(object):
         dt_start = self._get_datetime(start_time, get_start=True)
         dt_end = self._get_datetime(end_time, get_end=True)
 
-        lon = self.longitude[(self.time >= dt_start) & (self.time <= dt_end)]
-        lat = self.latitude[(self.time >= dt_start) & (self.time <= dt_end)]
+        lon = self.longitude['data'][(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
+        lat = self.latitude['data'][(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
 
         return lon, lat
 
@@ -1291,9 +1292,9 @@ class FlightLevel(object):
         # Check to see if time is subsetted
         dt_start = self._get_datetime(start_time, get_start=True)
         dt_end = self._get_datetime(end_time, get_end=True)
-        tsub = self.time[(self.time >= dt_start) & (self.time <= dt_end)]
+        tsub = self.time['data'][(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
         var = self.flight_data[field]
-        vsub = var[(self.time >= dt_start) & (self.time <= dt_end)]
+        vsub = var['data'][(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
         return tsub, vsub
 
     def _get_time_subset(self, start_time, end_time):
@@ -1303,7 +1304,7 @@ class FlightLevel(object):
         # Check to see if time is subsetted
         dt_start = self._get_datetime(start_time, get_start=True)
         dt_end = self._get_datetime(end_time, get_end=True)
-        tsub = self.time[(self.time >= dt_start) & (self.time <= dt_end)]
+        tsub = self.time['data'][(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
         return tsub
 
     def _get_lat_index(self, value, radar):
