@@ -4,9 +4,11 @@ AWOT
 AWOT is a toolkit of utilities to read in and visualize weather
 observations taken by aircraft.
 
-Authors:
+Contributors:
 
 Nick Guy (nick.guy@uwyo.edu)
+
+Timothy Lang
 
 Andrew Lyons
 
