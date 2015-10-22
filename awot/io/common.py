@@ -62,7 +62,7 @@ def _ncvar_to_dict_masked(ncvar, Good_Indices):
         d['data'].shape = (1, )
     return d
 
-def _get_time_units():
+def _get_epoch_units():
     """Set common time units for AWOT. Using Epoch."""
     return 'seconds since 1970-1-1 00:00:00+0:00'
 
