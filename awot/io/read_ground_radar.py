@@ -4,7 +4,6 @@ awot.io.read_ground_radar
 
 These scripts are a wrapper using the pyart interface to access a large
 number of file formats.
-.
 
 """
 # Load the needed packages
@@ -47,6 +46,7 @@ def read_ground_radar(fname, map_to_awot=True,
                  'fields': fields,
                  'platform': rad.metadata['instrument_name'],
                  'instrument': rad.metadata['instrument_name'],
+                 'time': rad.time,
                  'data_format': 'ground'
                  }
         if instrument is not None:

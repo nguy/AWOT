@@ -2,7 +2,7 @@
 awot.io.read_latmos_falcon
 =========================
 
-This is a grouping of scripts designed to process (French)
+Grouping of scripts designed to process (French)
  Falcon distributed by LATMOS.
 
 Note: This has only been tested with DYNAMO data files, versions
@@ -16,7 +16,8 @@ import numpy as np
 import pytz
 
 from ..io.common import (_ncvar_subset_to_dict, _ncvar_subset_masked,
-                         _ncvar_to_dict, _var_not_found)
+                         _ncvar_to_dict, _var_not_found,
+                         _get_epoch_units)
 
 def read_rasta_wind(fname, field_mapping=None):
     '''A wrapper to call the read_rasta_dynamic module.'''
@@ -394,8 +395,8 @@ def _get_latmos_time(fname, ncFile, Good_Indices):
     dtHrs = num2date(ncFile.variables['time'][
         Good_Indices], 'hours since ' + StartDate + '00:00:00+0:00')
     # Now convert this datetime instance into a number of seconds since Epoch
-    TimeSec = date2num(dtHrs, 'seconds since 1970-01-01 00:00:00+0:00')
+    TimeSec = date2num(dtHrs, _get_epoch_units())
     # Now once again convert this data into a datetime instance
-    Time_unaware = num2date(TimeSec, 'seconds since 1970-01-01 00:00:00+0:00')
-    Time = Time_unaware  # .replace(tzinfo=pytz.UTC)
+    Time_unaware = num2date(TimeSec, _get_epoch_units())
+    Time = Time_unaware
     return Time

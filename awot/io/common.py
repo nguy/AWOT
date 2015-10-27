@@ -1,5 +1,9 @@
 """
-common.py
+awot.io.common
+==============
+
+Common IO routines.
+
 """
 
 from __future__ import print_function

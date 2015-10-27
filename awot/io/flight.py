@@ -1,5 +1,8 @@
 """
-flight.py - Routines for reading flight data from file
+awot.io.flight
+==============
+
+Routines for reading flight data from file
 """
 from __future__ import absolute_import, print_function
 import os

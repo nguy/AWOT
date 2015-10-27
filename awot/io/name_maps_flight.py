@@ -1,5 +1,8 @@
 """
-name_maps_flight.py
+awot.io.name_maps_flight
+========================
+
+Routines for mapping flight level data.
 """
 
 from __future__ import print_function

@@ -1,9 +1,10 @@
 """
 awot.io.read_uwka
-=========================
+=================
 
 Scripts to read Wyoming Cloud Radar NetCDF data files.
  http://flights.uwyo.edu/wcr/
+
 """
 # NOTES:: Testing was done on test data from 2014 flights.
 #-------------------------------------------------------------------
@@ -13,7 +14,8 @@ import datetime
 import numpy as np
 
 from ..io.common import (_ncvar_subset_to_dict, _ncvar_subset_masked,
-                         _ncvar_to_dict, _var_found, _var_not_found)
+                         _ncvar_to_dict, _var_found, _var_not_found,
+                         _get_epoch_units)
 
 def read_wcr2(fname, field_mapping=None, file_mapping=None):
     '''
@@ -175,10 +177,11 @@ def _get_wcr_field_name_map():
 
 def _get_time(fname, ncFile, Good_Indices):
     """Pull the time from WCR NetCDF file and convert to AWOT useable"""
-    
+
     # Pull out the date, convert the date to a datetime friendly string
-    
+
     # Now convert the time array into a datetime instance
-    Time = num2date(ncFile.variables['time'][Good_Indices], 'seconds since 1970-01-01 00:00:00+0:00')
-    
+    Time_unaware = num2date(ncFile.variables['time'][Good_Indices], _get_epoch_units())
+    Time = {'data': Time_unaware, 'units': _get_epoch_units(),
+            'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time

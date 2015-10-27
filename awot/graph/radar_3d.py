@@ -1,9 +1,11 @@
 """
 awot.graph.radar_3d
+===================
 
 A group of scripts to create 3-dimensional plots.
 
 Note that is experimental and not fully developed.
+
 """
 
 from __future__ import print_function
@@ -11,10 +13,6 @@ from mpl_toolkits.mplot3d import axes3d
 import numpy as np
 
 from .common import find_nearest_indices, get_masked_data
-# ==============================================================
-# BEGIN FUNCTIONS
-# ==============================================================
-
 
 class Radar3DPlot(object):
     """
@@ -37,7 +35,7 @@ class Radar3DPlot(object):
         self.fields = self.radar_data['fields']
 
 ####################
-#   Plot methods  ##
+#   Plot methods   #
 ####################
 
     def DPJgrid_3d(self, surf_field,

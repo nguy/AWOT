@@ -19,6 +19,7 @@ from .read_p3_radar import (read_windsyn_tdr_netcdf, read_tdr_grid_variable,
                             read_windsyn_binary, read_lf_grid)
 from .read_uwka_lidar import read_wcl
 from .read_uwka_radar import read_wcr2
+from .read_nasa_hiwrap import read_hiwrap_netcdf
 from .write_radar_netcdf import radar2nc
 
 __all__ = [s for s in dir() if not s.startswith('_')]

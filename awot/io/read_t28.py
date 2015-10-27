@@ -1,8 +1,17 @@
+"""
+awot.io.read_t28
+================
+
+Function for reading T-28 data.
+See awot.io.flight.read_netcdf for a generalized version.
+
+"""
+
 from __future__ import absolute_import, print_function
 import numpy as np
 from netCDF4 import num2date
 from .flight import _winduv
-
+from ..io.common import _get_epoch_units
 
 def read_t28_netcdf(ncFile):
     """
@@ -57,9 +66,17 @@ def _make_data_dictionary(ncFile, name_map):
 
 
 def _get_time(ncFile):
-    TimeSec = np.array(ncFile.variables['Time'][:]).ravel()
-    units = ncFile.variables['Time'].units
-    return num2date(TimeSec, units)
+    # Now convert the time array into a datetime instance
+    dtHrs = num2date(np.array(ncFile.variables['Time'][:]).ravel(),
+                     ncFile.variables['Time'].units)
+
+    # Now convert this datetime instance into a number of seconds since Epoch
+    TimeSec = date2num(dtHrs, _get_epoch_units())
+
+    Time_unaware = num2date(TimeSec, _get_epoch_units())
+    Time = {'data': Time_unaware, 'units': _get_epoch_units(),
+            'title': 'Time', 'full_name': 'Time (UTC)'}
+    return Time_unaware
 
 
 def _t28_flight_namemap():

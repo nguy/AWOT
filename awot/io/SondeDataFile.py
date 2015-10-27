@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-SondeDataFile.py - Class for reading Data from file
+awot.io.SondeDataFile
+=====================
+
+Class for reading Data from file.
+
 """
 
 from __future__ import absolute_import, print_function

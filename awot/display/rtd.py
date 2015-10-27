@@ -1,6 +1,6 @@
 """
 awot.display.rtd
-=========================
+================
 
 A group of scripts create various plots of data collected by
 the NOAA P-3 tail Doppler radar.
@@ -14,8 +14,12 @@ Functions
                            aircraft-relative frame
  sweep_track_relative - Polar coord data transformed to track-relative frame
  sweep_earth_relative - Polar coord data transformed to earth-relative frame
+
+History
+-------
+  15 Apr 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
 """
-# ------------------------------------------------------------------
+
 # Load the needed packages
 from __future__ import print_function
 from mpl_toolkits.basemap import Basemap, cm
@@ -70,9 +74,6 @@ def polar_sweep(Var, rot, range, nlevs=30,
     ax : Polar axis created
     p : Output plot
     """
-# HISTORY::
-# 15 Apr 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
-# -------------------------------------------------------
     # Plot the polar coordinate radar data
     fig, ax, p = gp.plot_polar_contour(
         Var, rot, range, nlevs=nlevs,
@@ -109,7 +110,6 @@ def polar_sweep(Var, rot, range, nlevs=30,
             cb.set_label(cb_lab)
 
     return fig, ax, p
-# *===============================================================
 
 
 def plot_sweep_grid(Xcoord, Ycoord, Values, ax=None, title=None,
@@ -165,9 +165,6 @@ def plot_sweep_grid(Xcoord, Ycoord, Values, ax=None, title=None,
     Plotting convention is to project the data onto a 2D surface
     looking from the back of aircraft forward
     """
-# HISTORY::
-# 15 Apr 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
-# -------------------------------------------------------
     # Plot the data
     p = ax.pcolormesh(Xcoord, Ycoord, Values, cmap=cmap, vmin=vmin, vmax=vmax)
 
@@ -209,7 +206,6 @@ def plot_sweep_grid(Xcoord, Ycoord, Values, ax=None, title=None,
             cb.set_label(cb_lab)
 
     return p
-# *===============================================================
 
 
 def sweep_to_Cart(Var, range, rot, tilt, ax=None, data_proj='fore',
@@ -269,16 +265,13 @@ def sweep_to_Cart(Var, range, rot, tilt, ax=None, data_proj='fore',
 
     Notes
     -----
-   Plotting convention is to project the data onto a 2D surface
-   looking from the back of aircraft forward.  The polar data has
-   no direct measure of direction and therefore for the P-3, determination
-   of 'fore' or 'aft' may be accomplished by looking at tilt angle.
+    Plotting convention is to project the data onto a 2D surface
+    looking from the back of aircraft forward.  The polar data has
+    no direct measure of direction and therefore for the P-3, determination
+    of 'fore' or 'aft' may be accomplished by looking at tilt angle.
 
-   Positive is fore, negative is aft.
+    Positive is fore, negative is aft.
     """
-# HISTORY::
-# 15 Apr 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
-# -------------------------------------------------------
     # Check the data projection
     if data_proj == 'fore':
         Fact = 1.
@@ -323,7 +316,6 @@ def sweep_to_Cart(Var, range, rot, tilt, ax=None, data_proj='fore',
                         cb_flag=cb_flag, cb_orient=cb_orient, cb_lab=cb_lab)
 
     return p
-# *===============================================================
 
 
 def sweep_aircraft_relative(Var, range, tilt, rot, ax=None, title=None,
@@ -387,9 +379,6 @@ def sweep_aircraft_relative(Var, range, tilt, rot, ax=None, title=None,
     This mapping does NOT take into account corrections for roll,
     pitch, or drift of the aircraft.
     """
-# HISTORY::
-# 15 Apr 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
-# -------------------------------------------------------
     range = np.array(range)  # Make sure that the data is numpy array
 
     values = np.array(Var)  # Make sure that the data is numpy array
@@ -425,7 +414,6 @@ def sweep_aircraft_relative(Var, range, tilt, rot, ax=None, title=None,
                         cb_flag=cb_flag, cb_orient=cb_orient, cb_lab=cb_lab)
 
     return p
-# *===============================================================
 
 
 def sweep_track_relative(
@@ -494,9 +482,6 @@ def sweep_track_relative(
     This mapping corrects for roll, pitch, and drift of the aircraft.
     This is considered a leveled, heading-relative coordinate system.
     """
-# HISTORY::
-# 15 Apr 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
-# -------------------------------------------------------
     range = np.array(range)  # Make sure that the data is numpy array
 
     values = np.array(Var)  # Make sure that the data is numpy array
@@ -541,7 +526,6 @@ def sweep_track_relative(
                         cb_flag=cb_flag, cb_orient=cb_orient, cb_lab=cb_lab)
 
     return p
-# *===============================================================
 
 
 def sweep_earth_relative(Var, range, tilt, rot, roll, heading, pitch,
@@ -613,9 +597,6 @@ def sweep_earth_relative(Var, range, tilt, rot, roll, heading, pitch,
 
     This is considered a leveled, heading-relative coordinate system.
     """
-# HISTORY::
-# 15 Apr 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
-# -------------------------------------------------------
     range = np.array(range)  # Make sure that the data is numpy array
 
     values = np.array(Var)  # Make sure that the data is numpy array
@@ -659,4 +640,3 @@ def sweep_earth_relative(Var, range, tilt, rot, roll, heading, pitch,
                         xlims=xlims, ylims=ylims, xlab=xlab, ylab=ylab,
                         cb_flag=cb_flag, cb_orient=cb_orient, cb_lab=cb_lab)
     return p
-# *===============================================================
