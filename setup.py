@@ -19,7 +19,8 @@ packages = ['awot',
             'awot.io',
             'awot.display',
             'awot.graph',
-            'awot.dropsondes']
+            'awot.dropsondes',
+            'awot.util']
 package_dirs = {'awot'}
 # datafiles = glob.glob(os.path.join(pathout, '*'))
 # datafiles = [os.path.join('data', os.path.basename(f)) for f in datafiles]
@@ -27,7 +28,7 @@ package_dirs = {'awot'}
 
 # - Run setup
 setup(name='awot',
-      version='0.2.3',
+      version='0.2.4',
       author='Nick Guy',
       author_email='nick.guy@noaa.gov',
       packages=packages,

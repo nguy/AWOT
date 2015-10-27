@@ -1,5 +1,6 @@
 """
 awot.graph.radar_vertical
+=========================
 
 A group of scripts to create vertical radar plots.
 """
@@ -11,7 +12,7 @@ A group of scripts to create vertical radar plots.
 #                           to aircraft-relative frame
 # sweep_track_relative - Polar coord data transformed to track-relative frame
 # sweep_earth_relative - Polar coord data transformed to earth-relative frame
-# ------------------------------------------------------------------
+
 # Load the needed packages
 from __future__ import print_function
 import numpy as np
@@ -85,7 +86,7 @@ class RadarVerticalPlot(object):
             self.time = self.radar[time_name]
 
 #############################
-#  Vertical plot methods  ##
+#  Vertical plot methods    #
 #############################
 
     def plot_cross_section(self, field, start_pt, end_pt, xs_length=500,
@@ -506,7 +507,7 @@ class RadarVerticalPlot(object):
         return
 
 ###################
-#   Get methods  ##
+#   Get methods   #
 ###################
 
     def _get_variable_dict_data_time_subset(self, field, start_time, end_time):
@@ -600,7 +601,7 @@ class MicrophysicalVerticalPlot(object):
             self.time = self.microphys_data[time_name]
 
 #############################
-#   Vertical plot methods  ##
+#   Vertical plot methods   #
 #############################
 
     def time_height_image(self, field,

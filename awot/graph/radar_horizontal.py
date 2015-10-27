@@ -1,8 +1,10 @@
 """
 awot.graph.radar_horizontal
+===========================
 
 A group of scripts create various plots of gridded products from
 data collected by the NOAA P-3 tail Doppler radar.
+
 """
 
 from mpl_toolkits.basemap import Basemap, cm
@@ -19,10 +21,6 @@ from .common import (_check_basemap, _get_earth_radius,
 from .radar_3d import Radar3DPlot
 from .radar_vertical import RadarVerticalPlot
 
-# ==============================================================
-# BEGIN FUNCTIONS
-# ==============================================================
-
 
 class RadarHorizontalPlot(object):
     """Class to plot a horizontal radar image."""
@@ -34,7 +32,7 @@ class RadarHorizontalPlot(object):
         Parameters
         ----------
         radar : dict
-            AWOT radar instance.
+            AWOT radar object.
         basemap : basemap instance
         lon_name : str
             Key in radar instance for longitude variable.
@@ -48,7 +46,7 @@ class RadarHorizontalPlot(object):
         time_name : str
             Key in radar instance for time variable.
             None uses AWOT default.
-        
+
         Initialize the class to create plots.
         '''
 
@@ -166,7 +164,7 @@ class RadarHorizontalPlot(object):
 #    plt.colors.colormap.set_under('white')
         # Add Colorbar
         if color_bar:
-            cbStr = "%s at %4.1f %s" % (Var['long_name'], 
+            cbStr = "%s at %4.1f %s" % (Var['long_name'],
                         self.height['data'][Zind], self.height['units'])
             cb = self.basemap.colorbar(
                 cs, location=cb_loc, pad=cb_pad)  # ,ticks=clevels)

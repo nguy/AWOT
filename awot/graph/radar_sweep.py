@@ -1,9 +1,11 @@
 """
 awot.graph.radar_sweep
+======================
 
 A group of scripts to create vertical radar sweep plots.
+
 """
-# ------------------------------------------------------------------
+
 # Load the needed packages
 from __future__ import print_function
 import numpy as np
@@ -84,7 +86,7 @@ class RadarSweepPlot(object):
 #            _check_basemap(self)
 
 ################################
-#   Plotting generate method  ##
+#   Plotting generate method   #
 ################################
 
     def plot_to_grid(self, Xcoord, Ycoord, Values,
@@ -215,7 +217,7 @@ class RadarSweepPlot(object):
         return p
 
 ##########################
-#   Sweep plot modules  ##
+#   Sweep plot modules   #
 ##########################
 
     def plot_polar_sweep(self, field, nlevs=30, mask_procedure=None,

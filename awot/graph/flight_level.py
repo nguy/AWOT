@@ -1,5 +1,6 @@
 """
 awot.graph.flight_level
+=======================
 
 A group of scripts to create plots of flight level data.
 
@@ -37,7 +38,7 @@ class FlightLevel(object):
                  ):
         '''
         Intitialize the class to create plots.
-        
+
         Parameters
         ----------
         flightdata : dict
@@ -360,11 +361,11 @@ class FlightLevel(object):
             x_axis_array='distance', dForm='%H:%M', tz=None,
             date_MinTicker='minute', ax=None, fig=None):
         '''
-        Plot a cross-section along a flight path segment
+        Plot a cross-section along a flight path segment.
 
         Parameters
         ----------
-        radar : object
+        radar : AWOT radar object
             RadarHorizontalPlot object.
         field : str
             3-D variable inf RadarHorizontalPlot object
@@ -444,7 +445,8 @@ class FlightLevel(object):
         timeSub = self._get_time_subset(start_time, end_time)
 
         # Return masked or unmasked variable
-        Var, Data = radar.fields[field], radar.fields[field]['data'][:]
+#        Var, Data = radar['fields'][field], radar['fields'][field]['data'][:]
+        Var, Data = self._get_radar_variable_dict_data(radar, field)
         if mask_procedure is not None:
             Data = get_masked_data(Data, mask_procedure, mask_tuple)
 
@@ -452,7 +454,7 @@ class FlightLevel(object):
         clevels = np.linspace(cminmax[0], cminmax[1], clevs)
 
         # Create an array to hold the interpolated cross-section
-        xs_data = np.empty([len(lonSub), len(radar.height['data'][:])])
+        xs_data = np.empty([len(lonSub), len(radar['height']['data'][:])])
 
         # Create arrays for cross-section lon-lat index points
         xsY = np.empty(len(lonSub))
@@ -462,6 +464,7 @@ class FlightLevel(object):
         xsDist = np.empty(len(lonSub))
 
         for ii in range(len(lonSub)):
+            print(lonSub[ii])
             xsX[ii] = self._get_lon_index(lonSub[ii], radar)
             xsY[ii] = self._get_lat_index(latSub[ii], radar)
 
@@ -480,7 +483,7 @@ class FlightLevel(object):
                               ) + xsDist[ii - 1]
 
         # Loop through each level to create cross-section and stack them
-        for nlev in range(len(radar.height['data'][:])):
+        for nlev in range(len(radar['height']['data'][:])):
             # Extract the values along the line, using cubic interpolation
             xs_data[:, nlev] = scim.map_coordinates(
                 Data[nlev, :, :], np.vstack((xsY, xsX)), prefilter=False)
@@ -493,7 +496,7 @@ class FlightLevel(object):
             Xax = date2num(timeSub)
 
         # Convert Height, distance arrays to 2D
-        Ht2D, Xax2D = np.meshgrid(radar.height['data'][:], Xax)
+        Ht2D, Xax2D = np.meshgrid(radar['height']['data'][:], Xax)
 
         p = ax.pcolormesh(Xax2D, Ht2D, np.ma.masked_less_equal(xs_data, -800.),
                           vmin=vmin, vmax=vmax, cmap=cmap)
@@ -817,9 +820,9 @@ class FlightLevel(object):
         # Get start and end times (this deals with subsets)
         dt_point = self._get_datetime(label_time)
 
-        time = self.time[(self.time['data'][:] >= dt_point)]
+        time = self.time['data'][(self.time['data'][:] >= dt_point)]
         lon = self.longitude['data'][(self.time['data'][:] >= dt_point)]
-        lat = self.latitude[(self.time['data'][:] >= dt_point)]
+        lat = self.latitude['data'][(self.time['data'][:] >= dt_point)]
 
         xpos_mrkr, ypos_mrkr = self.basemap(lon[0], lat[0])
         xpos_text, ypos_text = self.basemap(
@@ -1264,7 +1267,7 @@ class FlightLevel(object):
         y = self.y[(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
 
         if return_time:
-            time = self.time[(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
+            time = self.time['data'][(self.time['data'][:] >= dt_start) & (self.time['data'][:] <= dt_end)]
 
             return x, y, time
         else:
@@ -1310,24 +1313,25 @@ class FlightLevel(object):
     def _get_lat_index(self, value, radar):
         '''Calculate the exact index position within latitude array'''
         # Find the spacing
-        dp = radar.latitude['data'][1] - radar.latitude['data'][0]
+        dp = radar['latitude']['data'][1] - radar['latitude']['data'][0]
 
         # Calculate the relative position
-        pos = (value - radar.latitude['data'][0]) / dp
+        pos = (value - radar['latitude']['data'][0]) / dp
         return pos
 
     def _get_lon_index(self, value, radar):
         '''Calculate the exact index position within longitude array'''
         # Find the spacing
-        dp = radar.longitude['data'][1] - radar.longitude['data'][0]
+        dp = radar['longitude']['data'][1] - radar['longitude']['data'][0]
 
         # Calculate the relative position
-        pos = (value - radar.longitude['data'][0]) / dp
+        pos = (value - radar['longitude']['data'][0]) / dp
         return pos
 
-    def _get_radar_variable_dict_data(self, field):
+    def _get_radar_variable_dict_data(self, radar, field):
         '''Get the variable from the fields dictionary'''
-        Var, data = self.radarfields[field], self.radarfields[field]['data'][:]
+        Var, data = radar['fields'][field], radar['fields'][field]['data'][:]
+        return Var, data
 
 ##################
 #  Save methods  #

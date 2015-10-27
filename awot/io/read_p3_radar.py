@@ -10,7 +10,6 @@ Supports both tail Doppler and lower fuselage radars.
 from __future__ import print_function
 from netCDF4 import Dataset
 import numpy as np
-import pytz
 from datetime import datetime
 import pyart
 

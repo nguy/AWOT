@@ -4,7 +4,6 @@ awot.io.read_radar_sweep
 
 These scripts are a wrapper using the pyart interface to access a large
 number of file formats.
-.
 
 """
 # Load the needed packages

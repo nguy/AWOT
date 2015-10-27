@@ -1,6 +1,6 @@
 """
 awot.io.write_radar_netcdf
-=========================
+=========================+
 
 A group of scripts to write radar data to NetCDF.
 Especially that collected by the NOAA P-3 aircraft.
@@ -8,6 +8,7 @@ Supports both tail Doppler and lower fuselage radars.
 
 Note: This has only been tested with DYNAMO data files, versions
 may change and another function may be needed.
+
 """
 # Load the needed packages
 import netCDF4 as nc4

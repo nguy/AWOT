@@ -1,8 +1,9 @@
 """
 awot.graph.common
-==================
+=================
 
 Common graphing routines.
+
 """
 # ------------------------------------------------------------------
 # Load the needed packages

@@ -1,11 +1,12 @@
 """
 awot.io.read_uwka_lidar
-=========================
+=======================
 
-Scripts for reading NetCDF data files from the 
+Scripts for reading NetCDF data files from the
 Wyoming Cloud Lidar, part of the University of Wyoming
 King Air Research Aircraft facility.
  http://flights.uwyo.edu/wcl/
+
 """
 # Load the needed packages
 from __future__ import print_function
@@ -14,7 +15,8 @@ import datetime
 import numpy as np
 
 from ..io.common import (_ncvar_subset_to_dict, _ncvar_subset_masked,
-                         _var_found, _var_not_found)
+                         _var_found, _var_not_found,
+                         _get_epoch_units)
 
 def read_wcl(fname):
     '''
@@ -151,8 +153,9 @@ def _get_time(fname, ncFile, Good_Indices):
     """Pull the time from WCL file and convert to AWOT useable."""
     # Pull out the date, convert the date to a datetime friendly string
     # Now convert the time array into a datetime instance
-    Time = num2date(ncFile.variables['time'][
-                    Good_Indices], 'seconds since 1970-01-01 00:00:00+0:00')
+    Time_unaware = num2date(ncFile.variables['time'][Good_Indices], _get_epoch_units)
+    Time = {'data': Time_unaware, 'units': _get_epoch_units(),
+            'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time
 
 # def _nc_var_masked(ncFile, ncvar, Good_Indices):

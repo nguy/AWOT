@@ -1,22 +1,15 @@
 """
 awot - Airborne Weather Observations Toolkit
 ================================================
-Probe Subpackage (:mod:'awot)
+Probe Subpackage (:mod:'awot.util)
 ================================================
 
-.. currentmodule:: awot
-
-.. autosummary::
-    :toctree: generated/
-
+.. currentmodule:: awot.io
 """
-from __future__ import absolute_import
 
-# import subpackages
-from . import io
-from . import display
-from . import graph
-from . import dropsondes
-from . import util
+from __future__ import absolute_import
+#from .matcher import TrackMatch
+
+from .convert import pyart_radar_to_awot, to_awot_flight
 
 __all__ = [s for s in dir() if not s.startswith('_')]
