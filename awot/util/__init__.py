@@ -8,7 +8,7 @@ Probe Subpackage (:mod:'awot.util)
 """
 
 from __future__ import absolute_import
-#from .matcher import TrackMatch
+from .matcher import TrackMatch
 
 from .convert import pyart_radar_to_awot, to_awot_flight
 

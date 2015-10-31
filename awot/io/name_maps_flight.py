@@ -2,14 +2,22 @@
 awot.io.name_maps_flight
 ========================
 
-Routines for mapping flight level data.
+Routines for mapping flight level data to
+AWOT objects. These are default name maps
+and are not guaranteed to work as they are
+based on specific project data generally.
+Unfortunately at this time the airborned
+community does not standardize.
+
+Thse maps may be a good starting point for creating a
+custom name_map.
 """
 
 from __future__ import print_function
 
 def _get_name_map(platform):
     """
-    Retrieve a name_map used to map file variables to 
+    Retrieve a name_map used to map file variables to
     AWOT object.
     """
     # Set up lists of potential names for various aircraft
@@ -24,6 +32,9 @@ def _get_name_map(platform):
     t28_names = ['t28', 't-28', 'sdsmt', 'sdsmtt28', 'sdsm&t',
                  'sdsm&tt-28', 'sdsmtt-28', 'sdsm&tt28']
 
+    und_citation_names = ['citation', 'und_citation',
+                         'und', 'undcitation']
+
     if platform is not None:
         if platform.lower().replace(" ", "") in p3_names:
             name_map = _p3_flight_namemap()
@@ -36,6 +47,9 @@ def _get_name_map(platform):
 
         elif platform.lower().replace(" ", "") in t28_names:
             name_map = _t28_flight_namemap()
+
+        elif platform.lower().replace(" ", "") in und_citation_names:
+            name_map = _und_citation_name_map()
     return name_map
 
 
@@ -45,7 +59,10 @@ def _get_name_map(platform):
 
 def _p3_flight_namemap():
     '''
-    Map NOAA P3 variables to AWOT structure
+    Map NOAA P3 variables to AWOT structure.
+    This map was developed based upon data from the
+    DYNAMO 2011 project.
+
     Available variables (not full list) :
      LonGPS.3      = Novatel GPS Longitude
      LatGPS.3      = Novatel GPS Latitude
@@ -92,7 +109,7 @@ def _p3_flight_namemap():
     return name_map
 
 def _uwka_name_map():
-    '''Map UWyo King Air variables to AWOT'''
+    '''Map UWyo King Air variables to AWOT.'''
     name_map = {
         'time': 'time',
         # Aircraft Position
@@ -240,7 +257,12 @@ def _t28_flight_namemap():
     return name_map
 
 def _latmos_name_map():
-    '''Map out names used in SAFIRE/LATMOS Falcon data to AWOT'''
+    '''
+    Map out names used in SAFIRE/LATMOS Falcon data to AWOT.
+
+    This map was developed based upon data from the DYNAMO
+    2011 project.
+    '''
     name_map = {
         'time': 'time',
         'latitude': 'latitude : from GPS (degree)',
@@ -278,30 +300,58 @@ def _latmos_name_map():
 
 
 def _und_citation_name_map():
-    '''Map out names used in UND Citation data to AWOT'''
+    '''
+    Map out names used in UND Citation data to AWOT.
+
+    This map was developed based upon data from the
+    MC3E 2011 project.
+    '''
     name_map = {
         'time': 'time',
-        'latitude': 'POS_Lat',
-        'longitude': 'POS_Lon',
-        'altitude': 'POS_Alt',
-        'pressure_altitude': 'Press_Alt',
-        'true_heading': 'POS_Head',
-        'track': 'POS_Trk',
-        'temperature': 'Air_Temp',
-        'dewpoint_temperature': 'DEWPT',
-        'theta': 'Pot_Temp_T1',
-        'wind_spd': 'Wind_M',
-        'wind_dir': 'Wind_D',
-        'mixing_ratio': 'MixingRatio',
-        'frost_point_temp': 'FrostPoint',
-        'lwc': 'King_LWC_ad',
-        'twc': 'Nev_TWC',
-        'Conc_2DC': '2-DC_Conc',
-        'Dmean_2DC': '2-DC_MenD',
-        'Dvol_2DC': '2-DC_VolDia',
-        'Deff_2DC': '2-DC_EffRad',
-        'Conc_CPC': 'CPCConc',
-        'air_vertical_velocity': 'Wind_Z',
-        'turb': 'TURB',
+        'temperature': "Air Temperature Corrected for Dynamic Heating (Based first on the main temperatue/pitot instrument and secondarly based on the backup temperature/pitot instrument) [degC]",
+        'mach_number': "Mach Number (Based first on the main temperatue/pitot instrument and secondarly based on the backup temperature/pitot instrument)",
+        'ias': "Indicated Air Speed (Based first on the main pitot instrument and secondarly based on the backup pitot instrument) [m/s]",
+        'tas': "True Air Speed (Based first on the main temperatue/pitot instrument and secondarly based on the backup temperature/pitot instrument) [m/s]",
+        'pressure_altitude': "Pressure Altitude [m]",
+        'theta': "Potential Temperature (Based first on the main temperatue/pitot instrument and secondarly based on the backup temperature/pitot instrument) [degK]",
+        'pitot_pressure': "Pitot Pressure from Wing Probe [hPa] {Calibration:  slope = 60.797701 offset = -150.48263}",
+        'cabin_pressure': "Aircraft Cabin Pressure [millibar]",
+        'static_pressure': "Static Pressure [hPa] {Calibration:  slope = 207.08000 offset = -0.71000000}",
+        'dewpoint_temperature1': "Dewpoint Temperature from EG&G Probe [degC] {Calibration:  slope = 20.000000 offset = -70.000000}",
+        'mixing_ratio': "Mixing Ratio by weight from the Laser Hygrometer [ppmw]",
+        'dewpoint_temperature2': "Dew Point Temperature from the Laser Hygrometer [degrees Celsius]",
+        'frost_point_temperature': "Frost Point Temperature from the Laser Hygrometer [degrees Celsius]",
+        'roll': "Aircraft Roll Angle from the Applanix POS System [degrees]",
+        'pitch': "Aircraft Pitch Angle from the Applanix POS System [degrees]",
+        'true_heading': "Aircraft Heading Angle [degrees]; 0-360 with 0 being North",
+        'aircraft_vert_accel': "Aircraft Z-direction (Vertical) Acceleration for the Applanix POS system [m/s^2]",
+        'latitude': "Aircraft Latitude from the Applanix POS System [degrees]",
+        'longitude': "Aircraft Longitude from the Applanix POS system [degrees]",
+        'altitude': "Aircraft Altitude from the Applanix POS system [m]",
+        'aircraft_speed': "Aircraft Speed from the Applanix POS system [m/s]",
+        'track': "Aircraft Track Angle [degrees]; 0-360 with 0 being North",
+        'attack_angle': "Alpha (Attack) Angle [degrees] {Calibration:  slope = 0.070310700 offset = 0.33308870}",
+        'sideslip_angle': "Beta (Sideslip) Angle [degrees] {Calibration:  slope = -0.073846080 offset = -1.6202790}",
+        'aicrcaft_vert_vel': "Vertical Velocity of the aircraft based on the change in position over a 2 seceond interval [m/s]",
+        'Wwind': "Z (Vertical) Component of the Wind Speed [m/s]",
+        'wind_spd': "Horizontal Wind Speed [m/s]",
+        'wind_dir': "Horizontal Wind Direction [degrees]; True Direction From Which it Blows",
+        'turb': "Turbulence parameter (Eddy Dissipation Rate) based on Wing Pitot pressure [cm^2/3*s^-1]",
+        'lwc1': "Liquid Water Content based on King Probe measurement adjusted (cloud threshold =  5.1 [#/cm^3], cloud interval = 30.0 [s] and adjustment slope = 0.500) for the baseline offset [g/m^3]",
+        'twc': "Total Water Content based on the Nevzorov Probe measurement",
+        'lwc2': "Liquid Water Content based on the Nevzorov Probe measurement with correction for  residual ice (beta = 0.110000) [g/m^3]",
+        'Conc_CDP': "Number Concentration of Droplets Based on the Cloud Droplet Probe [#/cc]",
+        'lwc3': "Liquid Water Content Based on the Cloud Droplet Probe [g/m^3]",
+        'Dmean_CDP': "Cloud Droplet Probe's Mean Droplet Diameter [um]",
+        'Dvol_CDP': "Cloud Droplet Probe's Mean Droplet Volume Diameter [um]",
+        'Deff_CDP': "Cloud Droplet Probe's Effective Droplet Radius [um]",
+        'Conc_2DC': "Number concentration of droplets based on the 2-DC Probe measurements [#/cm^3]",
+        'Dmean_2DC': "Mean droplet diameter based on the 2-DC Probe measurements [um]",
+        'Dvol_2DC': "Mean droplet volume diameter based on the 2-DC Probe measurements [um]",
+        'Deff_2DC': "Effective droplet radius based on the 2-DC Probe measurements [um]",
+        'mso_frequency': "The current Sensor (MSO) frequency from the Icing Detector [Hz]",
+        'Conc_CPC': "Total Concentration from CPC [#/cm^3]",
+        'yymmdd': "Date Stamp based on data file name (Example: 941119 is 19 November 1994) [stamp]",
+
     }
     return name_map
