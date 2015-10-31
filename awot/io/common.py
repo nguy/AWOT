@@ -66,6 +66,14 @@ def _ncvar_to_dict_masked(ncvar, Good_Indices):
         d['data'].shape = (1, )
     return d
 
+def _nasa_ames_var_to_dict(var, standard_name, long_name ):
+    d = {}
+    d['standard_name'] = standard_name
+    d['long_name'] = long_name
+    d['units'] = " "
+    d['data'] = var
+    return d
+
 def _get_epoch_units():
     """Set common time units for AWOT. Using Epoch."""
     return 'seconds since 1970-1-1 00:00:00+0:00'

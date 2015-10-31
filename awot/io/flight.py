@@ -11,7 +11,8 @@ import numpy as np
 from datetime import datetime
 from netCDF4 import Dataset, num2date, date2num
 from ..io.common import (_get_epoch_units,
-                         _ncvar_to_dict, _var_not_found)
+                         _ncvar_to_dict, _var_not_found,
+                         _nasa_ames_var_to_dict)
 from ..io.name_maps_flight import _get_name_map
 
 #########################
@@ -27,7 +28,7 @@ def read_netcdf(fname, time_var=None, mapping_dict=None, platform=None):
     be output.
 
     This reader checks to see if NCAR Research Aircraft Facility
-    (RAF) Nimbus conventions are followed. This convention packs 
+    (RAF) Nimbus conventions are followed. This convention packs
     data with a higher rate than 1 Hz into a 2-dimensional array.
     See the following website for a description of this data
     convention: http://www.eol.ucar.edu/raf/Software/netCDF.html
@@ -37,7 +38,7 @@ def read_netcdf(fname, time_var=None, mapping_dict=None, platform=None):
     fname : str
         Filename.
     time_var : str
-        Name of time variable. Choosing this overrides any mapping 
+        Name of time variable. Choosing this overrides any mapping
         dictionary that is used.
     mapping_dict : dict
         Dictionary to use for mapping variable names. Use if provided.
@@ -185,11 +186,11 @@ def _get_time(ncFile, isRAF, RAFrate=None, timevar=None):
         length = len(ncFile.dimensions['Time'])
         # Create a time array
         TimeSec = np.linspace(StartTime, StartTime + length, length)
-        
+
     try:
         time_units = ncFile.variables[varname].units
     except:
-        time_units = _get_epoch_units()        
+        time_units = _get_epoch_units()
 
     # Now convert the time array into a datetime instance
     dtHrs = num2date(TimeSec, time_units)
@@ -198,7 +199,7 @@ def _get_time(ncFile, isRAF, RAFrate=None, timevar=None):
     # Now once again convert this data into a datetime instance
     Time_unaware = num2date(TimeSec, _get_epoch_units())
     Time = {'data': Time_unaware, 'units': _get_epoch_units(),
-            'title': 'Time', 'full_name': 'Time (UTC)'}
+            'standard_name': 'Time', 'long_name': 'Time (UTC)'}
     return Time
 
 
@@ -249,7 +250,7 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
     hdr = _get_ames_header(f)
 
     # Read in the data from file
-    junk = np.genfromtxt(filename, skiprows=int(hdr['NLHEAD']),
+    junk = np.genfromtxt(filename, skip_header=int(hdr['NLHEAD']),
                          missing_values=hdr['VMISS'], filling_values=np.nan)
 
     # Grab a name map for data
@@ -265,7 +266,12 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
     # Loop through the variables and pull data
     readfile = {}
 
-    print(len(hdr['VMISS']))
+    if len(hdr['VNAME']) != len(hdr['VSCAL']):
+        print("ALL variables must be read in this type of file, "
+              "please check name_map to make sure it is the "
+              "correct length.")
+        return
+
     for jj, name in enumerate(hdr['VNAME']):
         readfile[name] = np.array(junk[:, jj] * hdr['VSCAL'][jj])
         readfile[name] = np.ma.masked_values(readfile[name], hdr['VMISS'][jj])
@@ -289,7 +295,9 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
     data = {}
     for varname in name_map:
         try:
-            data[varname] = readfile[name_map[varname]]
+            data[varname] = _nasa_ames_var_to_dict(
+                               readfile[name_map[varname]],
+                               varname, name_map[varname])
         except:
             data[varname] = None
 
@@ -301,9 +309,18 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
         data['Vwind'] = Vwind
 
     # Add some values to the data dictionary
-    data['project'] = hdr['MNAME']
-    data['platform'] = hdr['SNAME']
-    data['flight_number'] = hdr['NCOM'][0].split(':')[1]
+    try:
+        data['project'] = hdr['MNAME']
+    except:
+        data['project'] = None
+    try:
+        data['platform'] = hdr['SNAME']
+    except:
+        data['platform'] = None
+    try:
+        data['flight_number'] = hdr['NCOM'][0].split(':')[1]
+    except:
+        data['flight_number'] = None
 
     return data
 
@@ -351,7 +368,7 @@ def _get_ames_header(f):
     hdr['XNAME'] = f.readline().rstrip('\n')
     hdr['NV'] = int(f.readline().rstrip('\n'))
     vscl = f.readline().split()
-    hdr['VSCAL'] = [int(x) for x in vscl]
+    hdr['VSCAL'] = [float(x) for x in vscl]
     vmiss = f.readline().split()
     hdr['VMISS'] = [float(x) for x in vmiss]
     hdr['VNAME'] = ['time']
@@ -370,74 +387,6 @@ def _get_ames_header(f):
     hdr['VMISS'].insert(0, np.nan)
     f.close()
     return hdr
-
-
-def _latmos_name_map():
-    '''Map out names used in SAFIRE/LATMOS Falcon data to AWOT'''
-    name_map = {
-        'time': 'time',
-        'latitude': 'latitude : from GPS (degree)',
-        'longitude': 'longitude : from GPS (degree)',
-        'altitude': 'altitude : from GPS (meter)',
-        'true_heading': 'platform_orientation : from INS (degree)',
-        'temperature':
-        'air_temperature : from deiced Rosemount sensor (Celsius)',
-        'dewpoint_temperature': 'dew_point_temperature : from 1011B top dew-point hygrometer (Celsius)',
-        'wind_spd': 'wind_speed : Attitudes and speed wrt ground from INS, air angles from radome, air speed from pitot (m/s)',
-        'wind_dir': 'wind_from_direction : Attitudes and speed wrt ground from INS, air angles from radome, air speed from pitot (degree)',
-        'relative_humidity': 'relative_humidity : from Aerodata sensor (%)',
-        'mixing_ratio': 'humidity_mixing_ratio : from Aerodata sensor (gram/kg)',
-        'pressure': 'air_pressure : from front sensor, corrected for the so-called static defect (hPa)',
-        'roll': 'platform_roll_angle : from INS (degree)',
-        'pitch': 'platform_pitch_angle : from INS (degree)',
-        'aircraft_air_speed': 'platform_speed_wrt_air : from pitot (m/s)',
-        'platform_ground_speed': 'platform_speed_wrt_ground : from GPS (m/s)',
-        'platform_ground_speed2': 'platform_speed_wrt_ground : from INS (kt)',
-        'aircraft_vert_accel': 'platform_acceleration_along_vertical_axis : from INS (meter second-2)',
-        'altitude2': 'altitude : from INS (meter)',
-        'mixing_ratio2': 'humidity_mixing_ratio : from top dew-point hygrometer (GE 1011B) (gram/kg)',
-        'platform_course': 'platform_course : from INS (degree)',
-        'platform_upward_ground_speed': 'upward_platform_speed_wrt_ground : from INS (m/s)',
-        'platform_upward_ground_speed': 'upward_platform_speed_wrt_ground : from GPS (m/s)',
-        'attack_angle': 'angle_of_attack : from sensor on the boom (degree)',
-        'sideslip_angle': 'angle_of_sideslip : from sensor on the boom (degree)',
-        'Uwind': 'eastward_wind : Attitudes and speed wrt ground from INS, air angles from radome, air speed from pitot (m/s)',
-        'Vwind': 'northward_wind : Attitudes and speed wrt ground from INS, air angles from radome, air speed from pitot (m/s)',
-        'air_vertical_velocity': 'upward_air_velocity : Attitudes and speed wrt ground from INS, air angles from radome, air speed from pitot (m/s)',
-        'wind_dir2': 'wind_from_direction : Attitudes and speed wrt ground from INS, air angles from radome, air speed from pitot (degree)',
-        'wind_spd2': 'wind_speed : Attitudes and speed wrt ground from INS, air angles from radome, air speed from pitot (m/s)',
-    }
-    return name_map
-
-
-def _und_citation_name_map():
-    '''Map out names used in UND Citation data to AWOT'''
-    name_map = {
-        'time': 'time',
-        'latitude': 'POS_Lat',
-        'longitude': 'POS_Lon',
-        'altitude': 'POS_Alt',
-        'pressure_altitude': 'Press_Alt',
-        'true_heading': 'POS_Head',
-        'track': 'POS_Trk',
-        'temperature': 'Air_Temp',
-        'dewpoint_temperature': 'DEWPT',
-        'theta': 'Pot_Temp_T1',
-        'wind_spd': 'Wind_M',
-        'wind_dir': 'Wind_D',
-        'mixing_ratio': 'MixingRatio',
-        'frost_point_temp': 'FrostPoint',
-        'lwc': 'King_LWC_ad',
-        'twc': 'Nev_TWC',
-        'Conc_2DC': '2-DC_Conc',
-        'Dmean_2DC': '2-DC_MenD',
-        'Dvol_2DC': '2-DC_VolDia',
-        'Deff_2DC': '2-DC_EffRad',
-        'Conc_CPC': 'CPCConc',
-        'air_vertical_velocity': 'Wind_Z',
-        'turb': 'TURB',
-    }
-    return name_map
 
 ######################
 #   Shared methods   #
@@ -466,16 +415,16 @@ def _winduv(data):
         U = {}
         U['data'] = -np.cos(np.radians(data['wind_dir']['data'][:])) * data['wind_spd']['data'][:]
         U['units'] = data['wind_spd']['units']
-        U['title'] = "U Wind"
-        U['full_name'] = "Zonal Wind, positive blowing towards east"
+        U['standard_name'] = "U Wind"
+        U['long_name'] = "Zonal Wind, positive blowing towards east"
     except:
         U = None
     try:
         V = {}
         V ['data']= -np.sin(np.radians(data['wind_dir']['data'][:])) * data['wind_spd']['data'][:]
         V['units'] = data['wind_spd']['units']
-        V['title'] = "V Wind"
-        V['full_name'] = "Meridional Wind, positive blowing towards east"
+        V['standard_name'] = "V Wind"
+        V['long_name'] = "Meridional Wind, positive blowing towards east"
     except:
         V = None
     return U, V

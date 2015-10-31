@@ -5,6 +5,8 @@ awot.util.convert
 These scripts are various convenience utilities.
 
 """
+from netCDF4 import num2date
+
 def pyart_radar_to_awot(radar, instrument=None, platform=None):
     """
     This function creates an AWOT radar instance from a Py-ART
@@ -20,16 +22,18 @@ def pyart_radar_to_awot(radar, instrument=None, platform=None):
     platform : str
         If set this supersedes the platform key in AWOT dictionary.
     """
-    awotradar ={'metadata': radar.metadata,
-                 'longitude': radar.longitude,
-                 'latitude': radar.latitude,
-                 'height': radar.altitude,
-                 'fields': radar.fields,
+    awotradar ={'metadata': radar.metadata.copy(),
+                 'longitude': radar.longitude.copy(),
+                 'latitude': radar.latitude.copy(),
+                 'height': radar.altitude.copy(),
+                 'fields': radar.fields.copy(),
                  'platform': radar.metadata['instrument_name'],
                  'instrument': radar.metadata['instrument_name'],
-                 'time': radar.time,
+                 'time': radar.time.copy(),
                  'data_format': 'ground'
                  }
+    Time = num2date(radar.time['data'], radar.time['units'])
+    awotradar['time']['data'] = Time
     if instrument is not None:
         awotradar['instrument'] = instrument
     if platform is not None:
@@ -39,10 +43,10 @@ def pyart_radar_to_awot(radar, instrument=None, platform=None):
 
 def to_awot_flight(lon_dict=None, lat_dict=None, alt_dict=None,
                    time_dict=None, other_dict=None,
-                   lon_array=None, lon_unit=None, lon_name=None, lon_title=None,
-                   lat_array=None, lat_unit=None, lat_name=None, lat_title=None,
-                   alt_array=None, alt_unit=None, alt_name=None, alt_title=None,
-                   time_array=None,time_unit=None, time_name=None, time_title=None):
+                   lon_array=None, lon_unit=None, lon_longname=None, lon_stdname=None,
+                   lat_array=None, lat_unit=None, lat_longname=None, lat_stdname=None,
+                   alt_array=None, alt_unit=None, alt_longname=None, alt_stdname=None,
+                   time_array=None,time_unit=None, time_longname=None, time_stdname=None):
     """
     A convenience function to create an AWOT object from data loaded in some
     other fashion. For example if a reader does not exist in AWOT.
@@ -54,16 +58,16 @@ def to_awot_flight(lon_dict=None, lat_dict=None, alt_dict=None,
     ----------
     lon_dict : dict
         Dictionary to use for longitude.
-        Should include 'data', 'units', and 'title' keys minimally.
+        Should include 'data', 'units', and 'standard_name' keys minimally.
     lat_dict : dict
         Dictionary to use for latitude.
-        Should include 'data', 'units', and 'title' keys minimally.
+        Should include 'data', 'units', and 'standard_name' keys minimally.
     alt_dict : dict
         Dictionary to use for altitude.
-        Should include 'data', 'units', and 'title' keys minimally.
+        Should include 'data', 'units', and 'standard_name' keys minimally.
     time_dict : dict
         Dictionary to use for time.
-        Should include 'data', 'units', and 'title' keys minimally.
+        Should include 'data', 'units', and 'standard_name' keys minimally.
         Data should be datetime instances.
     other_dict : list
         List of other dictionaries to be included.
@@ -74,34 +78,34 @@ def to_awot_flight(lon_dict=None, lat_dict=None, alt_dict=None,
         Array of longitude values. AWOT uses masked Numpy arrays.
     lon_unit : str
         String indicating the units of longitude array.
-    lon_name : str
+    lon_longname : str
         The string to assign to the 'name' key of longitude dictionary.
-    lon_title : str
-        The string to assign to the 'title' key of longitude dictionary.
+    lon_stdname : str
+        The string to assign to the 'standard_name' key of longitude dictionary.
     lat_array : flt array
         Array of latitude values. AWOT uses masked Numpy arrays.
     lat_unit : str
         String indicating the units of latitude array.
-    lat_name : str
+    lat_longname : str
         The string to assign to the 'name' key of latitude dictionary.
-    lat_title : str
-        The string to assign to the 'title' key of latitude dictionary.
+    lat_stdname : str
+        The string to assign to the 'standard_name' key of latitude dictionary.
     alt_array : flt array
         Array of longitudinal values. AWOT uses masked Numpy arrays.
     alt_unit : str
         String indicating the units of altitude array.
-    alt_name : str
+    alt_longname : str
         The string to assign to the 'name' key of altitude dictionary.
-    alt_title : str
-        The string to assign to the 'title' key of altitude dictionary.
+    alt_stdname : str
+        The string to assign to the 'standard_name' key of altitude dictionary.
     time_array : flt array
         Array of time values. AWOT uses datetime arrays.
     time_unit : str
         String indicating the units of time array.
-    time_name : str
+    time_longname : str
         The string to assign to the 'name' key of time dictionary.
-    time_title : str
-        The string to assign to the 'title' key of time dictionary.
+    time_stdname : str
+        The string to assign to the 'standard_name' key of time dictionary.
     """
     awot_flight = {}
 
@@ -123,22 +127,22 @@ def to_awot_flight(lon_dict=None, lat_dict=None, alt_dict=None,
     # Attempt to build AWOT dictionaries if arrays are provided
     if lon_array is not None:
         awot_flight = _build_flight_dict(awot_flight, 'longitude',
-                        lon_array, lon_unit, lon_name, lon_title)
+                        lon_array, lon_unit, lon_longname, lon_stdname)
     if lat_array is not None:
         awot_flight = _build_flight_dict(awot_flight, 'latitude',
-                        lat_array, lat_unit, lat_name, lat_title)
+                        lat_array, lat_unit, lat_longname, lat_stdname)
     if alt_array is not None:
         awot_flight = _build_flight_dict(awot_flight, 'altitude',
-                        alt_array, alt_unit, alt_name, alt_title)
+                        alt_array, alt_unit, alt_longname, alt_stdname)
     if time_array is not None:
         awot_flight = _build_flight_dict(awot_flight, 'time',
-                        time_array, time_unit, time_name, time_title)
+                        time_array, time_unit, time_longname, time_stdname)
 
     return awot_flight
 
-def _build_flight_dict(flight, key, data, units, name, title):
+def _build_flight_dict(flight, key, data, units, longname, stdname):
     flight[key] = {'data': data,
                    'units' : units,
-                   'full_name' : name,
-                   'title' : title}
+                   'long_name' : longname,
+                   'standard_name' : stdname}
     return flight
