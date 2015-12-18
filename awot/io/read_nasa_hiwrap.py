@@ -140,6 +140,13 @@ def read_hiwrap_netcdf(fname, mapping_dict=None, field_mapping=None):
             fields[varname] = None
             _var_not_found(varname)
 
+    # Add the height field, need to calculate
+    r2D, alt2D = np.meshgrid(data['range']['data'], data['altitude']['data'])
+    data['height'] = {'name': "Height",
+                      'long_name': "Height above surface",
+                      'data': (alt2D - r2D),
+                      'units': data['altitude']['units']}
+
     # Save to output dictionary
     data['fields'] = fields
 
@@ -199,7 +206,8 @@ def _get_hiwrap_flight_name_map():
                'east_ground_speed': 'evel',
                'north_ground_speed': 'nvel',
                'vert_speed': 'wvel',
-               'vert_aircraft_velocity': 'vacft'
+               'vert_aircraft_velocity': 'vacft',
+               'surface_gate': 'sgate',
                }
     return name_map
 
@@ -207,7 +215,6 @@ def _get_hiwrap_flight_name_map():
 def _get_hiwrap_field_name_map():
     '''Map HIWRAP NetCDF field variables to AWOT structure.'''
     name_map = {
-               'surface_gate': 'sgate',
                'power': 'pwr',
                'reflectivity': 'ref',
                'velocity': 'dopcorr'

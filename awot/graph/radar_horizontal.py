@@ -53,7 +53,7 @@ class RadarHorizontalPlot(object):
         # Save the airborne class to this class in case cross-section is passed
         self.radar = radar
         self.basemap = basemap
-#        _check_basemap(self)
+        _check_basemap(self, strong=True)
         self.fields = self.radar['fields']
 
         if lon_name is None:

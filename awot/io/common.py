@@ -8,6 +8,7 @@ Common IO routines.
 
 from __future__ import print_function
 import numpy as np
+from netCDF4 import num2date, date2num
 
 ######################
 #  variable methods  #
@@ -74,10 +75,6 @@ def _nasa_ames_var_to_dict(var, standard_name, long_name ):
     d['data'] = var
     return d
 
-def _get_epoch_units():
-    """Set common time units for AWOT. Using Epoch."""
-    return 'seconds since 1970-1-1 00:00:00+0:00'
-
 def _var_found(var):
     '''Print variable found message.'''
     print("Found %s" % var)
@@ -86,9 +83,39 @@ def _var_not_found(var):
     '''Print variable not found message.'''
     print("%s does not exist in file..." % var)
 
-##############################
+##################
+#  time methods  #
+##################
+
+def _get_epoch_units():
+    """Set common time units for AWOT. Using Epoch time."""
+    return 'seconds since 1970-1-1 00:00:00+0:00'
+
+def _get_epoch_dict(TimeSec, time_units):
+    '''Output Epoch time dictionary.'''
+    # Convert the time array into a datetime instance
+    dtHrs = num2date(TimeSec, time_units)
+    # Now convert this datetime instance into a number of seconds since Epoch
+    TimeEpoch = date2num(dtHrs, _get_epoch_units())
+    # Now once again convert this data into a datetime instance
+    Time_unaware = num2date(TimeEpoch, _get_epoch_units())
+    Time = {'data': Time_unaware, 'units': _get_epoch_units(),
+            'standard_name': 'Time', 'long_name': 'Time (UTC)'}
+    return Time
+
+def convert_to_epoch_dict(datetime_dict):
+    '''Output Epoch time dictionary.'''
+    # Now convert this datetime instance into a number array
+    TimeSec = date2num(datetime_dict['data'], _get_epoch_units())
+    # Now once again convert  data into a datetime instance
+    Time_unaware = num2date(TimeSec, _get_epoch_units())
+    Time = {'data': Time_unaware, 'units': _get_epoch_units(),
+            'standard_name': 'Time', 'long_name': 'Time (UTC)'}
+    return Time
+
+########################
 #  image save methods  #
-##############################
+########################
 
 def save_figure(self, figName='awot_plot', figType='png', **kwargs):
     '''Save the current plot
