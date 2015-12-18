@@ -25,7 +25,8 @@ from datetime import datetime
 
 
 def create_basemap(corners=None, proj=None, resolution='l',
-                   area_thresh=1000.,
+##                   area_thresh=1000.,
+                   area_thresh=None, lon_0=None, lat_0=None,
                    meridians=True, parallels=True, dLon=2., dLat=2.,
                    coastlines=True, countries=True, states=False,
                    counties=False,
@@ -82,7 +83,8 @@ def create_basemap(corners=None, proj=None, resolution='l',
     bm = Basemap(projection=proj, resolution=resolution,
                  area_thresh=area_thresh,
                  llcrnrlon=corners[0], urcrnrlon=corners[2],
-                 llcrnrlat=corners[1], urcrnrlat=corners[3], ax=ax)
+                 llcrnrlat=corners[1], urcrnrlat=corners[3],
+                 lon_0=lon_0, lat_0=lat_0, ax=ax)
 
     # Check the customizations for the basemap
     if meridians:
@@ -512,7 +514,7 @@ def _set_ts_axes(dForm='%H:%M', tz=None, xdate=True,
 def find_nearest_indices(array, values):
     """
     Find the nearest value indices in an array to input value(s).
-    
+
     Parameters
     ----------
     array : float array
@@ -530,7 +532,7 @@ def find_nearest_indices(array, values):
 def create_polar_fig_ax(nrows=1, ncols=1, figsize=(5, 5)):
     '''
     Returns the figure and axes instance of a polar plot.
-    
+
     Parameters
     ----------
     nrows : int
@@ -584,7 +586,7 @@ def _get_start_datetime(time, start_time):
     '''Get a start time as datetime instance for subsetting.'''
     # Check to see if time is subsetted
     if start_time is None:
-        dt_start = time.min()
+        dt_start = time['data'].min()
     else:
         startStr = [start_time[0:4], start_time[5:7], start_time[8:10],
                     start_time[11:13], start_time[14:16],
@@ -604,7 +606,7 @@ def _get_end_datetime(time, end_time):
     '''Get a start time as datetime instance for subsetting.'''
     # Check to see if the time is subsetted
     if end_time is None:
-        dt_end = time.max()
+        dt_end = time['data'].max()
     else:
         endStr = [end_time[0:4], end_time[5:7], end_time[8:10],
                   end_time[11:13], end_time[14:16], end_time[17:19], '0']
@@ -627,7 +629,7 @@ def _get_variable_dict_data(dict, field):
     '''Get the variable from the fields dictionary.'''
     Var, data = dict[field], dict[field]['data'][:]
     return Var, data
-        
+
 def _get_earth_radius():
     return 6371.
 
@@ -666,7 +668,7 @@ def _parse_fig(fig):
 def _check_basemap(instance, strong=True):
     """
     Check for a basemap instance.
-    
+
     Parameters
     ----------
     instance: Class instance
@@ -680,9 +682,10 @@ def _check_basemap(instance, strong=True):
     if instance.basemap is None:
         if strong:
             raise ValueError('Please supply basemap instance')
-            return
+            return None
         else:
             print("WARNING: A basemap instance may be required for some plots")
+            return False
 
 def _check_field(instance, field):
     """

@@ -39,7 +39,7 @@ class RadarVerticalPlot(object):
                 time_name=None):
         """
         Initialize the class to create plots
-        
+
         Parameters
         ----------
         radar : dict
@@ -329,6 +329,9 @@ class RadarVerticalPlot(object):
             field, start_time, end_time)
         if mask_procedure is not None:
             Data = get_masked_data(Data, mask_procedure, mask_tuple)
+        if len(self.height['data'].shape) == 2:
+            Height = self._get_2d_height_time_subset(
+                          start_time, end_time)
 
         if plot_log10_var:
             Data = np.log10(Data)
@@ -338,7 +341,12 @@ class RadarVerticalPlot(object):
         # Create contour level array
         clevels = np.linspace(cminmax[0], cminmax[1], clevs)
 
-        tSub2D, Ht2D = np.meshgrid(date2num(tsub), self.height['data'][:])
+        if len(self.height['data'].shape) == 2:
+            tSub2D, junk = np.meshgrid(date2num(tsub), self.height['data'][0, :])
+            Ht2D = Height.T
+            del junk
+        else:
+            tSub2D, Ht2D = np.meshgrid(date2num(tsub), self.height['data'][:])
 
         # Plot the time series
         ts = image_2d_date(tSub2D, Ht2D, Data.T,
@@ -393,7 +401,7 @@ class RadarVerticalPlot(object):
             Tuple containing the field name and value(s) below which to mask
             field prior to plotting, for example to mask all data where.
         mask_off_6degree : bool
-        	True to apply mask where beam is more than 6 degrees off 
+        	True to apply mask where beam is more than 6 degrees off
         	of vertical pointing.
         mask_subsurface : bool
         	True to apply mask where gate occur below the surface.
@@ -488,6 +496,9 @@ class RadarVerticalPlot(object):
 
         tSub2D, Ht2D = np.meshgrid(date2num(tsub), self.height['data'][:])
 
+        print(np.shape(tSub2D))
+        print(np.shape(Ht2D))
+        print(np.shape(Data.T))
         # Plot the time series
         ts = image_2d_date(tSub2D, Ht2D, Data.T,
                              vmin=vmin, vmax=vmax, clevs=clevs,
@@ -520,9 +531,22 @@ class RadarVerticalPlot(object):
         # Check to see if time is subsetted
         dt_start = _get_start_datetime(self.time, start_time)
         dt_end = _get_end_datetime(self.time, end_time)
-        tsub = self.time[(self.time >= dt_start) & (self.time <= dt_end)]
-        datasub = data[(self.time >= dt_start) & (self.time <= dt_end)]
+        tsub = self.time['data'][(self.time['data'] >= dt_start) &
+                                 (self.time['data'] <= dt_end)]
+        datasub = data[(self.time['data'] >= dt_start) &
+                       (self.time['data'] <= dt_end)]
         return Var, tsub, datasub
+
+    def _get_2d_height_time_subset(self, start_time, end_time):
+        '''Get subsetted data if requested.'''
+        # Check to see if time is subsetted
+        dt_start = _get_start_datetime(self.time, start_time)
+        dt_end = _get_end_datetime(self.time, end_time)
+
+        hsub = self.height['data'][(self.time['data'] >= dt_start) &
+                                    (self.time['data'] <= dt_end), :]
+        hsub = np.ma.masked_invalid(hsub)
+        return hsub
 
     def _get_lat_index(self, value):
         '''Calculate the exact index position within latitude array.'''
@@ -556,7 +580,7 @@ class MicrophysicalVerticalPlot(object):
                 time_name=None):
         """
         Intitialize the class to create plots
-        
+
         Parameters
         ----------
         radar : dict
@@ -593,8 +617,6 @@ class MicrophysicalVerticalPlot(object):
             self.height = self.microphys_data['height']
         else:
             self.height = self.microphys_data[height_name]
-
-        # Attempt to pull in time if found
         if time_name is None:
             self.time = self.microphys_data['time']
         else:
@@ -773,11 +795,24 @@ class MicrophysicalVerticalPlot(object):
         dt_end = _get_end_datetime(self.time, end_time)
 
         # Create temporary 2D arrays for subsetting
-        t2D, Ht2D = np.meshgrid(date2num(self.time), self.height['data'][:])
-        tsub = self.time[(self.time >= dt_start) & (self.time <= dt_end)]
-        datasub = data[:, (self.time >= dt_start) & (self.time <= dt_end)]
+        tsub = self.time['data'][(self.time['data'] >= dt_start) &
+                                 (self.time['data'] <= dt_end)]
+        datasub = data[(self.time['data'] >= dt_start) &
+                       (self.time['data'] <= dt_end)]
         datasub = np.ma.masked_invalid(datasub)
         return Var, tsub, datasub
+
+    def _get_2d_height_time_subset(self, start_time, end_time):
+        '''Get subsetted data if requested.'''
+        # Check to see if time is subsetted
+        dt_start = _get_start_datetime(self.time, start_time)
+        dt_end = _get_end_datetime(self.time, end_time)
+
+        # Create temporary 2D arrays for subsetting
+        hsub = self.height['data'][[(self.time['data'] >= dt_start) &
+                                 (self.time['data'] <= dt_end)], :]
+        hsub = np.ma.masked_invalid(hsub)
+        return hsub
 
     def _get_lat_index(self, value):
         '''Calculate the exact index position within latitude array.'''
