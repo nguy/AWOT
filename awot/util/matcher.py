@@ -210,7 +210,7 @@ class TrackMatch(object):
         self.lon0vals = np.radians(self.flight_lon['data'][:])
 
     def kdtree(self, leafsize=16,
-               use_time=False, print_match_pairs=False
+               use_time=False, print_match_pairs=False,
                query_k=1, query_eps=0, query_p=2,
                query_distance_upper_bound=np.inf,
                query_n_jobs=1):
@@ -259,7 +259,7 @@ class TrackMatch(object):
                                                       self.flight_lat['data'][ii],
                                                       self.flight_alt['data'][ii],
                                                       date2num(self.flight_time['data'][ii],
-                                                               self.flight_time['units'])]
+                                                               self.flight_time['units'])],
                                                       k=query_k, eps=query_eps,
                                                       p=query_p,
                                                       distance_upper_bound=query_distance_upper_bound,
@@ -267,7 +267,7 @@ class TrackMatch(object):
             else:
                 dist_sq_min, minindex_1d = kdt.query([self.flight_lon['data'][ii],
                                                       self.flight_lat['data'][ii],
-                                                      self.flight_alt['data'][ii]]
+                                                      self.flight_alt['data'][ii]],
                                                       k=query_k, eps=query_eps,
                                                       p=query_p,
                                                       distance_upper_bound=query_distance_upper_bound,
