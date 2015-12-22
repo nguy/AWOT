@@ -132,6 +132,28 @@ def read_hiwrap_netcdf(fname, mapping_dict=None, field_mapping=None):
             data[varname] = None
             _var_not_found(varname)
 
+    # Replace negative range gates - used for calibration purposes
+    gate_mask = np.ma.less(ncvars['range'][:], 0.)
+    data['range']['data'][gate_mask] = np.nan
+
+    # Add the height field, need to calculate
+    r2D, alt2D = np.meshgrid(data['range']['data'], data['altitude']['data'])
+    data['height'] = {'name': "Height",
+                      'long_name': "Height above surface",
+                      'data': (alt2D - r2D),
+                      'units': data['altitude']['units']}
+
+    # Calculate the topo height
+    ## NG NEED TO CHECK TO MAKE SURE CORRECT
+    sfcgateheight = np.array(
+       [data['range']['data'][int(s)] for s in ncvars['sgate'][:]])
+    topo = data['altitude']['data'][:] - sfcgateheight[:]
+    data['topo'] = {'name' : "topo",
+                    'long_name' : "Height of Topography",
+                    'data' : topo,
+                    'units' : 'meters'
+                    }
+
     # Add fields to their own dictionary
     fields = {}
 
@@ -149,29 +171,12 @@ def read_hiwrap_netcdf(fname, mapping_dict=None, field_mapping=None):
             # Apply mask to any points with missing value
             # indicated by file
             fields[varname]['data'] = np.ma.masked_equal(fields[varname]['data'], baddata)
+            fields[varname]['data'][:, gate_mask] = np.nan
         except:
             fields[varname] = None
             _var_not_found(varname)
     # Save to output dictionary
     data['fields'] = fields
-
-    # Add the height field, need to calculate
-    r2D, alt2D = np.meshgrid(data['range']['data'], data['altitude']['data'])
-    data['height'] = {'name': "Height",
-                      'long_name': "Height above surface",
-                      'data': (alt2D - r2D),
-                      'units': data['altitude']['units']}
-
-    # Calculate the topo height
-    ## NG NEED TO CHECK TO MAKE SURE CORRECT
-    sfcgateheight = np.array(
-       [ncvars['range'][int(s)] for s in ncvars['sgate'][:]])
-    topo = ncvars['alt'][:] - sfcgateheight
-    data['topo'] = {'name' : "topo",
-                    'long_name' : "Height of Topography",
-                    'data' : topo,
-                    'units' : 'meters'
-                    }
 
     # Pull out global attributes
     try:
@@ -332,9 +337,9 @@ def read_hiwrap_h5(fname, mapping_dict=None, field_mapping=None):
 
     # Calculate the topo height
     ## NG NEED TO CHECK TO MAKE SURE CORRECT
-    sfcgateheight = np.array(
-       [h5File['rangevec'][int(s)] for s in h5File['sgate'][:]])
-    topo = h5File['height'][:] - sfcgateheight
+    sfcgaterange = np.array(
+       [data['range']['data'][int(s)] for s in h5File['sgate'][:]])
+    topo = data['altitude']['data'][:] - sfcgaterange[:]
     data['topo'] = {'name' : "topo",
                     'long_name' : "Height of Topography",
                     'data' : topo,
@@ -357,8 +362,7 @@ def read_hiwrap_h5(fname, mapping_dict=None, field_mapping=None):
                 h5File[name_map_fields[varname]])
             # Apply mask to any points with missing value
             # indicated by file
-#            fields[varname]['data'] = np.swapaxes(fields[varname]['data'][:], 0, 1).flipud()
-            fields[varname]['data'] = fields[varname]['data'][::-1,:].T
+            fields[varname]['data'] = fields[varname]['data'].T
             fields[varname]['data'] = np.ma.masked_equal(fields[varname]['data'], baddata)
             fields[varname]['data'][:, gate_mask] = np.nan
         except:
@@ -504,13 +508,15 @@ def _get_hiwrap_field_name_map():
     return name_map
 
 def _get_old_hiwrap_time(fname, ncFile, Good_Indices):
-    """Pull the time from HIWRAP file and convert to AWOT useable."""
-    # The time structure is odd here (to me) and is in
-    # seconds since last Sunday - wtf
-
+    """
+    Pull the time from HIWRAP file and convert to AWOT useable.
+    The time structure is odd here (to me) and is in
+    seconds since last Sunday.
+    The assumption that the data is the 4th 'field' in the filename
+    is required to make this work.
+    """
     # Pull out the date, convert the date to a datetime friendly string
     # Adds dashes between year, month, and day
-    # This assumes that the date is the 4th instance in the filename!!
     yyyymmdd = fname.split("_")[3]
 
     # Find the date for Sunday previous and check this (should be = 6 for Sunday)
@@ -534,17 +540,17 @@ def _get_old_hiwrap_time(fname, ncFile, Good_Indices):
     return Time
 
 def _get_hiwrap_time(h5File):
-    """Pull the time from the HIWRAP file and convert to AWOT useable."""
+    """
+    Pull the time from the HIWRAP file and convert to AWOT useable.
+    This method assumes that the first values for time variables
+    are indeed correct.
+    """
     year = np.array(h5File['utcYear'])
     month = np.array(h5File['utcMonth'])
     day = np.array(h5File['utcDay'])
-    hour = np.array(h5File['utcHour'])
-    min = np.array(h5File['utcMinute'])
-    sec = np.array(h5File['utcSecond'])
     seconds = np.array(h5File['timeUTC']) * 3600.
-    t_initial = ("%s-%s-%s %s:%s:%sZ"%(str(year[0]), str(month[0]), str(day[0]),
-                                       str(hour[0]), str(min[0]), str(sec[0])))
-    print('seconds since %s'%t_initial)
+    t_initial = ("%s-%s-%s 00:00:0.00Z"%(str(year[0]), str(month[0]), str(day[0])))
+
     dtHrs = num2date(seconds, 'seconds since %s'%t_initial)
     # Now convert this datetime instance into a number of seconds since Epoch
     TimeSec = date2num(dtHrs, _get_epoch_units())
