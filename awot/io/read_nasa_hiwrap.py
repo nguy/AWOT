@@ -133,10 +133,11 @@ def read_hiwrap_netcdf(fname, mapping_dict=None, field_mapping=None):
             _var_not_found(varname)
 
     # Replace negative range gates - used for calibration purposes
+    # This likely has no affect given data tested from GRIP campaign
     gate_mask = np.ma.less(ncvars['range'][:], 0.)
     data['range']['data'][gate_mask] = np.nan
 
-    # Add the height field, need to calculate
+    # Calculate the height field by subtracting the range from altitude
     r2D, alt2D = np.meshgrid(data['range']['data'], data['altitude']['data'])
     data['height'] = {'name': "Height",
                       'long_name': "Height above surface",

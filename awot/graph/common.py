@@ -200,8 +200,8 @@ def fill_topography(xarr, topo, color=None, ymin=None, ax=None):
     if color is None:
         color = '0.85'
 
-    p = ax.fill_between(x, ymin, topo, facecolor=color)
-    return p
+    p = ax.fill_between(xarr, ymin, topo, facecolor=color)
+    return
 
 def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
                  dForm='%H:%M', tz=None, xdate=True,

@@ -36,7 +36,7 @@ class RadarVerticalPlot(object):
 
     def __init__(self, radar, basemap=None,
                 lon_name=None, lat_name=None, height_name=None,
-                time_name=None):
+                time_name=None, topo_name=None):
         """
         Initialize the class to create plots
 
@@ -56,6 +56,9 @@ class RadarVerticalPlot(object):
             None uses AWOT default.
         time_name : str
             Key in radar instance for time variable.
+            None uses AWOT default.
+        topo_name : str
+            Key in radar instance for topography variable.
             None uses AWOT default.
         """
         self.radar = radar
@@ -84,6 +87,15 @@ class RadarVerticalPlot(object):
                 self.time = None
         else:
             self.time = self.radar[time_name]
+
+        # Attempt to pull in topo if found
+        if topo_name is None:
+            try:
+                self.topo = self.radar['topo']
+            except:
+                self.topo = None
+        else:
+            self.topo = self.radar[topo_name]
 
 #############################
 #  Vertical plot methods    #
@@ -373,10 +385,10 @@ class RadarVerticalPlot(object):
                              ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
                              ax=ax, fig=fig)
         if fill_topo:
-            try:
-                ft = fill_topography(tSub, self.topo['data'][:], ymin=fill_min,
-                                     color=fill_color, ax=ax)
-            except:
+            if self.topo is not None:
+                ft = fill_topography(tsub, self.topo['data'][:],
+                                     ymin=fill_min, color=fill_color, ax=ax)
+            else:
                 print("No surface topo information, cannot fill in topography...")
         return
 
