@@ -26,7 +26,7 @@ from .common import (_check_basemap, _get_earth_radius,
                      plot_polar_contour, get_masked_data,
                      _get_start_datetime, _get_end_datetime,
                      _get_variable_dict, _get_variable_dict_data,
-                     image_2d_date)
+                     image_2d_date, fill_topography)
 from .coord_transform import radar_coords_to_cart_track_relative, \
     radar_coords_to_cart_earth_relative, radar_coords_to_cart_aircraft_relative
 
@@ -234,8 +234,9 @@ class RadarVerticalPlot(object):
                            cb_pad=.05, cb_tick_int=2, cb_label=None,
                            dForm='%H:%M', tz=None, xdate=True,
                            date_MinTicker='minute',
-                           other_MajTicks=None, other_MinTicks=None,
-                           other_min=None, other_max=None,
+                           height_MajTicks=None, height_MinTicks=None,
+                           height_min=None, height_max=None,
+                           fill_topo=False, fill_min=None, fill_color=None,
                            start_time=None, end_time=None,
                            title=None, xlab=' ', xlabFontSize=16, xpad=7,
                            ylab=' ', ylabFontSize=16, ypad=7,
@@ -291,14 +292,21 @@ class RadarVerticalPlot(object):
         date_MinTicker : str
             Sting to set minor ticks of date axis,
             'second','minute','hour','day' supported.
-        other_MajTicks : float
-            Values for major tickmark spacing, non-date axis.
-        other_MinTicks : float
-            Values for minor tickmark spacing, non-date axis.
-        other_min : float
-            Minimum value for non-date axis.
-        other_max : float
-            Maximum value for non-date axis.
+        height_MajTicks : float
+            Values for major tickmark spacing on height axis.
+        height_MinTicks : float
+            Values for minor tickmark spacing on height axis.
+        height_min : float
+            Minimum value for height axis.
+        height_max : float
+            Maximum value for height axis.
+        fill_topo : boolean
+            True to fill in topo, False to leave alone.
+        fill_min : float
+            Minimum elvation to shade topo surface. Only applied
+            if fill_topo is True.
+        fill_color : float
+            Color to use if fill_topo is True.
         start_time : str
             UTC time to use as start time for subsetting in datetime format.
             (e.g. 2014-08-20 12:30:00)
@@ -357,13 +365,19 @@ class RadarVerticalPlot(object):
                              cb_label=cb_label,
                              dForm=dForm, tz=tz, xdate=xdate,
                              date_MinTicker=date_MinTicker,
-                             other_MajTicks=other_MajTicks,
-                             other_MinTicks=other_MinTicks,
-                             other_min=other_min, other_max=other_max,
+                             other_MajTicks=height_MajTicks,
+                             other_MinTicks=height_MinTicks,
+                             other_min=height_min, other_max=height_max,
                              title=title,
                              xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
                              ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
                              ax=ax, fig=fig)
+        if fill_topo:
+            try:
+                ft = fill_topography(tSub, self.topo['data'][:], ymin=fill_min,
+                                     color=fill_color, ax=ax)
+            except:
+                print("No surface topo information, cannot fill in topography...")
         return
 
     def wcr_time_height_image(self, field,
@@ -378,8 +392,8 @@ class RadarVerticalPlot(object):
                            cb_pad=.05, cb_tick_int=2, cb_label=None,
                            dForm='%H:%M', tz=None, xdate=True,
                            date_MinTicker='minute',
-                           other_MajTicks=None, other_MinTicks=None,
-                           other_min=None, other_max=None,
+                           height_MajTicks=None, height_MinTicks=None,
+                           height_min=None, height_max=None,
                            start_time=None, end_time=None,
                            title=None, xlab=' ', xlabFontSize=16, xpad=7,
                            ylab=' ', ylabFontSize=16, ypad=7,
@@ -447,14 +461,14 @@ class RadarVerticalPlot(object):
         date_MinTicker : str
             Sting to set minor ticks of date axis,
             'second','minute','hour','day' supported.
-        other_MajTicks : float
-            Values for major tickmark spacing, non-date axis.
-        other_MinTicks : float
-            Values for minor tickmark spacing, non-date axis.
-        other_min : float
-            Minimum value for non-date axis.
-        other_max : float
-            Maximum value for non-date axis.
+        height_MajTicks : float
+            Values for major tickmark spacing for height axis.
+        height_MinTicks : float
+            Values for minor tickmark spacing for height axis.
+        height_min : float
+            Minimum value for height axis.
+        height_max : float
+            Maximum value for height axis.
         start_time : str
             UTC time to use as start time for subsetting in datetime format.
             (e.g. 2014-08-20 12:30:00)
@@ -496,9 +510,6 @@ class RadarVerticalPlot(object):
 
         tSub2D, Ht2D = np.meshgrid(date2num(tsub), self.height['data'][:])
 
-        print(np.shape(tSub2D))
-        print(np.shape(Ht2D))
-        print(np.shape(Data.T))
         # Plot the time series
         ts = image_2d_date(tSub2D, Ht2D, Data.T,
                              vmin=vmin, vmax=vmax, clevs=clevs,
@@ -508,9 +519,9 @@ class RadarVerticalPlot(object):
                              cb_label=cb_label,
                              dForm=dForm, tz=tz, xdate=xdate,
                              date_MinTicker=date_MinTicker,
-                             other_MajTicks=other_MajTicks,
-                             other_MinTicks=other_MinTicks,
-                             other_min=other_min, other_max=other_max,
+                             other_MajTicks=height_MajTicks,
+                             other_MinTicks=height_MinTicks,
+                             other_min=height_min, other_max=height_max,
                              title=title,
                              xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
                              ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
@@ -636,8 +647,8 @@ class MicrophysicalVerticalPlot(object):
                            cb_label=None,
                            dForm='%H:%M', tz=None, xdate=True,
                            date_MinTicker='minute',
-                           other_MajTicks=None, other_MinTicks=None,
-                           other_min=None, other_max=None,
+                           height_MajTicks=None, height_MinTicks=None,
+                           height_min=None, height_max=None,
                            start_time=None, end_time=None,
                            title=None,
                            xlab=' ', xlabFontSize=16, xpad=7,
@@ -697,14 +708,14 @@ class MicrophysicalVerticalPlot(object):
         date_MinTicker : str
             Sting to set minor ticks of date axis,
             'second','minute','hour','day' supported
-        other_MajTicks : float
-            Values for major tickmark spacing, non-date axis
-        other_MinTicks : float
-            Values for minor tickmark spacing, non-date axis
-        other_min : float
-            Minimum value for non-date axis
+        height_MajTicks : float
+            Values for major tickmark spacing for height axis
+        height_MinTicks : float
+            Values for minor tickmark spacing for height axis
+        height_min : float
+            Minimum value for height axis
         other_max : float
-            Maximum value for non-date axis
+            Maximum value for height axis
 
         start_time : str
             UTC time to use as start time for subsetting in datetime format
@@ -768,9 +779,9 @@ class MicrophysicalVerticalPlot(object):
                              cb_label=cb_label,
                              dForm=dForm, tz=tz, xdate=xdate,
                              date_MinTicker=date_MinTicker,
-                             other_MajTicks=other_MajTicks,
-                             other_MinTicks=other_MinTicks,
-                             other_min=other_min, other_max=other_max,
+                             other_MajTicks=height_MajTicks,
+                             other_MinTicks=height_MinTicks,
+                             other_min=height_min, other_max=height_max,
                              title=title,
                              xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
                              ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,

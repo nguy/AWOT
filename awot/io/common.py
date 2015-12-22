@@ -75,6 +75,22 @@ def _nasa_ames_var_to_dict(var, standard_name, long_name ):
     d['data'] = var
     return d
 
+def _h5var_to_dict(dataset, units=None, long_name=None, standard_name=None):
+    """ Convert an HDF5 Dataset to a dictionary."""
+    d = {}
+    if dataset.dtype.char == "S":
+        d['data'] = np.array(dataset)[0]
+    else:
+        d['data'] = np.array(dataset)
+    if len(dataset.attrs) > 0:
+        for attrname in list(dataset.attrs):
+            d[attrname] = dataset.attrs.get(attrname)
+    else:
+        d['standard_name'] = standard_name
+        d['long_name'] = long_name
+        d['units'] = units
+    return d
+
 def _var_found(var):
     '''Print variable found message.'''
     print("Found %s" % var)

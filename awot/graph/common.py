@@ -5,27 +5,24 @@ awot.graph.common
 Common graphing routines.
 
 """
-# ------------------------------------------------------------------
-# Load the needed packages
 
 from __future__ import print_function
 import numpy as np
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
-from matplotlib.dates import DateFormatter
 from matplotlib.dates import (
-    SecondLocator, MinuteLocator, HourLocator, DayLocator)
+    DateFormatter, SecondLocator, MinuteLocator,
+    HourLocator, DayLocator)
 from matplotlib import ticker as mtic
 import matplotlib.cm as cm
 from datetime import datetime
 
-###########################
-#   Map creation module   #
-###########################
+###################
+#   Map modules   #
+###################
 
 
 def create_basemap(corners=None, proj=None, resolution='l',
-##                   area_thresh=1000.,
                    area_thresh=None, lon_0=None, lat_0=None,
                    meridians=True, parallels=True, dLon=2., dLat=2.,
                    coastlines=True, countries=True, states=False,
@@ -103,12 +100,11 @@ def create_basemap(corners=None, proj=None, resolution='l',
         bm.drawcounties()
     if rivers:
         bm.drawrivers()
-
     return bm
 
-#############################
-#   Plot creation modules   #
-#############################
+####################
+#   Plot modules   #
+####################
 
 
 def plot_polar_contour(values, azimuths, zeniths, nlevs=30,
@@ -175,9 +171,37 @@ def plot_polar_contour(values, azimuths, zeniths, nlevs=30,
     ax.set_theta_direction(-1)  # This makes the angles increase clockwise
 
     p = ax.pcolormesh(theta, r, values, cmap=cmap, vmin=vmin, vmax=vmax)
-
     return p
 
+
+def fill_topography(xarr, topo, color=None, ymin=None, ax=None):
+    """
+    Add topography to plot (e.g. time-height) and fill below.
+
+    Parameters
+    ----------
+    xarr : array
+        Array of x values.
+    topo : array
+        Array of surface height in meters. Same size as xarr.
+    color : str
+        Color string to use to fill below surface. If none
+        defaults to dark gray.
+    min : float
+        Minimum number to use for fell. If None defaults to 0.
+    ax : Matplotlib axis instance
+        Axis to plot. None will use the current axis.
+    """
+    # parse parameters
+    ax = _parse_ax(ax)
+
+    if ymin is None:
+        ymin = 0.
+    if color is None:
+        color = '0.85'
+
+    p = ax.fill_between(x, ymin, topo, facecolor=color)
+    return p
 
 def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
                  dForm='%H:%M', tz=None, xdate=True,
@@ -255,7 +279,6 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
     ax.plot_date(Time, Var, tz=tz, xdate=xdate, ydate=ydate,
                  mfc=color, mec=color, marker=marker,
                  markersize=msize, lw=lw)
-
     return
 
 
@@ -339,7 +362,6 @@ def image_2d_date(Time, AxVar, PlotVar,
     """
     # parse parameters
     ax = _parse_ax(ax)
-
     # If no cmap is specified, grab current
     if cmap is None:
         cmap = cm.get_cmap()
@@ -382,7 +404,6 @@ def image_2d_date(Time, AxVar, PlotVar,
         tick_locator = mtic.MaxNLocator(nbins=int(clevs / cb_tick_int))
         cb.locator = tick_locator
         cb.update_ticks()
-
     return
 
 
@@ -503,7 +524,6 @@ def _set_ts_axes(dForm='%H:%M', tz=None, xdate=True,
     # Set the title
     if title is not None:
         ax.set_title(title)
-
     return
 
 #######################
@@ -545,7 +565,6 @@ def create_polar_fig_ax(nrows=1, ncols=1, figsize=(5, 5)):
     fig, ax = plt.subplots(nrows=nrows, ncols=ncols,
                            subplot_kw=dict(projection='polar'),
                            fig_kw=dict(figsize=figsize))
-
     return fig, ax
 
 #################
