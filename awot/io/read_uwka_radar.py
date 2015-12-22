@@ -81,7 +81,10 @@ def read_wcr2(fname, field_mapping=None, file_mapping=None):
     ncvars = ncFile.variables
 
     # Grab the metadata stored in global attributes as a dictionary
-    data['metadata'] = ncFile.__dict__
+    try:
+        data['metadata'] = ncFile.__dict__
+    except:
+        data['metadata'] = None
 
     try:
         data['project'] = ncFile.ProjectName
