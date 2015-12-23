@@ -174,15 +174,15 @@ def plot_polar_contour(values, azimuths, zeniths, nlevs=30,
     return p
 
 
-def fill_topography(xarr, topo, color=None, ymin=None, ax=None):
+def plot_fill_surface(xarr, surface, color=None, ymin=None, ax=None):
     """
-    Add topography to plot (e.g. time-height) and fill below.
+    Add filled surface to plot (e.g. time-height).
 
     Parameters
     ----------
     xarr : array
         Array of x values.
-    topo : array
+    surface : array
         Array of surface height in meters. Same size as xarr.
     color : str
         Color string to use to fill below surface. If none
@@ -200,7 +200,7 @@ def fill_topography(xarr, topo, color=None, ymin=None, ax=None):
     if color is None:
         color = '0.85'
 
-    p = ax.fill_between(xarr, ymin, topo, facecolor=color)
+    p = ax.fill_between(xarr, ymin, surface, facecolor=color)
     return
 
 def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,

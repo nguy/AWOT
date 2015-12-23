@@ -26,7 +26,7 @@ from .common import (_check_basemap, _get_earth_radius,
                      plot_polar_contour, get_masked_data,
                      _get_start_datetime, _get_end_datetime,
                      _get_variable_dict, _get_variable_dict_data,
-                     image_2d_date, fill_topography)
+                     image_2d_date, plot_fill_surface)
 from .coord_transform import radar_coords_to_cart_track_relative, \
     radar_coords_to_cart_earth_relative, radar_coords_to_cart_aircraft_relative
 
@@ -36,7 +36,7 @@ class RadarVerticalPlot(object):
 
     def __init__(self, radar, basemap=None,
                 lon_name=None, lat_name=None, height_name=None,
-                time_name=None, topo_name=None):
+                time_name=None, surface_name=None):
         """
         Initialize the class to create plots
 
@@ -57,8 +57,8 @@ class RadarVerticalPlot(object):
         time_name : str
             Key in radar instance for time variable.
             None uses AWOT default.
-        topo_name : str
-            Key in radar instance for topography variable.
+        surface_name : str
+            Key in radar instance for surface height variable.
             None uses AWOT default.
         """
         self.radar = radar
@@ -88,14 +88,14 @@ class RadarVerticalPlot(object):
         else:
             self.time = self.radar[time_name]
 
-        # Attempt to pull in topo if found
-        if topo_name is None:
+        # Attempt to pull in surface height if found
+        if surface_name is None:
             try:
-                self.topo = self.radar['topo']
+                self.surface = self.radar['surface']
             except:
-                self.topo = None
+                self.surface = None
         else:
-            self.topo = self.radar[topo_name]
+            self.surface = self.radar[surface_name]
 
 #############################
 #  Vertical plot methods    #
@@ -248,7 +248,7 @@ class RadarVerticalPlot(object):
                            date_MinTicker='minute',
                            height_MajTicks=None, height_MinTicks=None,
                            height_min=None, height_max=None,
-                           fill_topo=False, fill_min=None, fill_color=None,
+                           fill_surface=False, fill_min=None, fill_color=None,
                            start_time=None, end_time=None,
                            title=None, xlab=' ', xlabFontSize=16, xpad=7,
                            ylab=' ', ylabFontSize=16, ypad=7,
@@ -312,13 +312,13 @@ class RadarVerticalPlot(object):
             Minimum value for height axis.
         height_max : float
             Maximum value for height axis.
-        fill_topo : boolean
-            True to fill in topo, False to leave alone.
+        fill_surface : boolean
+            True to fill in surface, False to leave alone.
         fill_min : float
-            Minimum elvation to shade topo surface. Only applied
-            if fill_topo is True.
+            Minimum surface elvation to shade. Only applied
+            if fill_surface is True.
         fill_color : float
-            Color to use if fill_topo is True.
+            Color to use if fill_surface is True.
         start_time : str
             UTC time to use as start time for subsetting in datetime format.
             (e.g. 2014-08-20 12:30:00)
@@ -384,12 +384,12 @@ class RadarVerticalPlot(object):
                              xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
                              ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
                              ax=ax, fig=fig)
-        if fill_topo:
-            if self.topo is not None:
-                ft = fill_topography(tsub, self.topo['data'][:],
+        if fill_surface:
+            if self.surface is not None:
+                ft = plot_fill_surface(tsub, self.surface['data'][:],
                                      ymin=fill_min, color=fill_color, ax=ax)
             else:
-                print("No surface topo information, cannot fill in topography...")
+                print("No surface height information, cannot fill...")
         return
 
     def wcr_time_height_image(self, field,

@@ -72,8 +72,8 @@ def read_hiwrap_netcdf(fname, mapping_dict=None, field_mapping=None):
             Index of surface gate in profile [unitless].
         height : float
             Height of radar observations [m].
-        topo : float
-            Height of surface topography [m].
+        surface : float
+            Height of surface return [m].
         fields : dict
             reflectivity : float
                 Radar Reflectivity [dBZ].
@@ -144,16 +144,16 @@ def read_hiwrap_netcdf(fname, mapping_dict=None, field_mapping=None):
                       'data': (alt2D - r2D),
                       'units': data['altitude']['units']}
 
-    # Calculate the topo height
+    # Calculate the surface height
     ## NG NEED TO CHECK TO MAKE SURE CORRECT
     sfcgateheight = np.array(
        [data['range']['data'][int(s)] for s in ncvars['sgate'][:]])
-    topo = data['altitude']['data'][:] - sfcgateheight[:]
-    data['topo'] = {'name' : "topo",
-                    'long_name' : "Height of Topography",
-                    'data' : topo,
-                    'units' : 'meters'
-                    }
+    surface = data['altitude']['data'][:] - sfcgateheight[:]
+    data['surface'] = {'name' : "surface",
+                       'long_name' : "Height of Surface",
+                       'data' : surface,
+                       'units' : 'meters'
+                       }
 
     # Add fields to their own dictionary
     fields = {}
@@ -267,8 +267,8 @@ def read_hiwrap_h5(fname, mapping_dict=None, field_mapping=None):
             Index of of the profile start
         height : float
             Height of radar observations [m].
-        topo : float
-            Height of surface topography [m].
+        surface : float
+            Height of surface return [m].
         fields : dict
             reflectivity : float
                 Radar Reflectivity [dBZ].
@@ -336,14 +336,14 @@ def read_hiwrap_h5(fname, mapping_dict=None, field_mapping=None):
                       'data': (alt2D - r2D),
                       'units': data['altitude']['units']}
 
-    # Calculate the topo height
+    # Calculate the surface height
     ## NG NEED TO CHECK TO MAKE SURE CORRECT
     sfcgaterange = np.array(
        [data['range']['data'][int(s)] for s in h5File['sgate'][:]])
-    topo = data['altitude']['data'][:] - sfcgaterange[:]
-    data['topo'] = {'name' : "topo",
-                    'long_name' : "Height of Topography",
-                    'data' : topo,
+    surface = data['altitude']['data'][:] - sfcgaterange[:]
+    data['surface'] = {'name' : "surface",
+                    'long_name' : "Height of Surface",
+                    'data' : surface,
                     'units' : 'meters'
                     }
 
