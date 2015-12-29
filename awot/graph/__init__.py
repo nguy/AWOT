@@ -14,6 +14,7 @@ from .radar_vertical import (
 from .radar_sweep import RadarSweepPlot
 from .radar_swath import RadarSwathPlot
 from .radar_3d import Radar3DPlot
-from .common import create_basemap
+from .common import (
+    create_basemap, plot_bivariate_frequency, plot_cfad)
 
 __all__ = [s for s in dir() if not s.startswith('_')]
