@@ -406,6 +406,156 @@ def image_2d_date(Time, AxVar, PlotVar,
         cb.update_ticks()
     return
 
+def plot_bivariate_frequency(xarr, yarr, xbinsminmax=None, nbinsx=50,
+                             ybinsminmax=None, nbinsy=50,
+                             mask_below=None, plot_percent=False,
+                             plot_colorbar=True,
+                             ax=None, fig=None):
+    """
+    Create a bivariate frequency distribution plot of two variables.
+
+    Parameters
+    ----------
+    xarr : array
+        First array to be used, plotted along x-axis.
+    yarr : array
+        Second array to be used, plotted along y-axis.
+    xbinsminmax : 2-tuple
+        A tuple with the minimum and maximax values to
+        use with xarr. None will use min/max of xarr.
+    nbinsx : int
+        The number of bins to use with xarr, default is 50.
+    ybinsminmax : array
+        A tuple with the minimum and maximax values to
+        use with yarr. None will use min/max of yarr.
+    nbinsy : int
+        The number of bins to use with yarr, default is 50.
+    mask_below : float
+        If provided, values less than mask_below will be masked.
+    plot_percent : boolean
+        True to display percentage. Default is to display fraction.
+    plot_colorbar : boolean
+        True to diaplay colorbar. False does not display colorbar.
+    ax : Matplotlib axis instance
+        Axis to plot. None will use the current axis.
+    fig : Matplotlib figure instance
+        Figure on which to add the plot. None will use the current figure.
+    """
+    # parse parameters
+    ax = _parse_ax(ax)
+
+    if xbinsminmax is None:
+        xbinsminmax = (np.ma.min(xarr), np.ma.max(xarr))
+    if ybinsminmax is None:
+        ybinsminmax = (np.ma.min(yarr), np.ma.max(yarr))
+    binsx = np.linspace(xbinsminmax[0], xbinsminmax[1], nbinsx, endpoint=True)
+    binsy = np.linspace(ybinsminmax[0], ybinsminmax[1], nbinsy, endpoint=True)
+
+    CFAD, xedges, yedges = np.histogram2d(xarr.ravel(), yarr.ravel(),
+                                      bins=(binsx, binsy),normed=True)
+    X, Y = np.meshgrid(xedges, yedges)
+    if mask_below is not None:
+        CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
+
+    cb_title = "Frequency"
+    if plot_percent:
+        CFAD = CFAD * 100.
+        cb_title = cb_title + " (%)"
+    p = ax.pcolormesh(X, Y, CFAD.T)
+
+    if plot_colorbar:
+        cb = plt.colorbar(p, ax=ax)
+        cb.set_label(cb_title)
+    return
+
+def plot_cfad(xarr, htarr, height_axis=0,
+              xbinsminmax=None, nbinsx=50,
+              mask_below=None, plot_percent=False,
+              plot_colorbar=True,
+              ax=None, fig=None):
+    """
+    Create a frequency by altitude distribution plot of two variables.
+    This is the traditional method of calculating a frequency distribution
+    at each height of input array by iterating through the height array
+    and input data array.
+
+    Parameters
+    ----------
+    xarr : array
+        First array to be used, plotted along x-axis.
+    htarr : array
+        Height array to be used, plotted along y-axis.
+    height_axis : int
+        The axis of 2-D xarr that is the height axis. This will
+        be used to iterate over.
+    xbinsminmax : 2-tuple
+        A tuple with the minimum and maximax values to
+        use with xarr. None will use min/max of xarr.
+    nbinsx : int
+        The number of bins to use with xarr, default is 50.
+    mask_below : float
+        If provided, values less than mask_below will be masked.
+    plot_percent : boolean
+        True to display percentage. Default is to display fraction.
+    plot_colorbar : boolean
+        True to diaplay colorbar. False does not display colorbar.
+    ax : Matplotlib axis instance
+        Axis to plot. None will use the current axis.
+    fig : Matplotlib figure instance
+        Figure on which to add the plot. None will use the current figure.
+    """
+    # parse parameters
+    ax = _parse_ax(ax)
+
+    if xbinsminmax is None:
+        xbinsminmax = (np.ma.min(xarr), np.ma.max(xarr))
+    binsx = np.linspace(xbinsminmax[0], xbinsminmax[1], nbinsx, endpoint=True)
+
+    cb_title = "Frequency"
+    percent = False
+
+    if plot_percent:
+        cb_title = cb_title + " (%)"
+        percent = True
+
+    # Create CFAD array to fill
+    nh = len(htarr)
+    CFAD = np.empty((nh, len(binsx)-1))
+    for nn in range(nh):
+        CFAD[nn, :], bin_edges = np.histogram(xarr[nn,:], bins=binsx, density=percent)
+
+    X, Y = np.meshgrid(binsx, htarr)
+    if mask_below is not None:
+        CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
+
+    p = ax.pcolormesh(X, Y, CFAD)
+
+    if plot_colorbar:
+        cb = plt.colorbar(p, ax=ax)
+        cb.set_label(cb_title)
+    return
+
+#######################
+#   General Methods   #
+#######################
+
+
+def find_nearest_indices(array, values):
+    """
+    Find the nearest value indices in an array to input value(s).
+
+    Parameters
+    ----------
+    array : float array
+        Input array to search.
+    values  : float (array)
+        Value(s) for which to search.
+    """
+    # Set the values to a 1D structure
+    values = np.atleast_1d(values)
+    # Find the nearest neighbor indices
+    indices = np.abs(np.subtract.outer(array, values)).argmin(0)
+    return indices if len(indices) > 1 else indices[0]
 
 def _set_ts_axes(dForm='%H:%M', tz=None, xdate=True,
                  date_MinTicker='minute',
@@ -526,29 +676,6 @@ def _set_ts_axes(dForm='%H:%M', tz=None, xdate=True,
         ax.set_title(title)
     return
 
-#######################
-#   General Methods   #
-#######################
-
-
-def find_nearest_indices(array, values):
-    """
-    Find the nearest value indices in an array to input value(s).
-
-    Parameters
-    ----------
-    array : float array
-        Input array to search.
-    values  : float (array)
-        Value(s) for which to search.
-    """
-    # Set the values to a 1D structure
-    values = np.atleast_1d(values)
-    # Find the nearest neighbor indices
-    indices = np.abs(np.subtract.outer(array, values)).argmin(0)
-    return indices if len(indices) > 1 else indices[0]
-
-
 def create_polar_fig_ax(nrows=1, ncols=1, figsize=(5, 5)):
     '''
     Returns the figure and axes instance of a polar plot.
@@ -665,13 +792,11 @@ def _parse_ax_fig(ax, fig):
         fig = plt.gcf()
     return ax, fig
 
-
 def _parse_ax(ax):
     """Parse and return ax parameters."""
     if ax is None:
         ax = plt.gca()
     return ax
-
 
 def _parse_fig(fig):
     """Parse and return fig parameters."""
