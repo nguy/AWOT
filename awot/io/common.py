@@ -10,10 +10,16 @@ from __future__ import print_function
 import numpy as np
 from netCDF4 import num2date, date2num
 
-######################
-#  variable methods  #
-######################
+#################################
+#  variable/dictionary methods  #
+#################################
 
+def _build_dict(data, units, longname, stdname):
+    newdict = {'data': data,
+               'units' : units,
+               'long_name' : longname,
+               'standard_name' : stdname}
+    return newdict
 
 def _ncvar_subset_masked(ncFile, ncvar, Good_Indices):
     """

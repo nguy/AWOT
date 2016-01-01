@@ -7,7 +7,7 @@ These scripts are various convenience utilities.
 """
 from netCDF4 import num2date
 
-from ..graph.common import _get_start_datetime, _get_end_datetime
+from ..io.common import _build_dict
 
 def pyart_radar_to_awot(radar, instrument=None, platform=None):
     """
@@ -128,49 +128,23 @@ def to_awot_flight(lon_dict=None, lat_dict=None, alt_dict=None,
 
     # Attempt to build AWOT dictionaries if arrays are provided
     if lon_array is not None:
-        awot_flight = _build_flight_dict(awot_flight, 'longitude',
+        awot_flight = _build_dict(awot_flight, 'longitude',
                         lon_array, lon_unit, lon_longname, lon_stdname)
     if lat_array is not None:
-        awot_flight = _build_flight_dict(awot_flight, 'latitude',
+        awot_flight = _build_dict(awot_flight, 'latitude',
                         lat_array, lat_unit, lat_longname, lat_stdname)
     if alt_array is not None:
-        awot_flight = _build_flight_dict(awot_flight, 'altitude',
+        awot_flight = _build_dict(awot_flight, 'altitude',
                         alt_array, alt_unit, alt_longname, alt_stdname)
     if time_array is not None:
-        awot_flight = _build_flight_dict(awot_flight, 'time',
+        awot_flight = _build_dict(awot_flight, 'time',
                         time_array, time_unit, time_longname, time_stdname)
 
     return awot_flight
 
-def _build_flight_dict(flight, key, data, units, longname, stdname):
+def _build_dict(flight, key, data, units, longname, stdname):
     flight[key] = {'data': data,
                    'units' : units,
                    'long_name' : longname,
                    'standard_name' : stdname}
     return flight
-
-def time_subset_awot_dict(time, data, start_time, end_time):
-        '''
-        Get the variable from the fields dictionary.
-        Subset the time when in time series format.
-
-        Parameters
-        ----------
-        time : dict
-            AWOT time dictionary
-        data : dict
-            AWOT data dictionary.
-        start_time : str
-            UTC time to use as start time for subsetting in datetime format.
-            (e.g. 2014-08-20 12:30:00)
-        end_time : str
-            UTC time to use as an end time for subsetting in datetime format.
-            (e.g. 2014-08-20 16:30:00)
-        '''
-        # Check to see if time is subsetted
-        dt_start = _get_start_datetime(time, start_time)
-        dt_end = _get_end_datetime(time, end_time)
-        datasub = data.copy()
-        datasub['data'] = data['data'][(time['data'] >= dt_start) &
-                       (time['data'] <= dt_end)]
-        return datasub

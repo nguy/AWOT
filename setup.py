@@ -28,7 +28,7 @@ package_dirs = {'awot'}
 
 # - Run setup
 setup(name='awot',
-      version='0.2.7',
+      version='0.2.8',
       author='Nick Guy',
       author_email='nick.guy@uwyo.edu',
       packages=packages,
