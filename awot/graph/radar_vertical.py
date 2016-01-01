@@ -386,7 +386,9 @@ class RadarVerticalPlot(object):
                              ax=ax, fig=fig)
         if fill_surface:
             if self.surface is not None:
-                ft = plot_fill_surface(tsub, self.surface['data'][:],
+                sfc= self._get_variable_subset(self.surface['data'][:],
+                                               start_time, end_time)
+                ft = plot_fill_surface(tsub, sfc,
                                      ymin=fill_min, color=fill_color, ax=ax)
             else:
                 print("No surface height information, cannot fill...")
@@ -559,6 +561,23 @@ class RadarVerticalPlot(object):
         datasub = data[(self.time['data'] >= dt_start) &
                        (self.time['data'] <= dt_end)]
         return Var, tsub, datasub
+
+    def _get_variable_subset(self, data, start_time, end_time):
+        '''
+        Get the variable from the fields dictionary.
+        Subset the time when in time series format.
+        '''
+        # Check to see if time is subsetted
+        dt_start = _get_start_datetime(self.time, start_time)
+        dt_end = _get_end_datetime(self.time, end_time)
+
+        # Create temporary 2D arrays for subsetting
+        tsub = self.time['data'][(self.time['data'] >= dt_start) &
+                                 (self.time['data'] <= dt_end)]
+        datasub = data[(self.time['data'] >= dt_start) &
+                       (self.time['data'] <= dt_end)]
+        datasub = np.ma.masked_invalid(datasub)
+        return datasub
 
     def _get_2d_height_time_subset(self, start_time, end_time):
         '''Get subsetted data if requested.'''
@@ -824,6 +843,23 @@ class MicrophysicalVerticalPlot(object):
                        (self.time['data'] <= dt_end)]
         datasub = np.ma.masked_invalid(datasub)
         return Var, tsub, datasub
+
+    def _get_variable_subset(self, data, start_time, end_time):
+        '''
+        Get the variable from the fields dictionary.
+        Subset the time when in time series format.
+        '''
+        # Check to see if time is subsetted
+        dt_start = _get_start_datetime(self.time, start_time)
+        dt_end = _get_end_datetime(self.time, end_time)
+
+        # Create temporary 2D arrays for subsetting
+        tsub = self.time['data'][(self.time['data'] >= dt_start) &
+                                 (self.time['data'] <= dt_end)]
+        datasub = data[(self.time['data'] >= dt_start) &
+                       (self.time['data'] <= dt_end)]
+        datasub = np.ma.masked_invalid(datasub)
+        return datasub
 
     def _get_2d_height_time_subset(self, start_time, end_time):
         '''Get subsetted data if requested.'''
