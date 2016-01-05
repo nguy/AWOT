@@ -114,7 +114,7 @@ class RadarUtilityPlot(object):
                              xlab=None, xlabFontSize=None, xpad=None,
                              ylab=None, ylabFontSize=None, ypad=None,
                              title=None, titleFontSize=None,
-                             store_to_awot_field=False,
+                             cb_fontsize=None,
                              ax=None, fig=None):
         """
         Create a bivariate frequency distribution plot of two variables.
@@ -171,6 +171,8 @@ class RadarUtilityPlot(object):
             Font size to use for X-axis label.
         ylabFontSize : int
             Font size to use for Y-axis label.
+        cb_fontsize : int
+            Font size of the colorbar label.
         ax : Matplotlib axis instance
             Axis to plot. None will use the current axis.
         fig : Matplotlib figure instance
@@ -215,7 +217,7 @@ class RadarUtilityPlot(object):
 
         if plot_colorbar:
             cb = plt.colorbar(p, ax=ax)
-            cb.set_label(cb_title)
+            cb.set_label(cb_title, fontsize=cb_fontsize)
         return
 
     def plot_cfad(self, field, height_axis=0,
@@ -229,6 +231,7 @@ class RadarUtilityPlot(object):
                   xlab=None, xlabFontSize=None, xpad=None,
                   ylab=None, ylabFontSize=None, ypad=None,
                   title=None, titleFontSize=None,
+                  cb_fontsize=None, cb_ticklabel_size=None,
                   ax=None, fig=None):
         """
         Create a frequency by altitude distribution plot of two variables.
@@ -283,6 +286,8 @@ class RadarUtilityPlot(object):
             Font size to use for X-axis label.
         ylabFontSize : int
             Font size to use for Y-axis label.
+        cb_fontsize : int
+            Font size of the colorbar label.
         ax : Matplotlib axis instance
             Axis to plot. None will use the current axis.
         fig : Matplotlib figure instance
@@ -335,7 +340,8 @@ class RadarUtilityPlot(object):
 
         if plot_colorbar:
             cb = plt.colorbar(p, ax=ax)
-            cb.set_label(cb_title)
+            cb.set_label(cb_title, fontsize=cb_fontsize)
+            cb.ax.tick_params(labelsize=cb_ticklabel_size)
         return
 ###################
 #   Get methods   #
