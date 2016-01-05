@@ -12,6 +12,7 @@ from .radar_horizontal import RadarHorizontalPlot
 from .radar_vertical import (
     RadarVerticalPlot, MicrophysicalVerticalPlot)
 from .radar_sweep import RadarSweepPlot
+from .radar_utility import RadarUtilityPlot
 #from .radar_swath import RadarSwathPlot
 from .radar_3d import Radar3DPlot
 from .common import (

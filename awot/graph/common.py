@@ -429,6 +429,7 @@ def plot_bivariate_frequency(xarr, yarr,
                              xlab=None, xlabFontSize=None, xpad=None,
                              ylab=None, ylabFontSize=None, ypad=None,
                              title=None, titleFontSize=None,
+                             store_to_awot_field=False,
                              ax=None, fig=None):
     """
     Create a bivariate frequency distribution plot of two variables.
@@ -515,7 +516,8 @@ def plot_bivariate_frequency(xarr, yarr,
     _set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
               title=title, titleFontSize=titleFontSize,
               xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
-              xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
+              xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
+              ax=ax)
     # Plot the data
     p = ax.pcolormesh(X, Y, CFAD.T)
 
@@ -527,8 +529,7 @@ def plot_bivariate_frequency(xarr, yarr,
 def plot_cfad(xarr, htarr, height_axis=0,
               xbinsminmax=None, nbinsx=50,
               mask_below=None, plot_percent=False,
-              plot_colorbar=True, plot_contour_levels=None,
-              contour_levels_color='k',
+              plot_colorbar=True,
               x_min=None, x_max=None,
               y_min=None, y_max=None,
               xlab=None, xlabFontSize=None, xpad=None,
@@ -608,9 +609,9 @@ def plot_cfad(xarr, htarr, height_axis=0,
     nh = len(htarr)
     CFAD = np.empty((nh, len(binsx)-1))
     for nn in range(nh):
-        CFAD[nn, :], bin_edges = np.histogram(xarr[nn,:], bins=binsx, density=percent)
+        CFAD[nn, :], bin_edges = np.histogram(xarr[:, nn], bins=binsx, density=percent)
 
-    X, Y = np.meshgrid(binsx, htarr)
+    X, Y = np.meshgrid(bin_edges, htarr)
     if mask_below is not None:
         CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
 
@@ -618,17 +619,18 @@ def plot_cfad(xarr, htarr, height_axis=0,
     _set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
               title=title, titleFontSize=titleFontSize,
               xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
-              xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,)
+              xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
+              ax=ax)
     # Plot the data
     p = ax.pcolormesh(X, Y, CFAD)
 
-    if plot_contour_levels is not None:
-        print("CONTOURING")
-        xtick = binsx[2] - binsx[1]
-        x1 = binsx[:-1] + ( xtick * .5 )
-        X1, Y1 = np.meshgrid(x1, htarr)
-        c = ax.contour(X1, Y1, CFAD, levels=plot_contour_levels,
-                    colors=contour_levels_color)
+#     if plot_contour_levels is not None:
+#         print("CONTOURING")
+#         xtick = binsx[2] - binsx[1]
+#         x1 = binsx[:-1] + ( xtick * .5 )
+#         X1, Y1 = np.meshgrid(x1, htarr)
+#         c = ax.contour(X1, Y1, CFAD, levels=plot_contour_levels,
+#                     colors=contour_levels_color)
 
     if plot_colorbar:
         cb = plt.colorbar(p, ax=ax)
