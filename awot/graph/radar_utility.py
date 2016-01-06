@@ -107,15 +107,16 @@ class RadarUtilityPlot(object):
     def plot_bivariate_frequency(self, xfield, yfield,
                              xbinsminmax=None, nbinsx=50,
                              ybinsminmax=None, nbinsy=50,
-                             mask_below=None,
                              start_time=None, end_time=None,
+                             vmin=None, vmax=None,
+                             mask_below=None,
                              plot_percent=False, plot_colorbar=True,
                              x_min=None, x_max=None,
                              y_min=None, y_max=None,
                              xlab=None, xlabFontSize=None, xpad=None,
                              ylab=None, ylabFontSize=None, ypad=None,
                              title=None, titleFontSize=None,
-                             cb_fontsize=None,
+                             cb_fontsize=None, cb_ticklabel_size=None,
                              ax=None, fig=None):
         """
         Create a bivariate frequency distribution plot of two variables.
@@ -136,14 +137,18 @@ class RadarUtilityPlot(object):
             use with yarr. None will use min/max of yarr.
         nbinsy : int
             The number of bins to use with yarr, default is 50.
-        mask_below : float
-            If provided, values less than mask_below will be masked.
         start_time : str
             UTC time to use as start time for subsetting in datetime format.
             (e.g. 2014-08-20 12:30:00)
         end_time : str
             UTC time to use as an end time for subsetting in datetime format.
             (e.g. 2014-08-20 16:30:00)
+        vmin : float
+            Minimum value to display.
+        vmax : float
+            Maximum value to display.
+        mask_below : float
+            If provided, values less than mask_below will be masked.
         plot_percent : boolean
             True to display percentage. Default is to display fraction.
         plot_colorbar : boolean
@@ -156,10 +161,6 @@ class RadarUtilityPlot(object):
             Minimum value for Y-axis.
         y_max : float
             Maximum value for Y-axis.
-        title : str
-            Plot title.
-        titleFontSize : int
-            Font size to use for Title label.
         xlab : str
             X-axis label.
         ylab : str
@@ -172,8 +173,14 @@ class RadarUtilityPlot(object):
             Font size to use for X-axis label.
         ylabFontSize : int
             Font size to use for Y-axis label.
+        title : str
+            Plot title.
+        titleFontSize : int
+            Font size to use for Title label.
         cb_fontsize : int
             Font size of the colorbar label.
+        cb_ticklabel_size : int
+            Font size of colorbar tick labels.
         ax : Matplotlib axis instance
             Axis to plot. None will use the current axis.
         fig : Matplotlib figure instance
@@ -213,19 +220,20 @@ class RadarUtilityPlot(object):
                   xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
                   ax=ax)
         # Plot the data
-        p = ax.pcolormesh(X, Y, CFAD.T)
+        p = ax.pcolormesh(X, Y, CFAD.T, vmin=vmin, vmax=vmax)
 
         if plot_colorbar:
             cb = plt.colorbar(p, ax=ax)
             cb.set_label(cb_title, fontsize=cb_fontsize)
+            cb.ax.tick_params(labelsize=cb_ticklabel_size)
         return
 
     def plot_cfad(self, field, height_axis=1,
                   xbinsminmax=None, nbinsx=50,
                   start_time=None, end_time=None,
+                  vmin=None, vmax=None,
                   mask_below=None, plot_percent=False,
                   plot_colorbar=True,
-                  contour_levels_color='k',
                   x_min=None, x_max=None,
                   y_min=None, y_max=None,
                   xlab=None, xlabFontSize=None, xpad=None,
@@ -256,6 +264,10 @@ class RadarUtilityPlot(object):
         end_time : str
             UTC time to use as an end time for subsetting in datetime format.
             (e.g. 2014-08-20 16:30:00)
+        vmin : float
+            Minimum value to display.
+        vmax : float
+            Maximum value to display.
         mask_below : float
             If provided, values less than mask_below will be masked.
         plot_percent : boolean
@@ -270,10 +282,6 @@ class RadarUtilityPlot(object):
             Minimum value for Y-axis.
         y_max : float
             Maximum value for Y-axis.
-        title : str
-            Plot title.
-        titleFontSize : int
-            Font size to use for Title label.
         xlab : str
             X-axis label.
         ylab : str
@@ -286,8 +294,14 @@ class RadarUtilityPlot(object):
             Font size to use for X-axis label.
         ylabFontSize : int
             Font size to use for Y-axis label.
+        title : str
+            Plot title.
+        titleFontSize : int
+            Font size to use for Title label.
         cb_fontsize : int
             Font size of the colorbar label.
+        cb_ticklabel_size : int
+            Font size of colorbar tick labels.
         ax : Matplotlib axis instance
             Axis to plot. None will use the current axis.
         fig : Matplotlib figure instance
@@ -323,6 +337,10 @@ class RadarUtilityPlot(object):
             CFAD[nn, :], bin_edges = np.histogram(
                    array, bins=binsx, density=percent)
 
+        # Mask any invalid or negative numbers
+        CFAD = np.ma.masked_invalid(CFAD)
+        CFAD = np.ma.masked_less(CFAD, 0.)
+
         X, Y = np.meshgrid(bin_edges, self.height['data'][:])
         if mask_below is not None:
             CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
@@ -334,7 +352,7 @@ class RadarUtilityPlot(object):
                   xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
                   ax=ax)
         # Plot the data
-        p = ax.pcolormesh(X, Y, CFAD)
+        p = ax.pcolormesh(X, Y, CFAD, vmin=vmin, vmax=vmax)
 
         if plot_colorbar:
             cb = plt.colorbar(p, ax=ax)

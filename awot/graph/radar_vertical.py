@@ -273,9 +273,9 @@ class RadarVerticalPlot(object):
         clevs : int
             Number of contour levels.
         vmin : float
-            Minimum contour value to display.
+            Minimum value to display.
         vmax : float
-            Maximum contour value to display.
+            Maximum value to display.
         ptype : str
             Type of plot to make, takes 'plot', 'contour', or 'pcolormesh'.
         plot_log10_var : bool
