@@ -10,6 +10,7 @@ from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 from netCDF4 import date2num, num2date
+from scipy.stats import mstats
 
 from .common import (_check_basemap, _get_earth_radius,
                      _parse_ax_fig, _parse_ax,
@@ -200,7 +201,6 @@ class RadarUtilityPlot(object):
         if mask_below is not None:
             CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
 
-        print(X.shape, Y.shape, CFAD.shape)
         cb_title = "Frequency"
         if plot_percent:
             CFAD = CFAD * 100.
@@ -220,7 +220,7 @@ class RadarUtilityPlot(object):
             cb.set_label(cb_title, fontsize=cb_fontsize)
         return
 
-    def plot_cfad(self, field, height_axis=0,
+    def plot_cfad(self, field, height_axis=1,
                   xbinsminmax=None, nbinsx=50,
                   start_time=None, end_time=None,
                   mask_below=None, plot_percent=False,
@@ -315,20 +315,18 @@ class RadarUtilityPlot(object):
         CFAD = np.empty((nh, len(binsx)-1))
         for nn in range(nh):
             if height_axis == 0:
-                CFAD[nn, ...], bin_edges = np.histogram(
-                       xarr[nn, ...], bins=binsx, density=percent)
-            if height_axis == 1:
-                CFAD[nn, :], bin_edges = np.histogram(
-                       xarr[:, nn, ...], bins=binsx, density=percent)
-            if height_axis == 2:
-                CFAD[nn, :], bin_edges = np.histogram(
-                       xarr[..., nn], bins=binsx, density=percent)
+                array = xarr[nn, ...]
+            elif height_axis == 1:
+                array = xarr[:, nn, ...]
+            elif height_axis == 2:
+                array = xarr[..., nn]
+            CFAD[nn, :], bin_edges = np.histogram(
+                   array, bins=binsx, density=percent)
 
-        X, Y = np.meshgrid(binsx, self.height['data'][:])
+        X, Y = np.meshgrid(bin_edges, self.height['data'][:])
         if mask_below is not None:
             CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
 
-        print(X.shape, Y.shape, CFAD.shape)
         # Set the axes
         _set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
                   title=title, titleFontSize=titleFontSize,
@@ -343,6 +341,139 @@ class RadarUtilityPlot(object):
             cb.set_label(cb_title, fontsize=cb_fontsize)
             cb.ax.tick_params(labelsize=cb_ticklabel_size)
         return
+
+#     def plot_quantiles(self, field, quantiles=None,
+#                   height_axis=1,
+#                   xbinsminmax=None, nbinsx=50,
+#                   start_time=None, end_time=None,
+#                   mask_below=None, plot_percent=False,
+#                   plot_colorbar=True,
+#                   contour_levels_color='k',
+#                   x_min=None, x_max=None,
+#                   y_min=None, y_max=None,
+#                   xlab=None, xlabFontSize=None, xpad=None,
+#                   ylab=None, ylabFontSize=None, ypad=None,
+#                   title=None, titleFontSize=None,
+#                   cb_fontsize=None, cb_ticklabel_size=None,
+#                   setup_axes=True,
+#                   ax=None, fig=None):
+#         """
+#         Create a frequency by altitude distribution plot of two variables.
+#         This is the traditional method of calculating a frequency distribution
+#         at each height of input array by iterating through the height array
+#         and input data array.
+#
+#         Parameters
+#         ----------
+#         field : str
+#             Name of the field to use in CFAD calculation.
+#         height_axis : int
+#             The dimension to perform quantile calculation over (non-height).
+#         xbinsminmax : 2-tuple
+#             A tuple with the minimum and maximax values to
+#             use with xarr. None will use min/max of xarr.
+#         nbinsx : int
+#             The number of bins to use with xarr, default is 50.
+#         start_time : str
+#             UTC time to use as start time for subsetting in datetime format.
+#             (e.g. 2014-08-20 12:30:00)
+#         end_time : str
+#             UTC time to use as an end time for subsetting in datetime format.
+#             (e.g. 2014-08-20 16:30:00)
+#         mask_below : float
+#             If provided, values less than mask_below will be masked.
+#         plot_percent : boolean
+#             True to display percentage. Default is to display fraction.
+#         plot_colorbar : boolean
+#             True to diaplay colorbar. False does not display colorbar.
+#         x_min : float
+#             Minimum value for X-axis.
+#         x_max : float
+#             Maximum value for X-axis.
+#         y_min : float
+#             Minimum value for Y-axis.
+#         y_max : float
+#             Maximum value for Y-axis.
+#         title : str
+#             Plot title.
+#         titleFontSize : int
+#             Font size to use for Title label.
+#         xlab : str
+#             X-axis label.
+#         ylab : str
+#             Y-axis label.
+#         xpad : int
+#             Padding for X-axis label.
+#         ypad : int
+#             Padding for Y-axis label.
+#         xlabFontSize : int
+#             Font size to use for X-axis label.
+#         ylabFontSize : int
+#             Font size to use for Y-axis label.
+#         cb_fontsize : int
+#             Font size of the colorbar label.
+#         setup_axes : bool
+#             If True, the axes will be set up using either keyword information
+#             or attempted to determine automatically.
+#             If False, existing axes will be used, either passed by keyword ax
+#             or current working axis.
+#         ax : Matplotlib axis instance
+#             Axis to plot. None will use the current axis.
+#         fig : Matplotlib figure instance
+#             Figure on which to add the plot. None will use the current figure.
+#         """
+#         # parse parameters
+#         ax = _parse_ax(ax)
+#         # Snag the data from requested field
+#         xdict, tsub, xarr = self._get_fields_variable_dict_data_time_subset(
+#             field, start_time, end_time)
+#
+#         if quantiles is None:
+#             quantiles = [5, 10, 25, 50, 75, 90]
+#
+#         if xbinsminmax is None:
+#             xbinsminmax = (np.ma.min(xarr), np.ma.max(xarr))
+#         binsx = np.linspace(xbinsminmax[0], xbinsminmax[1], nbinsx, endpoint=True)
+#
+#         cb_title = "Frequency"
+#         percent = False
+#
+#         if plot_percent:
+#             cb_title = cb_title + " (%)"
+#
+#         # Create CFAD array to fill
+#         nh = len(self.height['data'][:])
+# #         CFAD = np.empty((nh, len(binsx)-1))
+#         qArr = np.empty((len(quantiles), nh))
+#         xarr = np.rollaxis(xarr, height_axis)
+#         for nn in range(nh):
+#             array = xarr[nn, ...]
+#             qArr[:, nn] = mstats.mquantiles(
+#                     array, prob=quantiles)
+#             print(array.min(), array.max())
+#             print(qArr.min(), qArr.max())
+#
+# #        qArr = mstats.mquantiles(xarr, prob=quantiles, axis=axis)
+#
+#         if mask_below is not None:
+#             CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
+#
+#         # Set the axes
+#         if setup_axes:
+#             _set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
+#                       title=title, titleFontSize=titleFontSize,
+#                       xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
+#                       xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
+#                       ax=ax)
+#         # Plot the data
+#         for num in range(len(quantiles)):
+#             p = ax.plot(qArr[num, :], self.heightfield['data'][0, :])#, color='k')
+#             ytextloc = self.heightfield['data'][0, :].max() * 1.05
+#             ax.text(qArr[num, -1], ytextloc, str(quantiles[num]))
+# #            print(qArr[num, :].min(), qArr[num, :].max())
+# #            print(qArr[num, -1], ytextloc)
+#         return
+
 ###################
 #   Get methods   #
 ###################
