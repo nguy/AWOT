@@ -88,12 +88,14 @@ class RadarUtilityPlot(object):
         self.timefield = self.time.copy()
         self.heightfield = self.height.copy()
 
-        if len(self.time['data'].shape) == 1:
+        # This step is slow converting back-and-forth between datenum
+        # instances, but Numpy does not support meshgrid with datenum dtype
+        if len(self.timefield['data'].shape) == 1:
             timenum = date2num(self.time['data'][:], self.time['units'])
             self.timefield['data'] = num2date(np.resize(timenum, fieldshape),
                                               self.time['units'])
 
-        if len(self.height['data'].shape) == 1:
+        if len(self.heightfield['data'].shape) == 1:
             self.heightfield['data'] = np.resize(self.height['data'][:], fieldshape)
 
 ##################
@@ -199,7 +201,7 @@ class RadarUtilityPlot(object):
         # parse parameters
         ax = _parse_ax(ax)
         # Snag the data from requested fields
-        xarr, yarr = self._get_bivariate_field_data(
+        xarr, yarr = self._get_bivariate_data(
                       xfield, yfield, start_time, end_time)
 
         if xbinsminmax is None:
@@ -212,7 +214,6 @@ class RadarUtilityPlot(object):
                             nbinsy, endpoint=True)
 
         CFAD, xedges, yedges = np.histogram2d(
-##                 X2D.ravel(), Y2D.ravel(), bins=(binsx, binsy), normed=True)
                  xarr.ravel(), yarr.ravel(), bins=(binsx, binsy), normed=True)
         X, Y = np.meshgrid(xedges, yedges)
         if mask_below is not None:
@@ -237,7 +238,13 @@ class RadarUtilityPlot(object):
                  label=cb_label, fontsize=cb_fontsize,
                  ticklabel_size=cb_ticklabel_size,
                  clevs=cb_levs, tick_interval=cb_tick_int)
-        return
+
+        # Create a dictionary to return
+        bivar = {'frequency' : CFAD.T,
+                 'frequency_label' : cb_label,
+                 'xaxis' : X,
+                 'yaxis' : Y}
+        return bivar
 
     def plot_cfad(self, field, height_axis=1,
                   xbinsminmax=None, nbinsx=50,
@@ -384,7 +391,13 @@ class RadarUtilityPlot(object):
                  label=cb_label, fontsize=cb_fontsize,
                  ticklabel_size=cb_ticklabel_size,
                  clevs=cb_levs, tick_interval=cb_tick_int)
-        return
+
+        # Create a dictionary to return
+        cfad_dict = {'frequency' : CFAD,
+                     'frequency_label' : cb_label,
+                     'xaxis' : X,
+                     'yaxis' : Y}
+        return cfad_dict
 
 #     def plot_quantiles(self, field, quantiles=None,
 #                   height_axis=1,
@@ -554,7 +567,7 @@ class RadarUtilityPlot(object):
                        (self.time['data'] <= dt_end)]
         return Var, tsub, datasub
 
-    def _get_bivariate_field_data(self, field1, field2,
+    def _get_bivariate_data(self, field1, field2,
                                   start_time, end_time):
         '''
         Return the the data for field1 and field 2.

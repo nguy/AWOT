@@ -26,7 +26,8 @@ from .common import (_check_basemap, _get_earth_radius,
                      plot_polar_contour, get_masked_data,
                      _get_start_datetime, _get_end_datetime,
                      _get_variable_dict, _get_variable_dict_data,
-                     image_2d_date, plot_fill_surface)
+                     image_2d_date, plot_fill_surface,
+                     add_colorbar)
 from .coord_transform import radar_coords_to_cart_track_relative, \
     radar_coords_to_cart_earth_relative, radar_coords_to_cart_aircraft_relative
 
@@ -228,20 +229,10 @@ class RadarVerticalPlot(object):
 
         # Add Colorbar
         if color_bar:
-            cbStr = "%s (%s)" % (Var['long_name'], Var['units'])
-            cb = fig.colorbar(p, orientation=cb_orient,
-                              pad=cb_pad, ax=ax)  # ,ticks=clevels)
-            cb.set_label(cbStr)
-            # Set the number of ticks in the colorbar based upon number of
-            # contours
-            tick_locator = ticker.MaxNLocator(nbins=int(clevs / cb_tick_int))
-            cb.locator = tick_locator
-            cb.update_ticks()
-#    if plot_colorbar:
-#        cb = add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
-#                          label=cbStr, fontsize=cb_fontsize,
-#                          ticklabel_size=cb_ticklabel_size,
-#                          clevs=clevs, tick_interval=cb_tick_int)
+            cb = add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
+                              label=cbStr, fontsize=cb_fontsize,
+                              ticklabel_size=cb_ticklabel_size,
+                              clevs=clevs, tick_interval=cb_tick_int)
 
         # Add title
         ax.set_title(title, fontsize=title_size)
