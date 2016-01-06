@@ -12,12 +12,10 @@ import matplotlib.pyplot as plt
 from netCDF4 import date2num, num2date
 from scipy.stats import mstats
 
-from .common import (_check_basemap, _get_earth_radius,
-                     _parse_ax_fig, _parse_ax,
-                     plot_polar_contour, get_masked_data,
+from .common import (_parse_ax, _set_axes,
                      _get_start_datetime, _get_end_datetime,
-                     _get_variable_dict, _get_variable_dict_data,
-                     _set_axes)
+#                     _get_variable_dict, _get_variable_dict_data,
+                     add_colorbar)
 
 from ..util.helper import add_dict_to_awot_fields
 
@@ -52,8 +50,6 @@ class RadarUtilityPlot(object):
             None uses AWOT default.
         """
         self.radar = radar
-        self.basemap = basemap
-#        _check_basemap(self)
         self.fields = self.radar['fields']
 
         if lon_name is None:
@@ -108,7 +104,7 @@ class RadarUtilityPlot(object):
                              xbinsminmax=None, nbinsx=50,
                              ybinsminmax=None, nbinsy=50,
                              start_time=None, end_time=None,
-                             vmin=None, vmax=None,
+                             vmin=None, vmax=None, cmap=None,
                              mask_below=None,
                              plot_percent=False, plot_colorbar=True,
                              x_min=None, x_max=None,
@@ -117,6 +113,8 @@ class RadarUtilityPlot(object):
                              ylab=None, ylabFontSize=None, ypad=None,
                              title=None, titleFontSize=None,
                              cb_fontsize=None, cb_ticklabel_size=None,
+                             cb_orient=None, cb_pad=None,
+                             cb_levs=None, cb_tick_int=None,
                              ax=None, fig=None):
         """
         Create a bivariate frequency distribution plot of two variables.
@@ -147,6 +145,8 @@ class RadarUtilityPlot(object):
             Minimum value to display.
         vmax : float
             Maximum value to display.
+        cmap : str
+            Matplotlib colormap string.
         mask_below : float
             If provided, values less than mask_below will be masked.
         plot_percent : boolean
@@ -181,6 +181,16 @@ class RadarUtilityPlot(object):
             Font size of the colorbar label.
         cb_ticklabel_size : int
             Font size of colorbar tick labels.
+        cb_pad : str
+            Pad to move colorbar, in the form "5%",
+            pos is to right for righthand location.
+        cb_orient : str
+            Colorbar orientation, either 'vertical' or 'horizontal'.
+        cb_levs : int
+            Number of colorbar levels to use in tick calculation.
+        cb_tick_int : int
+            Interval to use for colorbar tick labels,
+            higher number "thins" labels.
         ax : Matplotlib axis instance
             Axis to plot. None will use the current axis.
         fig : Matplotlib figure instance
@@ -208,10 +218,10 @@ class RadarUtilityPlot(object):
         if mask_below is not None:
             CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
 
-        cb_title = "Frequency"
+        cb_label = "Frequency"
         if plot_percent:
             CFAD = CFAD * 100.
-            cb_title = cb_title + " (%)"
+            cb_label = cb_label + " (%)"
 
         # Set the axes
         _set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
@@ -220,18 +230,19 @@ class RadarUtilityPlot(object):
                   xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
                   ax=ax)
         # Plot the data
-        p = ax.pcolormesh(X, Y, CFAD.T, vmin=vmin, vmax=vmax)
+        p = ax.pcolormesh(X, Y, CFAD.T, vmin=vmin, vmax=vmax, cmap=cmap)
 
         if plot_colorbar:
-            cb = plt.colorbar(p, ax=ax)
-            cb.set_label(cb_title, fontsize=cb_fontsize)
-            cb.ax.tick_params(labelsize=cb_ticklabel_size)
+            cb = add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
+                 label=cb_label, fontsize=cb_fontsize,
+                 ticklabel_size=cb_ticklabel_size,
+                 clevs=cb_levs, tick_interval=cb_tick_int)
         return
 
     def plot_cfad(self, field, height_axis=1,
                   xbinsminmax=None, nbinsx=50,
                   start_time=None, end_time=None,
-                  vmin=None, vmax=None,
+                  vmin=None, vmax=None, cmap=None,
                   mask_below=None, plot_percent=False,
                   plot_colorbar=True,
                   x_min=None, x_max=None,
@@ -240,6 +251,8 @@ class RadarUtilityPlot(object):
                   ylab=None, ylabFontSize=None, ypad=None,
                   title=None, titleFontSize=None,
                   cb_fontsize=None, cb_ticklabel_size=None,
+                  cb_orient=None, cb_pad=None,
+                  cb_levs=None, cb_tick_int=None,
                   ax=None, fig=None):
         """
         Create a frequency by altitude distribution plot of two variables.
@@ -268,6 +281,8 @@ class RadarUtilityPlot(object):
             Minimum value to display.
         vmax : float
             Maximum value to display.
+        cmap : str
+            Matplotlib colormap string.
         mask_below : float
             If provided, values less than mask_below will be masked.
         plot_percent : boolean
@@ -302,6 +317,16 @@ class RadarUtilityPlot(object):
             Font size of the colorbar label.
         cb_ticklabel_size : int
             Font size of colorbar tick labels.
+        cb_pad : str
+            Pad to move colorbar, in the form "5%",
+            pos is to right for righthand location.
+        cb_orient : str
+            Colorbar orientation, either 'vertical' or 'horizontal'.
+        cb_levs : int
+            Number of colorbar levels to use in tick calculation.
+        cb_tick_int : int
+            Interval to use for colorbar tick labels,
+            higher number "thins" labels.
         ax : Matplotlib axis instance
             Axis to plot. None will use the current axis.
         fig : Matplotlib figure instance
@@ -317,11 +342,11 @@ class RadarUtilityPlot(object):
             xbinsminmax = (np.ma.min(xarr), np.ma.max(xarr))
         binsx = np.linspace(xbinsminmax[0], xbinsminmax[1], nbinsx, endpoint=True)
 
-        cb_title = "Frequency"
+        cb_label = "Frequency"
         percent = False
 
         if plot_percent:
-            cb_title = cb_title + " (%)"
+            cb_label = cb_label + " (%)"
             percent = True
 
         # Create CFAD array to fill
@@ -352,12 +377,13 @@ class RadarUtilityPlot(object):
                   xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
                   ax=ax)
         # Plot the data
-        p = ax.pcolormesh(X, Y, CFAD, vmin=vmin, vmax=vmax)
+        p = ax.pcolormesh(X, Y, CFAD, vmin=vmin, vmax=vmax, cmap=cmap)
 
         if plot_colorbar:
-            cb = plt.colorbar(p, ax=ax)
-            cb.set_label(cb_title, fontsize=cb_fontsize)
-            cb.ax.tick_params(labelsize=cb_ticklabel_size)
+            cb = add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
+                 label=cb_label, fontsize=cb_fontsize,
+                 ticklabel_size=cb_ticklabel_size,
+                 clevs=cb_levs, tick_interval=cb_tick_int)
         return
 
 #     def plot_quantiles(self, field, quantiles=None,
@@ -453,11 +479,11 @@ class RadarUtilityPlot(object):
 #             xbinsminmax = (np.ma.min(xarr), np.ma.max(xarr))
 #         binsx = np.linspace(xbinsminmax[0], xbinsminmax[1], nbinsx, endpoint=True)
 #
-#         cb_title = "Frequency"
+#         cb_label = "Frequency"
 #         percent = False
 #
 #         if plot_percent:
-#             cb_title = cb_title + " (%)"
+#             cb_label = cb_label + " (%)"
 #
 #         # Create CFAD array to fill
 #         nh = len(self.height['data'][:])

@@ -106,8 +106,9 @@ class RadarVerticalPlot(object):
                            title=" ", title_size=20,
                            cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
                            cmap='gist_ncar', clabel='dBZ',
-                           color_bar=True, cb_pad=.05, cb_orient='vertical',
-                           cb_tick_int=2, ax=None, fig=None):
+                           color_bar=True, cb_pad=None, cb_orient=None,
+                           cb_fontsize=None, cb_ticklabel_size=None,
+                           cb_tick_int=None, ax=None, fig=None):
         '''
         Plot a cross-section between two points.
 
@@ -144,12 +145,15 @@ class RadarVerticalPlot(object):
             Matplotlib color map to use.
         color_bar : bool
             True to add colorbar, False does not.
+        cb_fontsize : int
+            Font size of the colorbar label.
+        cb_ticklabel_size : int
+            Font size of colorbar tick labels.
         cb_pad : str
             Pad to move colorbar, in the form "5%", pos is to right for
             righthand location.
-        cb_loc : str
-            Location of colorbar, default is 'right', also available:
-            'bottom', 'top', 'left'.
+        cb_orient : str
+            Colorbar orientation, either 'vertical' or 'horizontal'.
         cb_tick_int : int
             Interval to use for colorbar tick labels,
             higher number "thins" labels.
@@ -233,23 +237,29 @@ class RadarVerticalPlot(object):
             tick_locator = ticker.MaxNLocator(nbins=int(clevs / cb_tick_int))
             cb.locator = tick_locator
             cb.update_ticks()
+#    if plot_colorbar:
+#        cb = add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
+#                          label=cbStr, fontsize=cb_fontsize,
+#                          ticklabel_size=cb_ticklabel_size,
+#                          clevs=clevs, tick_interval=cb_tick_int)
 
         # Add title
         ax.set_title(title, fontsize=title_size)
 
     def time_height_image(self, field,
                            mask_procedure=None, mask_tuple=None,
-                           ptype='pcolormesh', plot_log10_var=False,
+                           plot_log10_var=False,
                            cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
-                           cmap='gist_ncar', color_bar=True,
-                           cb_orient='vertical',
-                           cb_pad=.05, cb_tick_int=2, cb_label=None,
+                           cmap='gist_ncar',
                            dForm='%H:%M', tz=None, xdate=True,
                            date_MinTicker='minute',
                            height_MajTicks=None, height_MinTicks=None,
                            height_min=None, height_max=None,
                            fill_surface=False, fill_min=None, fill_color=None,
-                           start_time=None, end_time=None,
+                           start_time=None, end_time=None, color_bar=True,
+                           cb_orient='vertical',
+                           cb_pad=.05, cb_tick_int=2, cb_label=None,
+                           cb_fontsize=None, cb_ticklabel_size=None,
                            title=None, xlab=' ', xlabFontSize=16, xpad=7,
                            ylab=' ', ylabFontSize=16, ypad=7,
                            ax=None, fig=None):
@@ -276,25 +286,10 @@ class RadarVerticalPlot(object):
             Minimum value to display.
         vmax : float
             Maximum value to display.
-        ptype : str
-            Type of plot to make, takes 'plot', 'contour', or 'pcolormesh'.
         plot_log10_var : bool
                 True plots the log base 10 of Data field.
         cmap : str
             Matplotlib color map to use.
-        color_bar : bool
-            True to add colorbar, False does not.
-        cb_pad : str
-            Pad to move colorbar, in the form "5%",
-            pos is to right for righthand location.
-        cb_loc : str
-            Location of colorbar, default is 'right', also available:
-            'bottom', 'top', 'left'.
-        cb_tick_int : int
-            Interval to use for colorbar tick labels,
-            higher number "thins" labels.
-        cb_label : str
-            Label for colorbar (e.g. units 'dBZ').
         dForm : str
             Format of the time string for x-axis labels.
         tz : str
@@ -335,6 +330,22 @@ class RadarVerticalPlot(object):
             Padding for X-axis label.
         ypad : int
             Padding for Y-axis label.
+        color_bar : bool
+            True to add colorbar, False does not.
+        cb_pad : str
+            Pad to move colorbar, in the form "5%",
+            pos is to right for righthand location.
+        cb_orient : str
+            Colorbar orientation, either 'vertical' or 'horizontal'.
+        cb_tick_int : int
+            Interval to use for colorbar tick labels,
+            higher number "thins" labels.
+        cb_label : str
+            Label for colorbar (e.g. units 'dBZ').
+        cb_fontsize : int
+            Font size of the colorbar label.
+        cb_ticklabel_size : int
+            Font size of colorbar tick labels.
         ax : Matplotlib axis instance
             Axis to plot. None will use the current axis.
         fig : Matplotlib figure instance
@@ -372,9 +383,6 @@ class RadarVerticalPlot(object):
         ts = image_2d_date(tSub2D, Ht2D, Data.T,
                              vmin=vmin, vmax=vmax, clevs=clevs,
                              cmap=cmap,
-                             color_bar=color_bar, cb_orient=cb_orient,
-                             cb_pad=cb_pad, cb_tick_int=cb_tick_int,
-                             cb_label=cb_label,
                              dForm=dForm, tz=tz, xdate=xdate,
                              date_MinTicker=date_MinTicker,
                              other_MajTicks=height_MajTicks,
@@ -383,6 +391,11 @@ class RadarVerticalPlot(object):
                              title=title,
                              xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
                              ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
+                             color_bar=color_bar, cb_orient=cb_orient,
+                             cb_pad=cb_pad, cb_tick_int=cb_tick_int,
+                             cb_label=cb_label,
+                             cb_fontsize=cb_fontsize,
+                             cb_ticklabel_size=cb_ticklabel_size,
                              ax=ax, fig=fig)
         if fill_surface:
             if self.surface is not None:
@@ -393,13 +406,13 @@ class RadarVerticalPlot(object):
             else:
                 print("No surface height information, cannot fill...")
         return
-
+### NG - THIS CODE IS LIKELY OUTDATED AND SHOULD BE DEPRECATED ###
     def wcr_time_height_image(self, field,
                            mask_procedure=None, mask_tuple=None,
                            mask_off_6degree=False, mask_subsurface=False,
                            mask_out_of_range=False, mask_surface_clutter=False,
                            mask_transmitter_leakage=False,
-                           ptype='pcolormesh', plot_log10_var=False,
+                           plot_log10_var=False,
                            cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
                            cmap='gist_ncar', color_bar=True,
                            cb_orient='vertical',
@@ -447,8 +460,6 @@ class RadarVerticalPlot(object):
             Minimum contour value to display.
         vmax : float
             Maximum contour value to display.
-        ptype : str
-            Type of plot to make, takes 'plot', 'contour', or 'pcolormesh'.
         plot_log10_var : bool
                 True plots the log base 10 of Data field.
         cmap : str
@@ -458,9 +469,8 @@ class RadarVerticalPlot(object):
         cb_pad : str
             Pad to move colorbar, in the form "5%",
             pos is to right for righthand location.
-        cb_loc : str
-            Location of colorbar, default is 'right', also available:
-            'bottom', 'top', 'left'.
+        cb_orient : str
+            Colorbar orientation, either 'vertical' or 'horizontal'.
         cb_tick_int : int
             Interval to use for colorbar tick labels,
             higher number "thins" labels.
@@ -531,6 +541,8 @@ class RadarVerticalPlot(object):
                              color_bar=color_bar, cb_orient=cb_orient,
                              cb_pad=cb_pad, cb_tick_int=cb_tick_int,
                              cb_label=cb_label,
+                             cb_fontsize=cb_fontsize,
+                             cb_ticklabel_size=cb_ticklabel_size,
                              dForm=dForm, tz=tz, xdate=xdate,
                              date_MinTicker=date_MinTicker,
                              other_MajTicks=height_MajTicks,
@@ -670,12 +682,9 @@ class MicrophysicalVerticalPlot(object):
 
     def time_height_image(self, field,
                            mask_procedure=None, mask_tuple=None,
-                           ptype='pcolormesh', plot_log10_var=False,
-                           cminmax=(0., 60.), clevs=25, vmin=None, vmax=None,
-                           cmap='gist_ncar',
-                           color_bar=True, cb_orient='vertical',
-                           cb_pad=.05, cb_tick_int=2,
-                           cb_label=None,
+                           plot_log10_var=False,
+                           cminmax=(0., 60.), clevs=25, cmap='gist_ncar',
+                           vmin=None, vmax=None,
                            dForm='%H:%M', tz=None, xdate=True,
                            date_MinTicker='minute',
                            height_MajTicks=None, height_MinTicks=None,
@@ -684,89 +693,89 @@ class MicrophysicalVerticalPlot(object):
                            title=None,
                            xlab=' ', xlabFontSize=16, xpad=7,
                            ylab=' ', ylabFontSize=16, ypad=7,
+                           color_bar=True, cb_orient='vertical',
+                           cb_pad=.05, cb_tick_int=2,
+                           cb_label=None,
+                           cb_fontsize=None, cb_ticklabel_size=None,
                            ax=None, fig=None):
         """
         Wrapper function to produce a contoured time series plot
-        of variable indicated
+        of variable indicated.
 
         Parameters
         ----------
-        field : float
-            Variable to plot as time series
+        field : array
+            Variable to plot as time series.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
             'less', 'less_equal', 'greater', 'greater_equal',
-            'equal', 'inside', 'outside'
+            'equal', 'inside', 'outside'.
         mask_tuple : (str, float[, float])
             Tuple containing the field name and value(s) below which to mask
-            field prior to plotting, for example to mask all data where
-        cminmax : tuple
-            (min,max) values for controur levels
-        clevs : int
-            Number of contour levels
-        vmin : float
-            Minimum contour value to display
-        vmax : float
-            Maximum contour value to display
-
-        ptype : str
-            Type of plot to make, takes 'plot', 'contour', or 'pcolormsh'
+            field prior to plotting.
         plot_log10_var : boolean
-                True plots the log base 10 of Data field
-
-        cmap : str
-            Matplotlib color map to use
-        color_bar : boolean
-            True to add colorbar, False does not
-        cb_pad : str
-            Pad to move colorbar, in the form "5%",
-            pos is to right for righthand location
-        cb_loc : str
-            Location of colorbar, default is 'right', also available:
-            'bottom', 'top', 'left'
-        cb_tick_int : int
-            Interval to use for colorbar tick labels,
-            higher number "thins" labels
-        cb_label : str
-            Label for colorbar (e.g. units 'dBZ')
-
+                True plots the log base 10 of Data field.
+        cminmax : tuple
+            (min, max) values for controur levels.
+        clevs : int
+            Number of contour levels.
+        vmin : float
+            Minimum contour value to display.
+        vmax : float
+            Maximum contour value to display.
         dForm : str
-            Format of the time string for x-axis labels
+            Format of the time string for x-axis labels.
         tz : str
-            Time zone info to use when creating axis labels (see datetime)
+            Time zone info to use when creating axis labels (see datetime).
         xdate : bool
-            True to use X-axis as date axis, false implies Y-axis is date axis
+            True to use X-axis as date axis, False implies Y-axis is date axis.
         date_MinTicker : str
             Sting to set minor ticks of date axis,
-            'second','minute','hour','day' supported
+            'second','minute','hour','day' supported.
         height_MajTicks : float
-            Values for major tickmark spacing for height axis
+            Values for major tickmark spacing for height axis.
         height_MinTicks : float
-            Values for minor tickmark spacing for height axis
+            Values for minor tickmark spacing for height axis.
         height_min : float
-            Minimum value for height axis
+            Minimum value for height axis.
         other_max : float
-            Maximum value for height axis
-
+            Maximum value for height axis.
         start_time : str
-            UTC time to use as start time for subsetting in datetime format
+            UTC time to use as start time for subsetting in datetime format.
             (e.g. 2014-08-20 12:30:00)
         end_time : str
-            UTC time to use as an end time for subsetting in datetime format
+            UTC time to use as an end time for subsetting in datetime format.
             (e.g. 2014-08-20 16:30:00)
-
+        cmap : str
+            Matplotlib color map to use.
         title : str
-            Plot title
+            Plot title.
         xlab : str
-            X-axis label
+            X-axis label.
         ylab : str
-            Y-axis label
+            Y-axis label.
         xpad : int
-            Padding for X-axis label
+            Padding for X-axis label.
         ypad : int
-            Padding for Y-axis label
+            Padding for Y-axis label.
+        color_bar : boolean
+            True adds colorbar, False does not.
+        cb_pad : str
+            Pad to move colorbar, in the form "5%",
+            pos is to right for righthand location.
+        cb_orient : str
+            Colorbar orientation, either 'vertical' or 'horizontal'.
+        cb_tick_int : int
+            Interval to use for colorbar tick labels,
+            higher number "thins" labels.
+        cb_label : str
+            Label for colorbar (e.g. units 'dBZ').
+        cb_fontsize : int
+            Font size of the colorbar label.
+        cb_ticklabel_size : int
+            Font size of colorbar tick labels.
         ax : Matplotlib axes instance
-            Optional axes instance to plot the graph
+            Optional axes instance to plot the graph.
         fig : Matplotlib figure instance
             Figure which to add the plot.
             None will use the current figure.
@@ -803,20 +812,21 @@ class MicrophysicalVerticalPlot(object):
 
         # Plot the time series
         ts = image_2d_date(tSub2D, Ht2D, Data,
-                             ptype=ptype,
-                             vmin=vmin, vmax=vmax, clevs=clevs,
-                             color_bar=color_bar, cb_orient=cb_orient,
-                             cb_pad=cb_pad, cb_tick_int=cb_tick_int,
-                             cb_label=cb_label,
-                             dForm=dForm, tz=tz, xdate=xdate,
-                             date_MinTicker=date_MinTicker,
-                             other_MajTicks=height_MajTicks,
-                             other_MinTicks=height_MinTicks,
-                             other_min=height_min, other_max=height_max,
-                             title=title,
-                             xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
-                             ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
-                             ax=ax, fig=fig)
+                           vmin=vmin, vmax=vmax, clevs=clevs,
+                           dForm=dForm, tz=tz, xdate=xdate,
+                           date_MinTicker=date_MinTicker,
+                           other_MajTicks=height_MajTicks,
+                           other_MinTicks=height_MinTicks,
+                           other_min=height_min, other_max=height_max,
+                           title=title,
+                           xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
+                           ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
+                           color_bar=color_bar, cb_orient=cb_orient,
+                           cb_pad=cb_pad, cb_tick_int=cb_tick_int,
+                           cb_label=cb_label,
+                           cb_fontsize=cb_fontsize,
+                           cb_ticklabel_size=cb_ticklabel_size,
+                           ax=ax, fig=fig)
 
         return
 

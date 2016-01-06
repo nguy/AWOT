@@ -289,20 +289,20 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
 
 
 def image_2d_date(Time, AxVar, PlotVar,
-                    ptype='pcolormesh', plot_log10_var=False,
-                    vmin=None, vmax=None, clevs=25,
-                    cmap=None,
-                    color_bar=True, cb_orient='vertical',
-                    cb_pad=.05, cb_tick_int=2,
-                    cb_label=None,
-                    dForm='%H:%M', tz=None, xdate=True,
-                    date_MinTicker='minute',
-                    other_MajTicks=None, other_MinTicks=None,
-                    other_min=None, other_max=None,
-                    title=None, titleFontSize=None,
-                    xlab=None, xlabFontSize=None, xpad=None,
-                    ylab=None, ylabFontSize=None, ypad=None,
-                    ax=None, fig=None):
+                  plot_log10_var=False,
+                  vmin=None, vmax=None, clevs=25, cmap=None,
+                  dForm='%H:%M', tz=None, xdate=True,
+                  date_MinTicker='minute',
+                  other_MajTicks=None, other_MinTicks=None,
+                  other_min=None, other_max=None,
+                  title=None, titleFontSize=None,
+                  xlab=None, xlabFontSize=None, xpad=None,
+                  ylab=None, ylabFontSize=None, ypad=None,
+                  color_bar=True, cb_orient=None,
+                  cb_fontsize=None, cb_ticklabel_size=None,
+                  cb_pad=None, cb_tick_int=None,
+                  cb_label=None,
+                  ax=None, fig=None):
     """
     Returns a time series plot, with time on X-axis and variable on Y-axis.
 
@@ -314,26 +314,14 @@ def image_2d_date(Time, AxVar, PlotVar,
         Variable (2D same as PlotVar) to use as other axis variable for plot.
     PlotVar : float
         Variable to plot as time series.
-    ptype : str
-        Type of plot to make, takes 'plot', 'contour', or 'pcolormsh'.
     vmin : float
         Minimum contour value to display.
     vmax : float
         Maximum contour value to display.
+    clevs : int
+        Number of levels to use in colorbar tick calculation.
     cmap : str
         Matplotlib color map to use.
-    color_bar : bool
-        True to add colorbar, False does not.
-    cb_pad : str
-        Pad to move colorbar, in the form "5%",
-        pos is to right for righthand location.
-    cb_loc : str
-        Location of colorbar, default is 'right', also available:
-        'bottom', 'top', 'left'.
-    cb_tick_int : int
-        Interval to use for colorbar tick labels, higher number "thins" labels.
-    cb_label : str
-        String to use as colorbar label.
     dForm : str
         Format of the time string for x-axis labels.
     tz : str
@@ -367,6 +355,21 @@ def image_2d_date(Time, AxVar, PlotVar,
         Minimum value for non-date axis.
     other_max : float
         Maximum value for non-date axis.
+    color_bar : bool
+        True to add colorbar, False does not.
+    cb_pad : str
+        Pad to move colorbar, in the form "5%",
+        pos is to right for righthand location.
+    cb_orient : str
+        Colorbar orientation, either 'vertical' or 'horizontal'.
+    cb_fontsize : int
+        Font size of the colorbar label.
+    cb_ticklabel_size : int
+        Font size of colorbar tick labels.
+    cb_tick_int : int
+        Interval to use for colorbar tick labels, higher number "thins" labels.
+    cb_label : str
+        String to use as colorbar label.
     ax : Matplotlib axis instance
         Axis to plot. None will use the current axis.
     fig : Matplotlib figure instance
@@ -399,23 +402,15 @@ def image_2d_date(Time, AxVar, PlotVar,
                  ax=ax)
 
     # Create the plot
-    if ptype == 'pcolormesh':
-        p = ax.pcolormesh(XVar, YVar, PlotVar,
+    p = ax.pcolormesh(XVar, YVar, PlotVar,
                           vmin=vmin, vmax=vmax, cmap=cmap)
-    elif ptype == 'contour':
-        p = ax.contourf(XVar, YVar, PlotVar,
-                        vmin=vmin, vmax=vmax, cmap=cmap)
 
     # Add Colorbar
     if color_bar:
-        cb = fig.colorbar(p, orientation=cb_orient,
-                          pad=cb_pad, ax=ax)  # ,ticks=clevels)
-        if cb_label is not None:
-            cb.set_label(cb_label)
-        # Set the number of ticks in the colorbar based upon number of contours
-        tick_locator = mtic.MaxNLocator(nbins=int(clevs / cb_tick_int))
-        cb.locator = tick_locator
-        cb.update_ticks()
+        cb = add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
+                          label=cb_label, fontsize=cb_fontsize,
+                          ticklabel_size=cb_ticklabel_size,
+                          clevs=clevs, tick_interval=cb_tick_int)
     return
 
 def plot_bivariate_frequency(xarr, yarr,
@@ -872,6 +867,53 @@ def _set_ts_axes(dForm='%H:%M', tz=None, xdate=True,
             titleFontSize = 16
         ax.set_title(title, fontsize = titleFontSize)
     return
+
+def add_colorbar(ax, plot_instance, orientation=None, pad=None,
+                 label=None, fontsize=None, ticklabel_size=None,
+                 clevs=None, tick_interval=None):
+    '''
+    Add Colorbar to a plot instance.
+
+    Parameters
+    ----------
+    ax : Matplotlib axis instance
+        Axis to plot.
+    plot : Matplotlib plot instance
+        Plot instance used to establish colorbar.
+    orientation : str
+        Colorbar orientation, either 'vertical' or 'horizontal'.
+    pad : str
+        Pad to move colorbar, in the form "5%",
+        positive is to right for righthand location.
+    label : str
+        String to use as colorbar label.
+    fontsize : int
+        Font size of the colorbar label.
+    ticklabel_size : int
+        Font size of colorbar tick labels.
+    levs : int
+        Number of colorbar levels to use in tick calculation.
+    tick_interval : int
+        Interval to use for colorbar tick labels, higher number "thins" labels.
+    '''
+    if orientation is None:
+        orientation = 'vertical'
+    if pad is None:
+        pad = .05
+    if tick_interval is None:
+        tick_interval = 2
+    cb = plt.colorbar(plot_instance, orientation=orientation,
+                      pad=pad, ax=ax)
+    if label is not None:
+        cb.set_label(label, fontsize=fontsize)
+    # Set the tick label size
+    cb.ax.tick_params(labelsize=ticklabel_size)
+    # Set the number of ticks in the colorbar based upon number of contours
+    if (clevs is not None) & (tick_interval is not None):
+        tick_locator = mtic.MaxNLocator(nbins=int(clevs / tick_interval))
+        cb.locator = tick_locator
+        cb.update_ticks()
+    return cb
 
 def create_polar_fig_ax(nrows=1, ncols=1, figsize=(5, 5)):
     '''
