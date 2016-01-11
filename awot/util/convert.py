@@ -7,6 +7,8 @@ These scripts are various convenience utilities.
 """
 from netCDF4 import num2date
 
+from ..io.common import _build_dict
+
 def pyart_radar_to_awot(radar, instrument=None, platform=None):
     """
     This function creates an AWOT radar instance from a Py-ART
@@ -126,21 +128,21 @@ def to_awot_flight(lon_dict=None, lat_dict=None, alt_dict=None,
 
     # Attempt to build AWOT dictionaries if arrays are provided
     if lon_array is not None:
-        awot_flight = _build_flight_dict(awot_flight, 'longitude',
+        awot_flight = _build_dict(awot_flight, 'longitude',
                         lon_array, lon_unit, lon_longname, lon_stdname)
     if lat_array is not None:
-        awot_flight = _build_flight_dict(awot_flight, 'latitude',
+        awot_flight = _build_dict(awot_flight, 'latitude',
                         lat_array, lat_unit, lat_longname, lat_stdname)
     if alt_array is not None:
-        awot_flight = _build_flight_dict(awot_flight, 'altitude',
+        awot_flight = _build_dict(awot_flight, 'altitude',
                         alt_array, alt_unit, alt_longname, alt_stdname)
     if time_array is not None:
-        awot_flight = _build_flight_dict(awot_flight, 'time',
+        awot_flight = _build_dict(awot_flight, 'time',
                         time_array, time_unit, time_longname, time_stdname)
 
     return awot_flight
 
-def _build_flight_dict(flight, key, data, units, longname, stdname):
+def _build_dict(flight, key, data, units, longname, stdname):
     flight[key] = {'data': data,
                    'units' : units,
                    'long_name' : longname,

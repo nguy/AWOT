@@ -398,5 +398,6 @@ def _get_latmos_time(fname, ncFile, Good_Indices):
     TimeSec = date2num(dtHrs, _get_epoch_units())
     # Now once again convert this data into a datetime instance
     Time_unaware = num2date(TimeSec, _get_epoch_units())
-    Time = Time_unaware
+    Time = {'data': Time_unaware, 'units': _get_epoch_units(),
+            'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time

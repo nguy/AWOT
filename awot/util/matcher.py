@@ -10,18 +10,20 @@ AWOT objects.
 
 """
 import numpy as np
+import scipy
 import datetime
-import calendar
-import scipy.io
-import scipy.spatial
-import pdb
-from operator import itemgetter
-from mpl_toolkits.basemap import Basemap
+from netCDF4 import date2num
+from ..io.common import convert_to_epoch_dict, _get_epoch_dict
+#import calendar
+#import scipy.spatial
+#import pdb
+#from operator import itemgetter
+#from mpl_toolkits.basemap import Basemap
 
 class TrackMatch(object):
     """Class for matching flight level data to other observations."""
 
-    def __init__(self, flight, data, basemap=None,
+    def __init__(self, flight, data,
                  start_time=None, end_time=None,
                  data_lon=None, data_lat=None,
                  data_height=None, data_time=None,
@@ -48,8 +50,6 @@ class TrackMatch(object):
         end_time : str
             UTC time to use as an end time for subsetting in datetime format.
             (e.g. 2014-08-20 16:30:00)
-        basemap : basemap instance
-            Basemap instance to use for plotting.
         data_lon : flt array
             Ndarray longitude [deg] array same size as data.
         data_lat : flt array
@@ -118,30 +118,36 @@ class TrackMatch(object):
         self.flight_alt = self._get_var_time_subset(
                              flight[altkey].copy(),
                              start_time, end_time)
-        self.flight_Uwind = self._get_var_time_subset(
-                             flight[ukey].copy(),
-                             start_time, end_time)
-        self.flight_Vwind = self._get_var_time_subset(
-                             flight[vkey].copy(),
-                             start_time, end_time)
+        if flight[ukey] is not None:
+            self.flight_Uwind = self._get_var_time_subset(
+                                 flight[ukey].copy(),
+                                 start_time, end_time)
+        if flight[vkey] is not None:
+            self.flight_Vwind = self._get_var_time_subset(
+                                 flight[vkey].copy(),
+                                 start_time, end_time)
+
+        # Since time could come in in different datetime units,
+        # we need to convert to common epoch times
+        flight_epoch = convert_to_epoch_dict(flight[timekey])
         self.flight_time = self._get_var_time_subset(
-                             flight[timekey].copy(),
+                             flight_epoch,
                              start_time, end_time)
 
         # Create a field to store matched data
-        self.matchdata = {}
-        self.matchdata['flight_longitude'] = self.flight_lon
-        self.matchdata['flight_latitude'] = self.flight_lat
-        self.matchdata['flight_altitude'] = self.flight_alt
-        self.matchdata['flight_time'] = self.flight_time
+        self.flight_matchdata = {}
+        self.flight_matchdata['longitude'] = self.flight_lon
+        self.flight_matchdata['latitude'] = self.flight_lat
+        self.flight_matchdata['altitude'] = self.flight_alt
+        self.flight_matchdata['time'] = self.flight_time
 
         for field in flight.keys():
             try:
-                self.matchdata[field] = self._get_var_time_subset(
+                self.flight_matchdata[field] = self._get_var_time_subset(
                                           flight[field].copy(),
                                           start_time, end_time)
             except:
-                self.matchdata[field] = None
+                self.flight_matchdata[field] = None
 
         self.data_fields = {}
         if field_match_dict is None:
@@ -178,21 +184,24 @@ class TrackMatch(object):
 
         if data_time is None:
             try:
-                self.data_time = self.data['time']
+                self.data_time = convert_to_epoch_dict(self.data['time'])
             except:
+                self.data_time = _get_epoch_dict(
+                                    self.data['time']['data'],
+                                    self.data['time']['units'])
+            else:
                 print("Check that data is an AWOT object!")
         else:
-            self.data_time = data_time
+            try:
+                self.data_time = convert_to_epoch_dict(data_time)
+            except:
+                self.data_time = _get_epoch_dict(
+                                    data_time['data'],
+                                    data_time['units'])
 
-        self.basemap = basemap
-
-        # Calculate x,y map position coordinates
-        if self.basemap is not None:
-            self.flight_x, self.flight_y = self.basemap(
-                 self.flight_lon['data'][:].ravel(),
-                 self.flight_lat['data'][:].ravel())
-
-            self.data_x, self.data_y = self.basemap(self.data_lon, self.data_lat)
+#        self.basemap = basemap
+        self.start_time = start_time
+        self.end_time = end_time
 
         # Convert latitude and longitude to radians
         self.latvals = np.radians(self.data_lat)
@@ -201,9 +210,12 @@ class TrackMatch(object):
         self.lon0vals = np.radians(self.flight_lon['data'][:])
 
     def kdtree(self, leafsize=16,
-               print_match_pairs=False):
+               use_time=False, print_match_pairs=False,
+               query_k=1, query_eps=0, query_p=2,
+               query_distance_upper_bound=np.inf,
+               query_n_jobs=1):
         '''
-        Find the closest point using a KD Tree method.
+        Find the closest point using a K-Dimensional Tree method.
 
         Parameters
         ----------
@@ -211,9 +223,14 @@ class TrackMatch(object):
             Positive number of points at which time
             scipy.spatial.cKDTree switches to brute force.
             Default same as scipy default.
+        use_time: bool
+            True includes the time variables in KD-Tree.
+            Default is False.
         print_match_pairs: bool
             True returns screen print out of pair results.
             Default is False.
+        query_?? : See scipy.spatial.cKDTree.query
+            Default keyword values used in the cKDTree.query.
         '''
         # Create lists to contain the indices for each flight point
         indlat = []
@@ -226,13 +243,35 @@ class TrackMatch(object):
         slons0, slats0 = np.sin(self.lon0vals), np.sin(self.lat0vals)
 
         # Build kd-tree from big arrays of 3D coordinates
-        triples = list(zip(np.ravel(self.data_lon), np.ravel(self.data_lat), np.ravel(self.data_height)))
-        kdt = scipy.spatial.cKDTree(triples)
+        if use_time:
+            triples = list(zip(np.ravel(self.data_lon), np.ravel(self.data_lat),
+                               np.ravel(self.data_height),
+                               date2num(np.ravel(self.data_time['data']),
+                                                 self.data_time['units'])))
+        else:
+            triples = list(zip(np.ravel(self.data_lon), np.ravel(self.data_lat),
+                               np.ravel(self.data_height)))
+        kdt = scipy.spatial.cKDTree(triples, leafsize=leafsize)
 
         for ii in range(len(self.lat0vals)):
-            dist_sq_min, minindex_1d = kdt.query([self.flight_lon['data'][ii],
-                                                  self.flight_lat['data'][ii],
-                                                  self.flight_alt['data'][ii]])
+            if use_time:
+                dist_sq_min, minindex_1d = kdt.query([self.flight_lon['data'][ii],
+                                                      self.flight_lat['data'][ii],
+                                                      self.flight_alt['data'][ii],
+                                                      date2num(self.flight_time['data'][ii],
+                                                               self.flight_time['units'])],
+                                                      k=query_k, eps=query_eps,
+                                                      p=query_p,
+                                                      distance_upper_bound=query_distance_upper_bound,
+                                                      n_jobs=query_n_jobs)
+            else:
+                dist_sq_min, minindex_1d = kdt.query([self.flight_lon['data'][ii],
+                                                      self.flight_lat['data'][ii],
+                                                      self.flight_alt['data'][ii]],
+                                                      k=query_k, eps=query_eps,
+                                                      p=query_p,
+                                                      distance_upper_bound=query_distance_upper_bound,
+                                                      n_jobs=query_n_jobs)
             iy_min, ix_min = np.unravel_index(minindex_1d, self.data_lat.shape)
             indlon.append(iy_min)
             indlat.append(ix_min)
@@ -241,9 +280,10 @@ class TrackMatch(object):
             self._print_pair_by_index(indlon, indlat)
 
         self._get_matchdata_by_index(indlon, indlat)
-        return self.matchdata
+        return MatchData(self.flight_matchdata, self.data_matchdata,
+                         self.start_time, self.end_time)
 
-    def near_neighbor_tunnel(self, start_time=None, end_time=None):
+    def near_neighbor_tunnel(self, use_time=False):
         '''
         Find closest point to the set of (lat,lon) points
         provided by the flight data object to data object points.
@@ -253,6 +293,12 @@ class TrackMatch(object):
         Returns iy,ix such that the square of the tunnel distance
         between (latval[it,ix],lonval[iy,ix]) and (lat0,lon0)
         is minimum.
+
+        Parameters
+        ----------
+        use_time: bool
+            True to limit results to closest time value.
+            Default is False.
         '''
         # Create lists to contain the indices for each flight point
         indlat = []
@@ -277,58 +323,8 @@ class TrackMatch(object):
             indlat.append(ix_min)
 
         self._get_matchdata_by_index(indlon, indlat)
-        return self.matchdata
-
-#### CODE SNIPPET FROM GEORGE DUFFY - EQUIVALENT TO KDTREE ABOVE? ###
-#### DIFFERENCE IS THAT TIME IS ALSO SEARCHED IN THESE ROUTINES ###
-#     def weighted_stats(threshold_time=180, threshold_hor=250,
-#                      threshold_vert=125, threshold_ac=6):
-#         """
-#         Match the radar field values to each aicraft time
-#         """
-#         dt, dr, timestamp, actime, height, longheight, matchtimes = [], [], [], [], [], [], []
-#         for i in range(len(self.flight_time['data'][:])):
-#             timespan = range(int(self.flight_time['data'][i] - threshold_time),
-#                                  int(self.flight_time['data'][i] + threshold_time))
-#             rdex = np.in1d(self.data_time['data'][:], timespan)
-#             if np.mod(i, 1000) == 0:
-#                 print(i)
-#             if np.any(self.data_time['data'][:][rdex]):
-#                 field = np.dstack([self.data_x[rdex, :, :].ravel(),
-#                                    self.data_y[rdex, :, :].ravel(),
-#                                    self.data_height[rdex, :, :].ravel()])[0]
-#                 tree = scipy.spatial.cKDTree(field)
-#                 goahead = True
-#                 predist, predex = tree.query([self.flight_x[i],
-#                                               self.flight_y[i],
-#                                               self.flight_alt['data'][i]], 1)
-#                 if np.any(predex):
-# #***                    loctime = itemgetter(predex)(radtime_3D[rdex,:,:].ravel())
-#                     dtime = self.flight_time['data'][i] - loctime
-#                     trux = self.flight_x[i] - self.flight_Uwind['data'][i] * dtime
-#                     truy = self.flight_y[i] - self.flight_Vwind['data'][i] * dtime
-#                     truz = self.flight_alt['data'][i]
-#                     closest, matchdexa = tree.query([trux[0], truy[0], truz], 10)
-#                     if np.max(closest) > 300:
-#                         goahead = False
-#                     else:
-#                         matchtimes = np.hstack((matchtimes, self.flight_time['data'][:][i]*np.ones(np.shape(matchdexa))))
-#                     ###Retrieve reflectivities with weighted statistics
-#                     if goahead:
-#                         matchdex = matchdexa.astype(int)
-#                         branch14 = itemgetter(matchdex)(flec14[rdex, :, :].ravel())
-#                         branch35 = itemgetter(matchdex)(flec35[rdex, :, :].ravel())
-#                         timebranch = itemgetter(matchdex)(radtime_3D[rdex, :, :].ravel())
-#                         if np.all((branch14 > -100) & (branch35 > -100)):
-#                             if np.any(branch14 > 30):
-#                                 branch14 = branch14[branch14 < 30]
-#                                 branch35 = branch14[branch14 < 30]
-#                             print('match')
-#                             timestamp.append(np.mean(timebranch))
-#                             actime.append(self.flight_time['data'][i])
-#                             dt.append(np.mean(np.abs(matchtimes - timestamp[-1])))
-#                             dt_std.append(np.std(np.abs(matchtimes - timestamp[-1])))
-#         return match_data
+        return MatchData(self.flight_matchdata, self.data_matchdata,
+                         self.start_time, self.end_time)
 
     def near_neighbor_pyart(self, radar, basemap=None):
         """
@@ -467,13 +463,27 @@ class TrackMatch(object):
 
     def _get_matchdata_by_index(self, indlon, indlat):
         '''Retrieve data fields using calculated indices.'''
+        self.data_matchdata = {}
         for field in self.data_fields.keys():
-            self.matchdata[field] = self.data_fields[field].copy()
-            self.matchdata[field]['data'] = self.data_fields[field]['data'][indlon, indlat]
+            self.data_matchdata[field] = self.data_fields[field].copy()
+            self.data_matchdata[field]['data'] = self.data_fields[field]['data'][indlon, indlat]
         return
 
     def _get_matchdata_by_pyart_index(self, radar, indel, indaz, indrng):
         '''Retrieve data fields using calculated Py-ART indices.'''
+        self.data_matchdata = {}
         for field in radar.fields.keys():
-            self.matchdata[field] = radar.fields[field].copy()
-            self.matchdata[field]['data'] = radar.fields[field]['data'][azin, rgin]
+            self.data_matchdata[field] = radar.fields[field].copy()
+            self.data_matchdata[field]['data'] = radar.fields[field]['data'][azin, rgin]
+
+class MatchData(object):
+    """Class for storing matched flight level data to other observations."""
+
+    def __init__(self, flight, data, start_time=None, end_time=None):
+        '''
+        '''
+        self.flight = flight
+        self.data = data
+        self.start_time = start_time
+        self.end_time = end_time
+        return

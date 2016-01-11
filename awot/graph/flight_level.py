@@ -23,9 +23,11 @@ from matplotlib import ticker
 from datetime import datetime
 import scipy.ndimage as scim
 
-from .common import (plot_date_ts, image_2d_date, _get_earth_radius,
+from .common import (plot_date_ts, image_2d_date,
+                     _get_earth_radius,
                      _check_basemap, _check_field,
-                     _parse_ax_fig, _parse_ax)
+                     _parse_ax_fig, _parse_ax,
+                     add_colorbar)
 
 
 class FlightLevel(object):
@@ -358,6 +360,7 @@ class FlightLevel(object):
             cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
             cmap='gist_ncar', clabel='dBZ',
             color_bar=True, cb_orient='vertical', cb_pad=.05, cb_tick_int=2,
+            cb_fontsize=None, cb_ticklabel_size=None,
             x_axis_array='distance', dForm='%H:%M', tz=None,
             date_MinTicker='minute', ax=None, fig=None):
         '''
@@ -375,44 +378,45 @@ class FlightLevel(object):
         xs_length : int
             Number of
         start_time : string
-            UTC time to use as start time for subsetting in datetime format
+            UTC time to use as start time for subsetting in datetime format.
             (e.g. 2014-08-20 12:30:00)
         end_time : string
-            UTC time to use as an end time for subsetting in datetime format
+            UTC time to use as an end time for subsetting in datetime format.
             (e.g. 2014-08-20 16:30:00)
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
             'less', 'less_equal', 'greater', 'greater_equal', 'equal',
-            'inside', 'outside'
+            'inside', 'outside'.
         mask_tuple : (str, float[, float])
             Tuple containing the field name and value(s) below which to mask
-            field prior to plotting, for example to mask all data where
+            field prior to plotting.
         cminmax : tuple
-            (min,max) values for controur levels
+            (min,max) values for controur levels.
         clevs : integer
-            Number of contour levels
+            Number of contour levels.
         vmin : float
-            Minimum contour value to display
+            Minimum contour value to display.
         vmax : float
-            Maximum contour value to display
-        clabel : string
-            Label for colorbar (e.g. units 'dBZ')
-
-        title : string
-            Plot title
-        title_size : int
-            Font size of title to display
-
+            Maximum contour value to display.
         cmap : string
-            Matplotlib color map to use
+            Matplotlib color map to use.
+        clabel : string
+            Label for colorbar (e.g. units 'dBZ').
+        title : string
+            Plot title.
+        title_size : int
+            Font size of title to display.
         color_bar : boolean
-            True to add colorbar, False does not
+            True to add colorbar, False does not.
+        cb_fontsize : int
+            Font size of the colorbar label.
+        cb_ticklabel_size : int
+            Font size of colorbar tick labels.
         cb_pad : str
             Pad to move colorbar, in the form "5%", pos is to right
             for righthand location.
-        cb_loc : str
-            Location of colorbar, default is 'right', also available:
-            'bottom', 'top', 'left'.
+        cb_orient : str
+            Colorbar orientation, either 'vertical' or 'horizontal'.
         cb_tick_int : int
             Interval to use for colorbar tick labels,
             higher number "thins" labels.
@@ -425,7 +429,6 @@ class FlightLevel(object):
         date_MinTicker : str
             Sting to set minor ticks of date axis,
             'second','minute','hour','day' supported.
-
         ax : Matplotlib axis instance
             Axis to plot on. None will use the current axis.
         fig : Matplotlib figure instance
@@ -464,7 +467,6 @@ class FlightLevel(object):
         xsDist = np.empty(len(lonSub))
 
         for ii in range(len(lonSub)):
-            print(lonSub[ii])
             xsX[ii] = self._get_lon_index(lonSub[ii], radar)
             xsY[ii] = self._get_lat_index(latSub[ii], radar)
 
@@ -525,14 +527,10 @@ class FlightLevel(object):
         # Add Colorbar
         if color_bar:
             cbStr = Var['long_name'] + ' (' + Var['units'] + ')'
-            cb = fig.colorbar(p, orientation=cb_orient,
-                              pad=cb_pad, ax=ax)  # ,ticks=clevels)
-            cb.set_label(cbStr)
-            # Set the number of ticks in the colorbar based upon number of
-            # contours
-            tick_locator = ticker.MaxNLocator(nbins=int(clevs / cb_tick_int))
-            cb.locator = tick_locator
-            cb.update_ticks()
+            cb = add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
+                              label=cbStr, fontsize=cb_fontsize,
+                              ticklabel_size=cb_ticklabel_size,
+                              clevs=clevs, tick_interval=cb_tick_int)
 
         # Add title
         ax.set_title(title, fontsize=title_size)
@@ -544,9 +542,10 @@ class FlightLevel(object):
     def draw_boundary(self, **kwargs):
         """
         Draw a boundary around the map.
+
         Parameters
         ----------
-           See basemap documentation
+        See basemap documentation.
         """
         self.basemap.drawmapboundary(**kwargs)
 
@@ -554,6 +553,7 @@ class FlightLevel(object):
                    lon0=None, lat0=None, length=None, **kwargs):
         """
         Draw a reference scale on the map.
+
         Parameters
         ----------
         location : str
@@ -624,6 +624,7 @@ class FlightLevel(object):
                    **kwargs):
         """
         Draw a reference scale on the map.
+
         Parameters
         ----------
         barbspacing : int

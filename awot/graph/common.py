@@ -5,27 +5,25 @@ awot.graph.common
 Common graphing routines.
 
 """
-# ------------------------------------------------------------------
-# Load the needed packages
 
 from __future__ import print_function
 import numpy as np
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
-from matplotlib.dates import DateFormatter
 from matplotlib.dates import (
-    SecondLocator, MinuteLocator, HourLocator, DayLocator)
+    DateFormatter, SecondLocator, MinuteLocator,
+    HourLocator, DayLocator)
 from matplotlib import ticker as mtic
 import matplotlib.cm as cm
 from datetime import datetime
 
-###########################
-#   Map creation module   #
-###########################
+###################
+#   Map modules   #
+###################
 
 
 def create_basemap(corners=None, proj=None, resolution='l',
-                   area_thresh=1000.,
+                   area_thresh=None, lon_0=None, lat_0=None,
                    meridians=True, parallels=True, dLon=2., dLat=2.,
                    coastlines=True, countries=True, states=False,
                    counties=False,
@@ -82,7 +80,8 @@ def create_basemap(corners=None, proj=None, resolution='l',
     bm = Basemap(projection=proj, resolution=resolution,
                  area_thresh=area_thresh,
                  llcrnrlon=corners[0], urcrnrlon=corners[2],
-                 llcrnrlat=corners[1], urcrnrlat=corners[3], ax=ax)
+                 llcrnrlat=corners[1], urcrnrlat=corners[3],
+                 lon_0=lon_0, lat_0=lat_0, ax=ax)
 
     # Check the customizations for the basemap
     if meridians:
@@ -101,12 +100,11 @@ def create_basemap(corners=None, proj=None, resolution='l',
         bm.drawcounties()
     if rivers:
         bm.drawrivers()
-
     return bm
 
-#############################
-#   Plot creation modules   #
-#############################
+####################
+#   Plot modules   #
+####################
 
 
 def plot_polar_contour(values, azimuths, zeniths, nlevs=30,
@@ -173,18 +171,46 @@ def plot_polar_contour(values, azimuths, zeniths, nlevs=30,
     ax.set_theta_direction(-1)  # This makes the angles increase clockwise
 
     p = ax.pcolormesh(theta, r, values, cmap=cmap, vmin=vmin, vmax=vmax)
-
     return p
 
+
+def plot_fill_surface(xarr, surface, color=None, ymin=None, ax=None):
+    """
+    Add filled surface to plot (e.g. time-height).
+
+    Parameters
+    ----------
+    xarr : array
+        Array of x values.
+    surface : array
+        Array of surface height in meters. Same size as xarr.
+    color : str
+        Color string to use to fill below surface. If none
+        defaults to dark gray.
+    min : float
+        Minimum number to use for fell. If None defaults to 0.
+    ax : Matplotlib axis instance
+        Axis to plot. None will use the current axis.
+    """
+    # parse parameters
+    ax = _parse_ax(ax)
+
+    if ymin is None:
+        ymin = 0.
+    if color is None:
+        color = '0.85'
+
+    p = ax.fill_between(xarr, ymin, surface, facecolor=color)
+    return
 
 def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
                  dForm='%H:%M', tz=None, xdate=True,
                  date_MinTicker='minute',
                  other_MajTicks=None, other_MinTicks=None,
                  other_min=None, other_max=None,
-                 title=None,
-                 xlab=None, xlabFontSize=16, xpad=7,
-                 ylab=None, ylabFontSize=16, ypad=7,
+                 title=None, titleFontSize=None,
+                 xlab=None, xlabFontSize=None, xpad=None,
+                 ylab=None, ylabFontSize=None, ypad=None,
                  ax=None):
     """
     Returns a time series plot, with time on X-axis and variable on Y-axis.
@@ -210,6 +236,8 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
         True to use X-axis as date axis, false implies Y-axis is date axis.
     title : str
         Plot title.
+    titleFontSize : int
+        Font size to use for Title label.
     xlab : str
         X-axis label.
     ylab : str
@@ -218,6 +246,10 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
         Padding for X-axis label.
     ypad : int
         Padding for Y-axis label.
+    xlabFontSize : int
+        Font size to use for X-axis label.
+    ylabFontSize : int
+        Font size to use for Y-axis label.
     date_MinTicker : str
         Sting to set minor ticks of date axis,
         'second','minute','hour','day' supported.
@@ -245,7 +277,7 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
                  date_MinTicker=date_MinTicker,
                  other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
                  other_min=other_min, other_max=other_max,
-                 title=title,
+                 title=title, titleFontSize=titleFontSize,
                  xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
                  ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
                  ax=ax)
@@ -253,25 +285,24 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
     ax.plot_date(Time, Var, tz=tz, xdate=xdate, ydate=ydate,
                  mfc=color, mec=color, marker=marker,
                  markersize=msize, lw=lw)
-
     return
 
 
 def image_2d_date(Time, AxVar, PlotVar,
-                    ptype='pcolormesh', plot_log10_var=False,
-                    vmin=None, vmax=None, clevs=25,
-                    cmap=None,
-                    color_bar=True, cb_orient='vertical',
-                    cb_pad=.05, cb_tick_int=2,
-                    cb_label=None,
-                    dForm='%H:%M', tz=None, xdate=True,
-                    date_MinTicker='minute',
-                    other_MajTicks=None, other_MinTicks=None,
-                    other_min=None, other_max=None,
-                    title=None,
-                    xlab=None, xlabFontSize=16, xpad=7,
-                    ylab=None, ylabFontSize=16, ypad=7,
-                    ax=None, fig=None):
+                  plot_log10_var=False,
+                  vmin=None, vmax=None, clevs=25, cmap=None,
+                  dForm='%H:%M', tz=None, xdate=True,
+                  date_MinTicker='minute',
+                  other_MajTicks=None, other_MinTicks=None,
+                  other_min=None, other_max=None,
+                  title=None, titleFontSize=None,
+                  xlab=None, xlabFontSize=None, xpad=None,
+                  ylab=None, ylabFontSize=None, ypad=None,
+                  color_bar=True, cb_orient=None,
+                  cb_fontsize=None, cb_ticklabel_size=None,
+                  cb_pad=None, cb_tick_int=None,
+                  cb_label=None,
+                  ax=None, fig=None):
     """
     Returns a time series plot, with time on X-axis and variable on Y-axis.
 
@@ -283,26 +314,14 @@ def image_2d_date(Time, AxVar, PlotVar,
         Variable (2D same as PlotVar) to use as other axis variable for plot.
     PlotVar : float
         Variable to plot as time series.
-    ptype : str
-        Type of plot to make, takes 'plot', 'contour', or 'pcolormsh'.
     vmin : float
         Minimum contour value to display.
     vmax : float
         Maximum contour value to display.
+    clevs : int
+        Number of levels to use in colorbar tick calculation.
     cmap : str
         Matplotlib color map to use.
-    color_bar : bool
-        True to add colorbar, False does not.
-    cb_pad : str
-        Pad to move colorbar, in the form "5%",
-        pos is to right for righthand location.
-    cb_loc : str
-        Location of colorbar, default is 'right', also available:
-        'bottom', 'top', 'left'.
-    cb_tick_int : int
-        Interval to use for colorbar tick labels, higher number "thins" labels.
-    cb_label : str
-        String to use as colorbar label.
     dForm : str
         Format of the time string for x-axis labels.
     tz : str
@@ -311,6 +330,8 @@ def image_2d_date(Time, AxVar, PlotVar,
         True to use X-axis as date axis, false implies Y-axis is date axis.
     title : str
         Plot title.
+    titleFontSize : int
+        Font size to use for Title label.
     xlab : str
         X-axis label.
     ylab : str
@@ -319,6 +340,10 @@ def image_2d_date(Time, AxVar, PlotVar,
         Padding for X-axis label.
     ypad : int
         Padding for Y-axis label.
+    xlabFontSize : int
+        Font size to use for X-axis label.
+    ylabFontSize : int
+        Font size to use for Y-axis label.
     date_MinTicker : str
         Sting to set minor ticks of date axis,
         'second','minute','hour','day' supported.
@@ -330,6 +355,21 @@ def image_2d_date(Time, AxVar, PlotVar,
         Minimum value for non-date axis.
     other_max : float
         Maximum value for non-date axis.
+    color_bar : bool
+        True to add colorbar, False does not.
+    cb_pad : str
+        Pad to move colorbar, in the form "5%",
+        pos is to right for righthand location.
+    cb_orient : str
+        Colorbar orientation, either 'vertical' or 'horizontal'.
+    cb_fontsize : int
+        Font size of the colorbar label.
+    cb_ticklabel_size : int
+        Font size of colorbar tick labels.
+    cb_tick_int : int
+        Interval to use for colorbar tick labels, higher number "thins" labels.
+    cb_label : str
+        String to use as colorbar label.
     ax : Matplotlib axis instance
         Axis to plot. None will use the current axis.
     fig : Matplotlib figure instance
@@ -337,7 +377,6 @@ def image_2d_date(Time, AxVar, PlotVar,
     """
     # parse parameters
     ax = _parse_ax(ax)
-
     # If no cmap is specified, grab current
     if cmap is None:
         cmap = cm.get_cmap()
@@ -357,40 +396,347 @@ def image_2d_date(Time, AxVar, PlotVar,
                  date_MinTicker=date_MinTicker,
                  other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
                  other_min=other_min, other_max=other_max,
-                 title=title,
+                 title=title, titleFontSize=titleFontSize,
                  xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
                  ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
                  ax=ax)
 
     # Create the plot
-    if ptype == 'pcolormesh':
-        p = ax.pcolormesh(XVar, YVar, PlotVar,
+    p = ax.pcolormesh(XVar, YVar, PlotVar,
                           vmin=vmin, vmax=vmax, cmap=cmap)
-    elif ptype == 'contour':
-        p = ax.contourf(XVar, YVar, PlotVar,
-                        vmin=vmin, vmax=vmax, cmap=cmap)
 
     # Add Colorbar
     if color_bar:
-        cb = fig.colorbar(p, orientation=cb_orient,
-                          pad=cb_pad, ax=ax)  # ,ticks=clevels)
-        if cb_label is not None:
-            cb.set_label(cb_label)
-        # Set the number of ticks in the colorbar based upon number of contours
-        tick_locator = mtic.MaxNLocator(nbins=int(clevs / cb_tick_int))
-        cb.locator = tick_locator
-        cb.update_ticks()
-
+        cb = add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
+                          label=cb_label, fontsize=cb_fontsize,
+                          ticklabel_size=cb_ticklabel_size,
+                          clevs=clevs, tick_interval=cb_tick_int)
     return
 
+def plot_bivariate_frequency(xarr, yarr,
+                             xbinsminmax=None, nbinsx=50,
+                             ybinsminmax=None, nbinsy=50,
+                             mask_below=None,
+                             start_time=None, end_time=None,
+                             plot_percent=False, plot_colorbar=True,
+                             x_min=None, x_max=None,
+                             y_min=None, y_max=None,
+                             xlab=None, xlabFontSize=None, xpad=None,
+                             ylab=None, ylabFontSize=None, ypad=None,
+                             title=None, titleFontSize=None,
+                             store_to_awot_field=False,
+                             ax=None, fig=None):
+    """
+    Create a bivariate frequency distribution plot of two variables.
+
+    Parameters
+    ----------
+    xarr : array
+        First array to be used, plotted along x-axis.
+    yarr : array
+        Second array to be used, plotted along y-axis.
+    xbinsminmax : 2-tuple
+        A tuple with the minimum and maximax values to
+        use with xarr. None will use min/max of xarr.
+    nbinsx : int
+        The number of bins to use with xarr, default is 50.
+    ybinsminmax : array
+        A tuple with the minimum and maximax values to
+        use with yarr. None will use min/max of yarr.
+    nbinsy : int
+        The number of bins to use with yarr, default is 50.
+    mask_below : float
+        If provided, values less than mask_below will be masked.
+    start_time : str
+        UTC time to use as start time for subsetting in datetime format.
+        (e.g. 2014-08-20 12:30:00)
+    end_time : str
+        UTC time to use as an end time for subsetting in datetime format.
+        (e.g. 2014-08-20 16:30:00)
+    plot_percent : boolean
+        True to display percentage. Default is to display fraction.
+    plot_colorbar : boolean
+        True to diaplay colorbar. False does not display colorbar.
+    x_min : float
+        Minimum value for X-axis.
+    x_max : float
+        Maximum value for X-axis.
+    y_min : float
+        Minimum value for Y-axis.
+    y_max : float
+        Maximum value for Y-axis.
+    title : str
+        Plot title.
+    titleFontSize : int
+        Font size to use for Title label.
+    xlab : str
+        X-axis label.
+    ylab : str
+        Y-axis label.
+    xpad : int
+        Padding for X-axis label.
+    ypad : int
+        Padding for Y-axis label.
+    xlabFontSize : int
+        Font size to use for X-axis label.
+    ylabFontSize : int
+        Font size to use for Y-axis label.
+    ax : Matplotlib axis instance
+        Axis to plot. None will use the current axis.
+    fig : Matplotlib figure instance
+        Figure on which to add the plot. None will use the current figure.
+    """
+    # parse parameters
+    ax = _parse_ax(ax)
+
+    if xbinsminmax is None:
+        xbinsminmax = (np.ma.min(xarr), np.ma.max(xarr))
+    if ybinsminmax is None:
+        ybinsminmax = (np.ma.min(yarr), np.ma.max(yarr))
+    binsx = np.linspace(xbinsminmax[0], xbinsminmax[1], nbinsx, endpoint=True)
+    binsy = np.linspace(ybinsminmax[0], ybinsminmax[1], nbinsy, endpoint=True)
+
+    CFAD, xedges, yedges = np.histogram2d(xarr.ravel(), yarr.ravel(),
+                                      bins=(binsx, binsy),normed=True)
+    X, Y = np.meshgrid(xedges, yedges)
+    if mask_below is not None:
+        CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
+
+    cb_title = "Frequency"
+    if plot_percent:
+        CFAD = CFAD * 100.
+        cb_title = cb_title + " (%)"
+
+    # Set the axes
+    _set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
+              title=title, titleFontSize=titleFontSize,
+              xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
+              xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
+              ax=ax)
+    # Plot the data
+    p = ax.pcolormesh(X, Y, CFAD.T)
+
+    if plot_colorbar:
+        cb = plt.colorbar(p, ax=ax)
+        cb.set_label(cb_title)
+    return
+
+def plot_cfad(xarr, htarr, height_axis=0,
+              xbinsminmax=None, nbinsx=50,
+              mask_below=None, plot_percent=False,
+              plot_colorbar=True,
+              x_min=None, x_max=None,
+              y_min=None, y_max=None,
+              xlab=None, xlabFontSize=None, xpad=None,
+              ylab=None, ylabFontSize=None, ypad=None,
+              title=None, titleFontSize=None,
+              ax=None, fig=None):
+    """
+    Create a frequency by altitude distribution plot of two variables.
+    This is the traditional method of calculating a frequency distribution
+    at each height of input array by iterating through the height array
+    and input data array.
+
+    Parameters
+    ----------
+    xarr : array
+        First array to be used, plotted along x-axis.
+    htarr : array
+        Height array to be used, plotted along y-axis.
+    height_axis : int
+        The axis of 2-D xarr that is the height axis. This will
+        be used to iterate over.
+    xbinsminmax : 2-tuple
+        A tuple with the minimum and maximax values to
+        use with xarr. None will use min/max of xarr.
+    nbinsx : int
+        The number of bins to use with xarr, default is 50.
+    mask_below : float
+        If provided, values less than mask_below will be masked.
+    plot_percent : boolean
+        True to display percentage. Default is to display fraction.
+    plot_colorbar : boolean
+        True to diaplay colorbar. False does not display colorbar.
+    x_min : float
+        Minimum value for X-axis.
+    x_max : float
+        Maximum value for X-axis.
+    y_min : float
+        Minimum value for Y-axis.
+    y_max : float
+        Maximum value for Y-axis.
+    title : str
+        Plot title.
+    titleFontSize : int
+        Font size to use for Title label.
+    xlab : str
+        X-axis label.
+    ylab : str
+        Y-axis label.
+    xpad : int
+        Padding for X-axis label.
+    ypad : int
+        Padding for Y-axis label.
+    xlabFontSize : int
+        Font size to use for X-axis label.
+    ylabFontSize : int
+        Font size to use for Y-axis label.
+    ax : Matplotlib axis instance
+        Axis to plot. None will use the current axis.
+    fig : Matplotlib figure instance
+        Figure on which to add the plot. None will use the current figure.
+    """
+    # parse parameters
+    ax = _parse_ax(ax)
+
+    if xbinsminmax is None:
+        xbinsminmax = (np.ma.min(xarr), np.ma.max(xarr))
+    binsx = np.linspace(xbinsminmax[0], xbinsminmax[1], nbinsx, endpoint=True)
+
+    cb_title = "Frequency"
+    percent = False
+
+    if plot_percent:
+        cb_title = cb_title + " (%)"
+        percent = True
+
+    # Create CFAD array to fill
+    nh = len(htarr)
+    CFAD = np.empty((nh, len(binsx)-1))
+    for nn in range(nh):
+        CFAD[nn, :], bin_edges = np.histogram(xarr[:, nn], bins=binsx, density=percent)
+
+    X, Y = np.meshgrid(bin_edges, htarr)
+    if mask_below is not None:
+        CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
+
+    # Set the axes
+    _set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
+              title=title, titleFontSize=titleFontSize,
+              xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
+              xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
+              ax=ax)
+    # Plot the data
+    p = ax.pcolormesh(X, Y, CFAD)
+
+#     if plot_contour_levels is not None:
+#         print("CONTOURING")
+#         xtick = binsx[2] - binsx[1]
+#         x1 = binsx[:-1] + ( xtick * .5 )
+#         X1, Y1 = np.meshgrid(x1, htarr)
+#         c = ax.contour(X1, Y1, CFAD, levels=plot_contour_levels,
+#                     colors=contour_levels_color)
+
+    if plot_colorbar:
+        cb = plt.colorbar(p, ax=ax)
+        cb.set_label(cb_title)
+    return
+
+#######################
+#   General Methods   #
+#######################
+
+
+def find_nearest_indices(array, values):
+    """
+    Find the nearest value indices in an array to input value(s).
+
+    Parameters
+    ----------
+    array : float array
+        Input array to search.
+    values  : float (array)
+        Value(s) for which to search.
+    """
+    # Set the values to a 1D structure
+    values = np.atleast_1d(values)
+    # Find the nearest neighbor indices
+    indices = np.abs(np.subtract.outer(array, values)).argmin(0)
+    return indices if len(indices) > 1 else indices[0]
+
+def _set_axes(x_min=None, x_max=None,
+              y_min=None, y_max=None,
+              title=None, titleFontSize=None,
+              xlab=None, xlabFontSize=None, xpad=None,
+              ylab=None, ylabFontSize=None, ypad=None,
+              ax=None):
+    """
+    Returns a time series plot, with time on X-axis and variable on Y-axis.
+
+    Parameters
+    ----------
+    x_min : float
+        Minimum value for X-axis.
+    x_max : float
+        Maximum value for X-axis.
+    y_min : float
+        Minimum value for Y-axis.
+    y_max : float
+        Maximum value for Y-axis.
+    title : str
+        Plot title.
+    titleFontSize : int
+        Font size to use for Title label.
+    xlab : str
+        X-axis label.
+    ylab : str
+        Y-axis label.
+    xpad : int
+        Padding for X-axis label.
+    ypad : int
+        Padding for Y-axis label.
+    xlabFontSize : int
+        Font size to use for X-axis label.
+    ylabFontSize : int
+        Font size to use for Y-axis label.
+    ax : Matplotlib axis instance
+        Axis to plot. None will use the current axis.
+    """
+    # parse parameters
+    ax = _parse_ax(ax)
+
+    # Potentially set the X- and Y-axis limits
+    if x_min is not None:
+        ax.set_xlim(left=x_min)
+    if x_max is not None:
+        ax.set_xlim(right=x_max)
+
+    if y_min is not None:
+        ax.set_ylim(bottom=y_min)
+    if y_max is not None:
+        ax.set_ylim(top=y_max)
+
+    # Turn the tick marks outward
+    ax.tick_params(which='both', direction='out')
+
+    # Set the axis labels if provided
+    if ylab is not None:
+        if ylabFontSize is None:
+            ylabFontSize = 16
+        if ypad is None:
+            ypad = 7
+        ax.set_ylabel(ylab, labelpad=ypad, fontsize=ylabFontSize)
+    if xlab is not None:
+        if xlabFontSize is None:
+            xlabFontSize = 16
+        if xpad is None:
+            xpad = 7
+        ax.set_xlabel(xlab, labelpad=xpad, fontsize=xlabFontSize)
+
+    # Set the title
+    if title is not None:
+        if titleFontSize is None:
+            titleFontSize = 16
+        ax.set_title(title, fontsize = titleFontSize)
+    return
 
 def _set_ts_axes(dForm='%H:%M', tz=None, xdate=True,
                  date_MinTicker='minute',
                  other_MajTicks=None, other_MinTicks=None,
                  other_min=None, other_max=None,
-                 title=None,
-                 xlab=None, xlabFontSize=16, xpad=7,
-                 ylab=None, ylabFontSize=16, ypad=7,
+                 title=None, titleFontSize=None,
+                 xlab=None, xlabFontSize=None, xpad=None,
+                 ylab=None, ylabFontSize=None, ypad=None,
                  ax=None):
     """
     Returns a time series plot, with time on X-axis and variable on Y-axis.
@@ -405,6 +751,8 @@ def _set_ts_axes(dForm='%H:%M', tz=None, xdate=True,
         True to use X-axis as date axis, false implies Y-axis is date axis.
     title : str
         Plot title.
+    titleFontSize : int
+        Font size to use for Title label.
     xlab : str
         X-axis label.
     ylab : str
@@ -413,6 +761,10 @@ def _set_ts_axes(dForm='%H:%M', tz=None, xdate=True,
         Padding for X-axis label.
     ypad : int
         Padding for Y-axis label.
+    xlabFontSize : int
+        Font size to use for X-axis label.
+    ylabFontSize : int
+        Font size to use for Y-axis label.
     date_MinTicker : str
         Sting to set minor ticks of date axis,
         'second','minute','hour','day' supported.
@@ -427,6 +779,9 @@ def _set_ts_axes(dForm='%H:%M', tz=None, xdate=True,
     ax : Matplotlib axis instance
         Axis to plot. None will use the current axis.
     """
+    # parse parameters
+    ax = _parse_ax(ax)
+
     # Set the date format
     date_Fmt = DateFormatter(dForm, tz=tz)
 
@@ -492,45 +847,78 @@ def _set_ts_axes(dForm='%H:%M', tz=None, xdate=True,
     # Turn the tick marks outward
     ax.tick_params(which='both', direction='out')
 
-    # Set the Y label
+    # Set the axis labels if provided
     if ylab is not None:
+        if ylabFontSize is None:
+            ylabFontSize = 16
+        if ypad is None:
+            ypad = 7
         ax.set_ylabel(ylab, labelpad=ypad, fontsize=ylabFontSize)
     if xlab is not None:
+        if xlabFontSize is None:
+            xlabFontSize = 16
+        if xpad is None:
+            xpad = 7
         ax.set_xlabel(xlab, labelpad=xpad, fontsize=xlabFontSize)
 
     # Set the title
     if title is not None:
-        ax.set_title(title)
-
+        if titleFontSize is None:
+            titleFontSize = 16
+        ax.set_title(title, fontsize = titleFontSize)
     return
 
-#######################
-#   General Methods   #
-#######################
+def add_colorbar(ax, plot_instance, orientation=None, pad=None,
+                 label=None, fontsize=None, ticklabel_size=None,
+                 clevs=None, tick_interval=None):
+    '''
+    Add Colorbar to a plot instance.
 
-
-def find_nearest_indices(array, values):
-    """
-    Find the nearest value indices in an array to input value(s).
-    
     Parameters
     ----------
-    array : float array
-        Input array to search.
-    values  : float (array)
-        Value(s) for which to search.
-    """
-    # Set the values to a 1D structure
-    values = np.atleast_1d(values)
-    # Find the nearest neighbor indices
-    indices = np.abs(np.subtract.outer(array, values)).argmin(0)
-    return indices if len(indices) > 1 else indices[0]
-
+    ax : Matplotlib axis instance
+        Axis to plot.
+    plot : Matplotlib plot instance
+        Plot instance used to establish colorbar.
+    orientation : str
+        Colorbar orientation, either 'vertical' or 'horizontal'.
+    pad : str
+        Pad to move colorbar, in the form "5%",
+        positive is to right for righthand location.
+    label : str
+        String to use as colorbar label.
+    fontsize : int
+        Font size of the colorbar label.
+    ticklabel_size : int
+        Font size of colorbar tick labels.
+    levs : int
+        Number of colorbar levels to use in tick calculation.
+    tick_interval : int
+        Interval to use for colorbar tick labels, higher number "thins" labels.
+    '''
+    if orientation is None:
+        orientation = 'vertical'
+    if pad is None:
+        pad = .05
+    if tick_interval is None:
+        tick_interval = 2
+    cb = plt.colorbar(plot_instance, orientation=orientation,
+                      pad=pad, ax=ax)
+    if label is not None:
+        cb.set_label(label, fontsize=fontsize)
+    # Set the tick label size
+    cb.ax.tick_params(labelsize=ticklabel_size)
+    # Set the number of ticks in the colorbar based upon number of contours
+    if (clevs is not None) & (tick_interval is not None):
+        tick_locator = mtic.MaxNLocator(nbins=int(clevs / tick_interval))
+        cb.locator = tick_locator
+        cb.update_ticks()
+    return cb
 
 def create_polar_fig_ax(nrows=1, ncols=1, figsize=(5, 5)):
     '''
     Returns the figure and axes instance of a polar plot.
-    
+
     Parameters
     ----------
     nrows : int
@@ -543,7 +931,6 @@ def create_polar_fig_ax(nrows=1, ncols=1, figsize=(5, 5)):
     fig, ax = plt.subplots(nrows=nrows, ncols=ncols,
                            subplot_kw=dict(projection='polar'),
                            fig_kw=dict(figsize=figsize))
-
     return fig, ax
 
 #################
@@ -584,7 +971,7 @@ def _get_start_datetime(time, start_time):
     '''Get a start time as datetime instance for subsetting.'''
     # Check to see if time is subsetted
     if start_time is None:
-        dt_start = time.min()
+        dt_start = time['data'].min()
     else:
         startStr = [start_time[0:4], start_time[5:7], start_time[8:10],
                     start_time[11:13], start_time[14:16],
@@ -604,7 +991,7 @@ def _get_end_datetime(time, end_time):
     '''Get a start time as datetime instance for subsetting.'''
     # Check to see if the time is subsetted
     if end_time is None:
-        dt_end = time.max()
+        dt_end = time['data'].max()
     else:
         endStr = [end_time[0:4], end_time[5:7], end_time[8:10],
                   end_time[11:13], end_time[14:16], end_time[17:19], '0']
@@ -627,7 +1014,7 @@ def _get_variable_dict_data(dict, field):
     '''Get the variable from the fields dictionary.'''
     Var, data = dict[field], dict[field]['data'][:]
     return Var, data
-        
+
 def _get_earth_radius():
     return 6371.
 
@@ -644,13 +1031,11 @@ def _parse_ax_fig(ax, fig):
         fig = plt.gcf()
     return ax, fig
 
-
 def _parse_ax(ax):
     """Parse and return ax parameters."""
     if ax is None:
         ax = plt.gca()
     return ax
-
 
 def _parse_fig(fig):
     """Parse and return fig parameters."""
@@ -666,7 +1051,7 @@ def _parse_fig(fig):
 def _check_basemap(instance, strong=True):
     """
     Check for a basemap instance.
-    
+
     Parameters
     ----------
     instance: Class instance
@@ -680,9 +1065,10 @@ def _check_basemap(instance, strong=True):
     if instance.basemap is None:
         if strong:
             raise ValueError('Please supply basemap instance')
-            return
+            return None
         else:
             print("WARNING: A basemap instance may be required for some plots")
+            return False
 
 def _check_field(instance, field):
     """

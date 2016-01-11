@@ -81,7 +81,10 @@ def read_wcr2(fname, field_mapping=None, file_mapping=None):
     ncvars = ncFile.variables
 
     # Grab the metadata stored in global attributes as a dictionary
-    data['metadata'] = ncFile.__dict__
+    try:
+        data['metadata'] = ncFile.__dict__
+    except:
+        data['metadata'] = None
 
     try:
         data['project'] = ncFile.ProjectName
@@ -104,7 +107,7 @@ def read_wcr2(fname, field_mapping=None, file_mapping=None):
     data['time'] = _get_time(fname, ncFile, Good)
 
     # Grab the name map
-    name_map_data = _get_wcr_data_map()
+    name_map_data = _get_wcr_data_map_level2()
 
     # Loop through the variables and pull data
     for varname in name_map_data:
@@ -114,7 +117,6 @@ def read_wcr2(fname, field_mapping=None, file_mapping=None):
         else:
             data[varname] = None
             _var_not_found(varname)
-
     # Add fields to their own dictionary
     fields = {}
 
@@ -128,6 +130,20 @@ def read_wcr2(fname, field_mapping=None, file_mapping=None):
         else:
             fields[varname] = None
             _var_not_found(varname)
+
+    # Find the surface variable
+    # See http://flights.uwyo.edu/uwka/wcr/projects/owles13/PROCESSED_DATA/WCR_L2_OWLES13.20131015.cdl
+    # for details of mask properties
+    surface = np.empty_like(data['latitude']['data'])
+    condition = np.equal(fields['mask']['data'], 32)
+    for nn in range(len(surface)):
+         if np.any(condition[nn, :]):
+             surface[nn] = data['height']['data'][np.where(condition[nn, :])[0][0]]
+    data['surface'] = {'name' : "surface",
+                       'long_name' : "Height of Surface",
+                       'data' : surface,
+                       'units' : 'meters'
+                       }
 
     # Save to output dictionary
     data['fields'] = fields
@@ -146,12 +162,12 @@ def read_wcr2(fname, field_mapping=None, file_mapping=None):
 ##  _get methods  ##
 ####################
 
-def _get_wcr_data_map():
+def _get_wcr_data_map_level2():
     '''Map WCR variable names to AWOT dictionary.'''
     name_map = {
                'latitude': 'LAT',
                'longitude': 'LON',
-               'altitude_aircraft': 'ALT',
+               'altitude': 'ALT',
                'tas': 'TAS',
                'ground_speed': 'GS',
                'aircraft_wind':  'acwcbeam',
@@ -176,7 +192,7 @@ def _get_wcr_field_name_map():
     return name_map
 
 def _get_time(fname, ncFile, Good_Indices):
-    """Pull the time from WCR NetCDF file and convert to AWOT useable"""
+    """Pull the time from WCR NetCDF file and convert to AWOT useable."""
 
     # Pull out the date, convert the date to a datetime friendly string
 
