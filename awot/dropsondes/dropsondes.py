@@ -678,3 +678,28 @@ def plot_shear_calcs():
 #    t_parcel, p_parcel = tC.dry_lift(T, p, LCLT, LCLP)
 #
 #    ax1.semilogy(t_parcel, p_parcel, 'k--', ms=1)
+
+
+def splitFile(filename):
+    
+    splitString1 = 'Data Type:'
+    splitString2 = 'Project ID:'
+    splitString3 = '------'
+    
+    f = open(filename,'r')
+    newString = ''
+    splitFileList = []
+    f.readline()
+    s =0
+    x=0
+    for line in f:
+        if  (splitString1 or splitString2) not in line:
+            newString = newString + line
+        
+        else:
+            splitFileList.append(newString)
+            newString = ''
+
+    splitFileList.append(newString)
+    
+    return splitFileList
