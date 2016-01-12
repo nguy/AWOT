@@ -21,15 +21,10 @@ from matplotlib.dates import DateFormatter, date2num
 from matplotlib import ticker
 import scipy.ndimage as scim
 
-from .common import (_check_basemap, _get_earth_radius,
-                     _parse_ax_fig, _parse_ax,
-                     plot_polar_contour, get_masked_data,
-                     _get_start_datetime, _get_end_datetime,
-                     _get_variable_dict, _get_variable_dict_data,
-                     image_2d_date, plot_fill_surface,
-                     add_colorbar)
-from .coord_transform import radar_coords_to_cart_track_relative, \
-    radar_coords_to_cart_earth_relative, radar_coords_to_cart_aircraft_relative
+from . import common
+from .coord_transform import (radar_coords_to_cart_track_relative,
+                              radar_coords_to_cart_earth_relative,
+                              radar_coords_to_cart_aircraft_relative)
 
 
 class RadarVerticalPlot(object):
@@ -64,7 +59,7 @@ class RadarVerticalPlot(object):
         """
         self.radar = radar
         self.basemap = basemap
-#        _check_basemap(self)
+#        common._check_basemap(self)
         self.fields = self.radar['fields']
 
         if lon_name is None:
@@ -103,6 +98,7 @@ class RadarVerticalPlot(object):
 #############################
 
     def plot_cross_section(self, field, start_pt, end_pt, xs_length=500,
+                           plot_km=False,
                            mask_procedure=None, mask_tuple=None,
                            title=" ", title_size=20,
                            cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
@@ -121,6 +117,9 @@ class RadarVerticalPlot(object):
             (lat, lon) Tuple of start, end points for cross-section.
         xs_length : int
             Number of to use for the cross section.
+        plot_km : boolean
+            True to convert meters to kilometers for cappi_height. False
+            retains meters information.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
             'less', 'less_equal', 'greater', 'greater_equal',
@@ -164,12 +163,12 @@ class RadarVerticalPlot(object):
             Figure on which to add the plot. None will use the current figure.
         '''
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
         # Return masked or unmasked variable
-        Var, Data = _get_variable_dict_data(self.fields, field)
+        Var, Data = common._get_variable_dict_data(self.fields, field)
         if mask_procedure is not None:
-            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            Data = common.get_masked_data(Data, mask_procedure, mask_tuple)
 
         # Create contour level array
         clevels = np.linspace(cminmax[0], cminmax[1], clevs)
@@ -200,9 +199,9 @@ class RadarVerticalPlot(object):
 
         # Calculate the distance array along the cross-section
         Xdist = np.absolute(
-            (np.pi * _get_earth_radius() / 180.) * (xslon - xslon[0]))
+            (np.pi * common._get_earth_radius() / 180.) * (xslon - xslon[0]))
         Ydist = np.absolute(
-            (np.pi * _get_earth_radius() / 180.) * (xslat - xslat[0]))
+            (np.pi * common._get_earth_radius() / 180.) * (xslat - xslat[0]))
         xsDist = np.sqrt(Xdist**2 + Ydist**2)
 
         # Define the angle of the cross-secton
@@ -215,21 +214,26 @@ class RadarVerticalPlot(object):
             AngNref = Ang
 
         # Convert Height, distance arrays to 2D
-        Ht2D, Dist2D = np.meshgrid(self.height['data'][:], xsDist)
+        if plot_km:
+            Ht2D, Dist2D = np.meshgrid(self.height['data'][:]/1000., xsDist)
+            ylabel = 'Altitude (km)'
+        else:
+            Ht2D, Dist2D = np.meshgrid(self.height['data'][:], xsDist)
+            ylabel = 'Altitude (m)'
 
         p = ax.pcolormesh(Dist2D, Ht2D,
                           np.ma.masked_less_equal(xs_data, -800.),
                           vmin=vmin, vmax=vmax, cmap=cmap)
 
         ax.set_xlabel('Distance along track (km)')
-        ax.set_ylabel(' Altitude (km)')
+        ax.set_ylabel(ylabel)
 
         # Add title
         ax.set_title(title, fontsize=title_size)
 
         # Add Colorbar
         if color_bar:
-            cb = add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
+            cb = common.add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
                               label=cbStr, fontsize=cb_fontsize,
                               ticklabel_size=cb_ticklabel_size,
                               clevs=clevs, tick_interval=cb_tick_int)
@@ -237,7 +241,7 @@ class RadarVerticalPlot(object):
         # Add title
         ax.set_title(title, fontsize=title_size)
 
-    def time_height_image(self, field,
+    def time_height_image(self, field, plot_km=False,
                            mask_procedure=None, mask_tuple=None,
                            plot_log10_var=False,
                            cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
@@ -262,6 +266,9 @@ class RadarVerticalPlot(object):
         ----------
         field : float
             Variable to plot as time series.
+        plot_km : boolean
+            True to convert meters to kilometers for cappi_height. False
+            retains meters information.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
             'less', 'less_equal', 'greater', 'greater_equal',
@@ -343,14 +350,14 @@ class RadarVerticalPlot(object):
             Figure on which to add the plot. None will use the current figure.
         """
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
         # Return masked or unmasked variable
         # Subsetted if desired
         Var, tsub, Data = self._get_variable_dict_data_time_subset(
             field, start_time, end_time)
         if mask_procedure is not None:
-            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            Data = common.get_masked_data(Data, mask_procedure, mask_tuple)
         if len(self.height['data'].shape) == 2:
             Height = self._get_2d_height_time_subset(
                           start_time, end_time)
@@ -370,8 +377,10 @@ class RadarVerticalPlot(object):
         else:
             tSub2D, Ht2D = np.meshgrid(date2num(tsub), self.height['data'][:])
 
+        if plot_km:
+            Ht2D = Ht2D / 1000.
         # Plot the time series
-        ts = image_2d_date(tSub2D, Ht2D, Data.T,
+        ts = common.image_2d_date(tSub2D, Ht2D, Data.T,
                              vmin=vmin, vmax=vmax, clevs=clevs,
                              cmap=cmap,
                              dForm=dForm, tz=tz, xdate=xdate,
@@ -392,7 +401,7 @@ class RadarVerticalPlot(object):
             if self.surface is not None:
                 sfc= self._get_variable_subset(self.surface['data'][:],
                                                start_time, end_time)
-                ft = plot_fill_surface(tsub, sfc,
+                ft = common.plot_fill_surface(tsub, sfc,
                                      ymin=fill_min, color=fill_color, ax=ax)
             else:
                 print("No surface height information, cannot fill...")
@@ -506,14 +515,14 @@ class RadarVerticalPlot(object):
             Figure on which to add the plot. None will use the current figure.
         """
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
         # Return masked or unmasked variable
         # Subsetted if desired
         Var, tsub, Data = self._get_variable_dict_data_time_subset(
             field, start_time, end_time)
         if mask_procedure is not None:
-            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            Data = common.get_masked_data(Data, mask_procedure, mask_tuple)
 
         if plot_log10_var:
             Data = np.log10(Data)
@@ -526,7 +535,7 @@ class RadarVerticalPlot(object):
         tSub2D, Ht2D = np.meshgrid(date2num(tsub), self.height['data'][:])
 
         # Plot the time series
-        ts = image_2d_date(tSub2D, Ht2D, Data.T,
+        ts = common.image_2d_date(tSub2D, Ht2D, Data.T,
                              vmin=vmin, vmax=vmax, clevs=clevs,
                              cmap=cmap,
                              color_bar=color_bar, cb_orient=cb_orient,
@@ -557,8 +566,8 @@ class RadarVerticalPlot(object):
         Var, data = self.fields[field], self.fields[field]['data'][:]
 
         # Check to see if time is subsetted
-        dt_start = _get_start_datetime(self.time, start_time)
-        dt_end = _get_end_datetime(self.time, end_time)
+        dt_start = common._get_start_datetime(self.time, start_time)
+        dt_end = common._get_end_datetime(self.time, end_time)
         tsub = self.time['data'][(self.time['data'] >= dt_start) &
                                  (self.time['data'] <= dt_end)]
         datasub = data[(self.time['data'] >= dt_start) &
@@ -571,8 +580,8 @@ class RadarVerticalPlot(object):
         Subset the time when in time series format.
         '''
         # Check to see if time is subsetted
-        dt_start = _get_start_datetime(self.time, start_time)
-        dt_end = _get_end_datetime(self.time, end_time)
+        dt_start = common._get_start_datetime(self.time, start_time)
+        dt_end = common._get_end_datetime(self.time, end_time)
 
         # Create temporary 2D arrays for subsetting
         tsub = self.time['data'][(self.time['data'] >= dt_start) &
@@ -585,8 +594,8 @@ class RadarVerticalPlot(object):
     def _get_2d_height_time_subset(self, start_time, end_time):
         '''Get subsetted data if requested.'''
         # Check to see if time is subsetted
-        dt_start = _get_start_datetime(self.time, start_time)
-        dt_end = _get_end_datetime(self.time, end_time)
+        dt_start = common._get_start_datetime(self.time, start_time)
+        dt_end = common._get_end_datetime(self.time, end_time)
 
         hsub = self.height['data'][(self.time['data'] >= dt_start) &
                                     (self.time['data'] <= dt_end), :]
@@ -647,7 +656,7 @@ class MicrophysicalVerticalPlot(object):
         # Now initialize the RadarHorizontalPlot Class
         self.microphys_data = microphysdata
         self.basemap = basemap
-#        _check_basemap(self)
+#        common._check_basemap(self)
         self.fields = microphys_data['fields']
 
         if lon_name is None:
@@ -772,14 +781,14 @@ class MicrophysicalVerticalPlot(object):
             None will use the current figure.
         """
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
         # Return masked or unmasked variable
         # Subsetted if desired
         Var, tsub, Data = self._get_variable_dict_data_time_subset(
             field, start_time, end_time)
         if mask_procedure is not None:
-            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            Data = common.get_masked_data(Data, mask_procedure, mask_tuple)
 
         if plot_log10_var:
             Data = np.log10(Data)
@@ -802,7 +811,7 @@ class MicrophysicalVerticalPlot(object):
         tSub2D, Ht2D = np.meshgrid(date2num(tsub), self.height['data'][:])
 
         # Plot the time series
-        ts = image_2d_date(tSub2D, Ht2D, Data,
+        ts = common.image_2d_date(tSub2D, Ht2D, Data,
                            vmin=vmin, vmax=vmax, clevs=clevs,
                            dForm=dForm, tz=tz, xdate=xdate,
                            date_MinTicker=date_MinTicker,
@@ -834,8 +843,8 @@ class MicrophysicalVerticalPlot(object):
         Var, data = self.fields[field], self.fields[field]['data'][:]
 
         # Check to see if time is subsetted
-        dt_start = _get_start_datetime(self.time, start_time)
-        dt_end = _get_end_datetime(self.time, end_time)
+        dt_start = common._get_start_datetime(self.time, start_time)
+        dt_end = common._get_end_datetime(self.time, end_time)
 
         # Create temporary 2D arrays for subsetting
         tsub = self.time['data'][(self.time['data'] >= dt_start) &
@@ -851,8 +860,8 @@ class MicrophysicalVerticalPlot(object):
         Subset the time when in time series format.
         '''
         # Check to see if time is subsetted
-        dt_start = _get_start_datetime(self.time, start_time)
-        dt_end = _get_end_datetime(self.time, end_time)
+        dt_start = common._get_start_datetime(self.time, start_time)
+        dt_end = common._get_end_datetime(self.time, end_time)
 
         # Create temporary 2D arrays for subsetting
         tsub = self.time['data'][(self.time['data'] >= dt_start) &
@@ -865,8 +874,8 @@ class MicrophysicalVerticalPlot(object):
     def _get_2d_height_time_subset(self, start_time, end_time):
         '''Get subsetted data if requested.'''
         # Check to see if time is subsetted
-        dt_start = _get_start_datetime(self.time, start_time)
-        dt_end = _get_end_datetime(self.time, end_time)
+        dt_start = common._get_start_datetime(self.time, start_time)
+        dt_end = common._get_end_datetime(self.time, end_time)
 
         # Create temporary 2D arrays for subsetting
         hsub = self.height['data'][[(self.time['data'] >= dt_start) &

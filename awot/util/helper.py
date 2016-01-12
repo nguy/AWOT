@@ -11,7 +11,7 @@ import numpy as np
 from ..graph.common import _get_start_datetime, _get_end_datetime
 from ..io.common import _build_dict
 
-def time_subset_awot_dict(time, data, start_time, end_time):
+def time_subset_awot_dict(time, data, start_time, end_time, time_axis=0):
     '''
     Get the variable from the fields dictionary.
     Subset the time when in time series format.
@@ -33,8 +33,10 @@ def time_subset_awot_dict(time, data, start_time, end_time):
     dt_start = _get_start_datetime(time, start_time)
     dt_end = _get_end_datetime(time, end_time)
     datasub = data.copy()
+    if time_axis > 0:
+        np.rollaxis(datasub['data'], time_axis)
     datasub['data'] = data['data'][(time['data'] >= dt_start) &
-                   (time['data'] <= dt_end)]
+                   (time['data'] <= dt_end), ...]
     return datasub
 
 def add_dict_to_awot(awot, keyname, newdict=None, data=None, units=None,

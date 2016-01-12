@@ -12,19 +12,14 @@ import matplotlib.pyplot as plt
 from netCDF4 import date2num, num2date
 from scipy.stats import mstats
 
-from .common import (_parse_ax, _set_axes,
-                     _get_start_datetime, _get_end_datetime,
-#                     _get_variable_dict, _get_variable_dict_data,
-                     add_colorbar)
-
-from ..util.helper import add_dict_to_awot_fields
+from . import common
 
 class RadarUtilityPlot(object):
     """Create vertical plot of radar data."""
 
     def __init__(self, radar, basemap=None,
                 lon_name=None, lat_name=None, height_name=None,
-                time_name=None, surface_name=None):
+                time_name=None):
         """
         Initialize the class to create plots
 
@@ -52,6 +47,10 @@ class RadarUtilityPlot(object):
         self.radar = radar
         self.fields = self.radar['fields']
 
+        # See what the field shape looks like for inspection
+        # of time and height arrays later
+        fieldshape = self.radar['fields'][self.radar['fields'].keys()[0]]['data'].shape
+
         if lon_name is None:
             self.longitude = self.radar['longitude']
         else:
@@ -65,38 +64,26 @@ class RadarUtilityPlot(object):
         else:
             self.height = self.radar[height_name]
 
+        self.heightfield = self.height.copy()
+        if len(self.heightfield['data'].shape) == 1:
+            self.heightfield['data'] = np.resize(self.height['data'][:], fieldshape)
+
         # Attempt to pull in time if found
         if time_name is None:
             try:
                 self.time = self.radar['time']
+                self.timefield = self.time.copy()
+                # This step is slow converting back-and-forth between datenum
+                # instances, but Numpy does not support meshgrid with datenum dtype
+                if len(self.timefield['data'].shape) == 1:
+                    timenum = date2num(self.time['data'][:], self.time['units'])
+                    self.timefield['data'] = num2date(
+                          np.resize(timenum, fieldshape), self.time['units'])
             except:
                 self.time = None
+                self.timefield = None
         else:
             self.time = self.radar[time_name]
-
-        # Attempt to pull in surface height if found
-        if surface_name is None:
-            try:
-                self.surface = self.radar['surface']
-            except:
-                self.surface = None
-        else:
-            self.surface = self.radar[surface_name]
-
-        # See if time or height arrays are 2D, if not create
-        fieldshape = self.radar['fields'][self.radar['fields'].keys()[0]]['data'].shape
-        self.timefield = self.time.copy()
-        self.heightfield = self.height.copy()
-
-        # This step is slow converting back-and-forth between datenum
-        # instances, but Numpy does not support meshgrid with datenum dtype
-        if len(self.timefield['data'].shape) == 1:
-            timenum = date2num(self.time['data'][:], self.time['units'])
-            self.timefield['data'] = num2date(np.resize(timenum, fieldshape),
-                                              self.time['units'])
-
-        if len(self.heightfield['data'].shape) == 1:
-            self.heightfield['data'] = np.resize(self.height['data'][:], fieldshape)
 
 ##################
 #  plot methods  #
@@ -199,7 +186,7 @@ class RadarUtilityPlot(object):
             Figure on which to add the plot. None will use the current figure.
         """
         # parse parameters
-        ax = _parse_ax(ax)
+        ax = common._parse_ax(ax)
         # Snag the data from requested fields
         xarr, yarr = self._get_bivariate_data(
                       xfield, yfield, start_time, end_time)
@@ -213,34 +200,34 @@ class RadarUtilityPlot(object):
         binsy = np.linspace(ybinsminmax[0], ybinsminmax[1],
                             nbinsy, endpoint=True)
 
-        CFAD, xedges, yedges = np.histogram2d(
+        bifreq, xedges, yedges = np.histogram2d(
                  xarr.ravel(), yarr.ravel(), bins=(binsx, binsy), normed=True)
         X, Y = np.meshgrid(xedges, yedges)
-        if mask_below is not None:
-            CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
 
         cb_label = "Frequency"
         if plot_percent:
-            CFAD = CFAD * 100.
+            bifreq = bifreq * 100.
             cb_label = cb_label + " (%)"
 
+        if mask_below is not None:
+            bifreq = np.ma.masked_where(bifreq < mask_below, bifreq)
+        # Plot the data
+        p = ax.pcolormesh(X, Y, bifreq.T, vmin=vmin, vmax=vmax, cmap=cmap)
+
         # Set the axes
-        _set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
+        common._set_axes(ax, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
                   title=title, titleFontSize=titleFontSize,
                   xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
-                  xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
-                  ax=ax)
-        # Plot the data
-        p = ax.pcolormesh(X, Y, CFAD.T, vmin=vmin, vmax=vmax, cmap=cmap)
+                  xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
 
         if plot_colorbar:
-            cb = add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
+            cb = common.add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
                  label=cb_label, fontsize=cb_fontsize,
                  ticklabel_size=cb_ticklabel_size,
                  clevs=cb_levs, tick_interval=cb_tick_int)
 
         # Create a dictionary to return
-        bivar = {'frequency' : CFAD.T,
+        bivar = {'frequency' : bifreq.T,
                  'frequency_label' : cb_label,
                  'xaxis' : X,
                  'yaxis' : Y}
@@ -266,6 +253,8 @@ class RadarUtilityPlot(object):
         This is the traditional method of calculating a frequency distribution
         at each height of input array by iterating through the height array
         and input data array.
+
+        NOTE: This routine only works with Cartesian data.
 
         Parameters
         ----------
@@ -340,9 +329,9 @@ class RadarUtilityPlot(object):
             Figure on which to add the plot. None will use the current figure.
         """
         # parse parameters
-        ax = _parse_ax(ax)
+        ax = common._parse_ax(ax)
         # Snag the data from requested field
-        xdict, tsub, xarr = self._get_fields_variable_dict_data_time_subset(
+        xarr = self._get_fields_variable_dict_data_time_subset(
             field, start_time, end_time)
 
         if xbinsminmax is None:
@@ -356,18 +345,19 @@ class RadarUtilityPlot(object):
             cb_label = cb_label + " (%)"
             percent = True
 
+        # Reshape the array so that height axis is first dimension
+        if height_axis != 0:
+            ht = np.rollaxis(self.heightfield['data'], height_axis)
+            xarr = np.rollaxis(xarr, height_axis)
+        else:
+            ht = self.heightfield['data'].copy()
+
         # Create CFAD array to fill
         nh = len(self.height['data'][:])
         CFAD = np.empty((nh, len(binsx)-1))
         for nn in range(nh):
-            if height_axis == 0:
-                array = xarr[nn, ...]
-            elif height_axis == 1:
-                array = xarr[:, nn, ...]
-            elif height_axis == 2:
-                array = xarr[..., nn]
             CFAD[nn, :], bin_edges = np.histogram(
-                   array, bins=binsx, density=percent)
+                   xarr[nn, ...], bins=binsx, density=percent)
 
         # Mask any invalid or negative numbers
         CFAD = np.ma.masked_invalid(CFAD)
@@ -378,16 +368,15 @@ class RadarUtilityPlot(object):
             CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
 
         # Set the axes
-        _set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
+        common._set_axes(ax, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
                   title=title, titleFontSize=titleFontSize,
                   xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
-                  xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
-                  ax=ax)
+                  xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
         # Plot the data
         p = ax.pcolormesh(X, Y, CFAD, vmin=vmin, vmax=vmax, cmap=cmap)
 
         if plot_colorbar:
-            cb = add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
+            cb = common.add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
                  label=cb_label, fontsize=cb_fontsize,
                  ticklabel_size=cb_ticklabel_size,
                  clevs=cb_levs, tick_interval=cb_tick_int)
@@ -480,9 +469,9 @@ class RadarUtilityPlot(object):
 #             Figure on which to add the plot. None will use the current figure.
 #         """
 #         # parse parameters
-#         ax = _parse_ax(ax)
+#         ax = common._parse_ax(ax)
 #         # Snag the data from requested field
-#         xdict, tsub, xarr = self._get_fields_variable_dict_data_time_subset(
+#         xarr = self._get_fields_variable_dict_data_time_subset(
 #             field, start_time, end_time)
 #
 #         if quantiles is None:
@@ -517,7 +506,7 @@ class RadarUtilityPlot(object):
 #
 #         # Set the axes
 #         if setup_axes:
-#             _set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
+#             common._set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
 #                       title=title, titleFontSize=titleFontSize,
 #                       xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
 #                       xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
@@ -540,32 +529,38 @@ class RadarUtilityPlot(object):
         Get the variable from the fields dictionary.
         Subset the time when in time series format.
         '''
-        Var, data = self.fields[field], self.fields[field]['data'][:]
+        data = self.fields[field]['data'][:]
 
         # Check to see if time is subsetted
-        dt_start = _get_start_datetime(self.time, start_time)
-        dt_end = _get_end_datetime(self.time, end_time)
-        tsub = self.time['data'][(self.time['data'] >= dt_start) &
-                                 (self.time['data'] <= dt_end)]
-        datasub = data[(self.time['data'] >= dt_start) &
-                       (self.time['data'] <= dt_end)]
-        return Var, tsub, datasub
+        if self.time != None:
+            dt_start = common._get_start_datetime(self.time, start_time)
+            dt_end = common._get_end_datetime(self.time, end_time)
+            tsub = self.time['data'][(self.time['data'] >= dt_start) &
+                                     (self.time['data'] <= dt_end)]
+            datasub = data[(self.time['data'] >= dt_start) &
+                           (self.time['data'] <= dt_end)]
+        else:
+            datasub = data
+        return datasub
 
     def _get_variable_dict_data_time_subset(self, field, start_time, end_time):
         '''
         Get the variable from the fields dictionary.
         Subset the time when in time series format.
         '''
-        Var, data = self.radar[field], self.radar[field]['data'][:]
+        data = self.radar[field]['data'][:]
 
         # Check to see if time is subsetted
-        dt_start = _get_start_datetime(self.time, start_time)
-        dt_end = _get_end_datetime(self.time, end_time)
-        tsub = self.time['data'][(self.time['data'] >= dt_start) &
-                                 (self.time['data'] <= dt_end)]
-        datasub = data[(self.time['data'] >= dt_start) &
-                       (self.time['data'] <= dt_end)]
-        return Var, tsub, datasub
+        if self.time != None:
+            dt_start = common._get_start_datetime(self.time, start_time)
+            dt_end = common._get_end_datetime(self.time, end_time)
+            tsub = self.time['data'][(self.time['data'] >= dt_start) &
+                                     (self.time['data'] <= dt_end)]
+            datasub = data[(self.time['data'] >= dt_start) &
+                           (self.time['data'] <= dt_end)]
+        else:
+            datasub = data
+        return datasub
 
     def _get_bivariate_data(self, field1, field2,
                                   start_time, end_time):
@@ -589,21 +584,24 @@ class RadarUtilityPlot(object):
             data2 = self.heightfield['data']
 
         # Check to see if time is subsetted
-        dt_start = _get_start_datetime(self.time, start_time)
-        dt_end = _get_end_datetime(self.time, end_time)
+        if self.time != None:
+            dt_start = common._get_start_datetime(self.time, start_time)
+            dt_end = common._get_end_datetime(self.time, end_time)
 
-        data1sub = data1[(self.timefield['data'] >= dt_start) &
-                       (self.timefield['data'] <= dt_end)]
+            data1sub = data1[(self.timefield['data'] >= dt_start) &
+                           (self.timefield['data'] <= dt_end)]
 
-        data2sub = data2[(self.timefield['data'] >= dt_start) &
-                       (self.timefield['data'] <= dt_end)]
+            data2sub = data2[(self.timefield['data'] >= dt_start) &
+                           (self.timefield['data'] <= dt_end)]
+        else:
+            data1sub, data2sub = data1, data2
         return data1sub, data2sub
 
     def _get_2d_height_time_subset(self, start_time, end_time):
         '''Get subsetted data if requested.'''
         # Check to see if time is subsetted
-        dt_start = _get_start_datetime(self.time, start_time)
-        dt_end = _get_end_datetime(self.time, end_time)
+        dt_start = common._get_start_datetime(self.time, start_time)
+        dt_end = common._get_end_datetime(self.time, end_time)
 
         hsub = self.height['data'][(self.time['data'] >= dt_start) &
                                     (self.time['data'] <= dt_end), :]

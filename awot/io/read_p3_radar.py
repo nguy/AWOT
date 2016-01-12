@@ -86,6 +86,9 @@ def read_windsyn_tdr_netcdf(fname, field_mapping=None):
     radar['longitude'] = _ncvar_to_dict(ncvars['Lon'])
     radar['latitude'] = _ncvar_to_dict(ncvars['Lat'])
     radar['height'] = _ncvar_to_dict(ncvars['Height'])
+    if radar['height']['units'] == 'km':
+        radar['height']['data'][:] = radar['height']['data'][:] * 1000.
+        radar['height']['units'] = 'meters'
 
     # Make a Datetime start/end instances to pass
     radar['datetime_start'] = datetime(
@@ -363,6 +366,9 @@ def read_lf_grid(fname):
     radar['longitude'] = _ncvar_to_dict(ncvars['Lon'])
     radar['latitude'] = _ncvar_to_dict(ncvars['Lat'])
     radar['height'] = _ncvar_to_dict(ncvars['Zlev'])
+    if radar['height']['units'] == 'km':
+        radar['height']['data'][:] = radar['height']['data'][:] * 1000.
+        radar['height']['units'] = 'meters'
 
     # Make a Datetime start/end instances to pass
     radar['datetime_start'] = datetime(
@@ -414,9 +420,9 @@ def _get_height_from_header(hdr):
     """Calculated the height array given windsyn binary header."""
 #    Height = {'data': np.arange(hdr['Z0'], hdr['Kmax'], hdr['Sz']),
     Height = {'data': np.arange(0, hdr['Kmax'] * hdr['Sz'], hdr['Sz']),
-              'units': 'km', 'long_name': 'Altitude'}
+              'units': 'meters', 'long_name': 'Altitude'}
     if np.isscalar(Height['data']):
-        Height['data'] = np.array(Height['data'])
+        Height['data'] = np.array(Height['data']) * 1000.
         Height['data'].shape = (1, )
     return Height
 

@@ -19,7 +19,7 @@ from ..io.common import (_ncvar_subset_to_dict, _ncvar_subset_masked,
 
 def read_wcr2(fname, field_mapping=None, file_mapping=None):
     '''
-    Read Wyoming Cloud Radar 2 (WCR2) NetCDF data file.
+    Read Wyoming Cloud Radar 2 (WCR2) NetCDF level 2 data file.
 
     Parameters
     ----------

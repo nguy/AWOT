@@ -273,14 +273,13 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
         ydate = True
 
     # Set up the axes
-    _set_ts_axes(dForm=dForm, tz=tz, xdate=xdate,
+    _set_ts_axes(ax, dForm=dForm, tz=tz, xdate=xdate,
                  date_MinTicker=date_MinTicker,
                  other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
                  other_min=other_min, other_max=other_max,
                  title=title, titleFontSize=titleFontSize,
                  xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
-                 ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
-                 ax=ax)
+                 ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad)
     # Create the plot
     ax.plot_date(Time, Var, tz=tz, xdate=xdate, ydate=ydate,
                  mfc=color, mec=color, marker=marker,
@@ -392,14 +391,13 @@ def image_2d_date(Time, AxVar, PlotVar,
         YVar = Time
 
     # Set up the axes
-    _set_ts_axes(dForm=dForm, tz=tz, xdate=xdate,
+    _set_ts_axes(ax, dForm=dForm, tz=tz, xdate=xdate,
                  date_MinTicker=date_MinTicker,
                  other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
                  other_min=other_min, other_max=other_max,
                  title=title, titleFontSize=titleFontSize,
                  xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
-                 ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
-                 ax=ax)
+                 ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad)
 
     # Create the plot
     p = ax.pcolormesh(XVar, YVar, PlotVar,
@@ -413,224 +411,224 @@ def image_2d_date(Time, AxVar, PlotVar,
                           clevs=clevs, tick_interval=cb_tick_int)
     return
 
-def plot_bivariate_frequency(xarr, yarr,
-                             xbinsminmax=None, nbinsx=50,
-                             ybinsminmax=None, nbinsy=50,
-                             mask_below=None,
-                             start_time=None, end_time=None,
-                             plot_percent=False, plot_colorbar=True,
-                             x_min=None, x_max=None,
-                             y_min=None, y_max=None,
-                             xlab=None, xlabFontSize=None, xpad=None,
-                             ylab=None, ylabFontSize=None, ypad=None,
-                             title=None, titleFontSize=None,
-                             store_to_awot_field=False,
-                             ax=None, fig=None):
-    """
-    Create a bivariate frequency distribution plot of two variables.
-
-    Parameters
-    ----------
-    xarr : array
-        First array to be used, plotted along x-axis.
-    yarr : array
-        Second array to be used, plotted along y-axis.
-    xbinsminmax : 2-tuple
-        A tuple with the minimum and maximax values to
-        use with xarr. None will use min/max of xarr.
-    nbinsx : int
-        The number of bins to use with xarr, default is 50.
-    ybinsminmax : array
-        A tuple with the minimum and maximax values to
-        use with yarr. None will use min/max of yarr.
-    nbinsy : int
-        The number of bins to use with yarr, default is 50.
-    mask_below : float
-        If provided, values less than mask_below will be masked.
-    start_time : str
-        UTC time to use as start time for subsetting in datetime format.
-        (e.g. 2014-08-20 12:30:00)
-    end_time : str
-        UTC time to use as an end time for subsetting in datetime format.
-        (e.g. 2014-08-20 16:30:00)
-    plot_percent : boolean
-        True to display percentage. Default is to display fraction.
-    plot_colorbar : boolean
-        True to diaplay colorbar. False does not display colorbar.
-    x_min : float
-        Minimum value for X-axis.
-    x_max : float
-        Maximum value for X-axis.
-    y_min : float
-        Minimum value for Y-axis.
-    y_max : float
-        Maximum value for Y-axis.
-    title : str
-        Plot title.
-    titleFontSize : int
-        Font size to use for Title label.
-    xlab : str
-        X-axis label.
-    ylab : str
-        Y-axis label.
-    xpad : int
-        Padding for X-axis label.
-    ypad : int
-        Padding for Y-axis label.
-    xlabFontSize : int
-        Font size to use for X-axis label.
-    ylabFontSize : int
-        Font size to use for Y-axis label.
-    ax : Matplotlib axis instance
-        Axis to plot. None will use the current axis.
-    fig : Matplotlib figure instance
-        Figure on which to add the plot. None will use the current figure.
-    """
-    # parse parameters
-    ax = _parse_ax(ax)
-
-    if xbinsminmax is None:
-        xbinsminmax = (np.ma.min(xarr), np.ma.max(xarr))
-    if ybinsminmax is None:
-        ybinsminmax = (np.ma.min(yarr), np.ma.max(yarr))
-    binsx = np.linspace(xbinsminmax[0], xbinsminmax[1], nbinsx, endpoint=True)
-    binsy = np.linspace(ybinsminmax[0], ybinsminmax[1], nbinsy, endpoint=True)
-
-    CFAD, xedges, yedges = np.histogram2d(xarr.ravel(), yarr.ravel(),
-                                      bins=(binsx, binsy),normed=True)
-    X, Y = np.meshgrid(xedges, yedges)
-    if mask_below is not None:
-        CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
-
-    cb_title = "Frequency"
-    if plot_percent:
-        CFAD = CFAD * 100.
-        cb_title = cb_title + " (%)"
-
-    # Set the axes
-    _set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
-              title=title, titleFontSize=titleFontSize,
-              xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
-              xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
-              ax=ax)
-    # Plot the data
-    p = ax.pcolormesh(X, Y, CFAD.T)
-
-    if plot_colorbar:
-        cb = plt.colorbar(p, ax=ax)
-        cb.set_label(cb_title)
-    return
-
-def plot_cfad(xarr, htarr, height_axis=0,
-              xbinsminmax=None, nbinsx=50,
-              mask_below=None, plot_percent=False,
-              plot_colorbar=True,
-              x_min=None, x_max=None,
-              y_min=None, y_max=None,
-              xlab=None, xlabFontSize=None, xpad=None,
-              ylab=None, ylabFontSize=None, ypad=None,
-              title=None, titleFontSize=None,
-              ax=None, fig=None):
-    """
-    Create a frequency by altitude distribution plot of two variables.
-    This is the traditional method of calculating a frequency distribution
-    at each height of input array by iterating through the height array
-    and input data array.
-
-    Parameters
-    ----------
-    xarr : array
-        First array to be used, plotted along x-axis.
-    htarr : array
-        Height array to be used, plotted along y-axis.
-    height_axis : int
-        The axis of 2-D xarr that is the height axis. This will
-        be used to iterate over.
-    xbinsminmax : 2-tuple
-        A tuple with the minimum and maximax values to
-        use with xarr. None will use min/max of xarr.
-    nbinsx : int
-        The number of bins to use with xarr, default is 50.
-    mask_below : float
-        If provided, values less than mask_below will be masked.
-    plot_percent : boolean
-        True to display percentage. Default is to display fraction.
-    plot_colorbar : boolean
-        True to diaplay colorbar. False does not display colorbar.
-    x_min : float
-        Minimum value for X-axis.
-    x_max : float
-        Maximum value for X-axis.
-    y_min : float
-        Minimum value for Y-axis.
-    y_max : float
-        Maximum value for Y-axis.
-    title : str
-        Plot title.
-    titleFontSize : int
-        Font size to use for Title label.
-    xlab : str
-        X-axis label.
-    ylab : str
-        Y-axis label.
-    xpad : int
-        Padding for X-axis label.
-    ypad : int
-        Padding for Y-axis label.
-    xlabFontSize : int
-        Font size to use for X-axis label.
-    ylabFontSize : int
-        Font size to use for Y-axis label.
-    ax : Matplotlib axis instance
-        Axis to plot. None will use the current axis.
-    fig : Matplotlib figure instance
-        Figure on which to add the plot. None will use the current figure.
-    """
-    # parse parameters
-    ax = _parse_ax(ax)
-
-    if xbinsminmax is None:
-        xbinsminmax = (np.ma.min(xarr), np.ma.max(xarr))
-    binsx = np.linspace(xbinsminmax[0], xbinsminmax[1], nbinsx, endpoint=True)
-
-    cb_title = "Frequency"
-    percent = False
-
-    if plot_percent:
-        cb_title = cb_title + " (%)"
-        percent = True
-
-    # Create CFAD array to fill
-    nh = len(htarr)
-    CFAD = np.empty((nh, len(binsx)-1))
-    for nn in range(nh):
-        CFAD[nn, :], bin_edges = np.histogram(xarr[:, nn], bins=binsx, density=percent)
-
-    X, Y = np.meshgrid(bin_edges, htarr)
-    if mask_below is not None:
-        CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
-
-    # Set the axes
-    _set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
-              title=title, titleFontSize=titleFontSize,
-              xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
-              xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
-              ax=ax)
-    # Plot the data
-    p = ax.pcolormesh(X, Y, CFAD)
-
-#     if plot_contour_levels is not None:
-#         print("CONTOURING")
-#         xtick = binsx[2] - binsx[1]
-#         x1 = binsx[:-1] + ( xtick * .5 )
-#         X1, Y1 = np.meshgrid(x1, htarr)
-#         c = ax.contour(X1, Y1, CFAD, levels=plot_contour_levels,
-#                     colors=contour_levels_color)
-
-    if plot_colorbar:
-        cb = plt.colorbar(p, ax=ax)
-        cb.set_label(cb_title)
-    return
+# def plot_bivariate_frequency(xarr, yarr,
+#                              xbinsminmax=None, nbinsx=50,
+#                              ybinsminmax=None, nbinsy=50,
+#                              mask_below=None,
+#                              start_time=None, end_time=None,
+#                              plot_percent=False, plot_colorbar=True,
+#                              x_min=None, x_max=None,
+#                              y_min=None, y_max=None,
+#                              xlab=None, xlabFontSize=None, xpad=None,
+#                              ylab=None, ylabFontSize=None, ypad=None,
+#                              title=None, titleFontSize=None,
+#                              store_to_awot_field=False,
+#                              ax=None, fig=None):
+#     """
+#     Create a bivariate frequency distribution plot of two variables.
+#
+#     Parameters
+#     ----------
+#     xarr : array
+#         First array to be used, plotted along x-axis.
+#     yarr : array
+#         Second array to be used, plotted along y-axis.
+#     xbinsminmax : 2-tuple
+#         A tuple with the minimum and maximax values to
+#         use with xarr. None will use min/max of xarr.
+#     nbinsx : int
+#         The number of bins to use with xarr, default is 50.
+#     ybinsminmax : array
+#         A tuple with the minimum and maximax values to
+#         use with yarr. None will use min/max of yarr.
+#     nbinsy : int
+#         The number of bins to use with yarr, default is 50.
+#     mask_below : float
+#         If provided, values less than mask_below will be masked.
+#     start_time : str
+#         UTC time to use as start time for subsetting in datetime format.
+#         (e.g. 2014-08-20 12:30:00)
+#     end_time : str
+#         UTC time to use as an end time for subsetting in datetime format.
+#         (e.g. 2014-08-20 16:30:00)
+#     plot_percent : boolean
+#         True to display percentage. Default is to display fraction.
+#     plot_colorbar : boolean
+#         True to diaplay colorbar. False does not display colorbar.
+#     x_min : float
+#         Minimum value for X-axis.
+#     x_max : float
+#         Maximum value for X-axis.
+#     y_min : float
+#         Minimum value for Y-axis.
+#     y_max : float
+#         Maximum value for Y-axis.
+#     title : str
+#         Plot title.
+#     titleFontSize : int
+#         Font size to use for Title label.
+#     xlab : str
+#         X-axis label.
+#     ylab : str
+#         Y-axis label.
+#     xpad : int
+#         Padding for X-axis label.
+#     ypad : int
+#         Padding for Y-axis label.
+#     xlabFontSize : int
+#         Font size to use for X-axis label.
+#     ylabFontSize : int
+#         Font size to use for Y-axis label.
+#     ax : Matplotlib axis instance
+#         Axis to plot. None will use the current axis.
+#     fig : Matplotlib figure instance
+#         Figure on which to add the plot. None will use the current figure.
+#     """
+#     # parse parameters
+#     ax = _parse_ax(ax)
+#
+#     if xbinsminmax is None:
+#         xbinsminmax = (np.ma.min(xarr), np.ma.max(xarr))
+#     if ybinsminmax is None:
+#         ybinsminmax = (np.ma.min(yarr), np.ma.max(yarr))
+#     binsx = np.linspace(xbinsminmax[0], xbinsminmax[1], nbinsx, endpoint=True)
+#     binsy = np.linspace(ybinsminmax[0], ybinsminmax[1], nbinsy, endpoint=True)
+#
+#     CFAD, xedges, yedges = np.histogram2d(xarr.ravel(), yarr.ravel(),
+#                                       bins=(binsx, binsy),normed=True)
+#     X, Y = np.meshgrid(xedges, yedges)
+#     if mask_below is not None:
+#         CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
+#
+#     cb_title = "Frequency"
+#     if plot_percent:
+#         CFAD = CFAD * 100.
+#         cb_title = cb_title + " (%)"
+#
+#     # Set the axes
+#     _set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
+#               title=title, titleFontSize=titleFontSize,
+#               xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
+#               xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
+#               ax=ax)
+#     # Plot the data
+#     p = ax.pcolormesh(X, Y, CFAD.T)
+#
+#     if plot_colorbar:
+#         cb = plt.colorbar(p, ax=ax)
+#         cb.set_label(cb_title)
+#     return
+#
+# def plot_cfad(xarr, htarr, height_axis=0,
+#               xbinsminmax=None, nbinsx=50,
+#               mask_below=None, plot_percent=False,
+#               plot_colorbar=True,
+#               x_min=None, x_max=None,
+#               y_min=None, y_max=None,
+#               xlab=None, xlabFontSize=None, xpad=None,
+#               ylab=None, ylabFontSize=None, ypad=None,
+#               title=None, titleFontSize=None,
+#               ax=None, fig=None):
+#     """
+#     Create a frequency by altitude distribution plot of two variables.
+#     This is the traditional method of calculating a frequency distribution
+#     at each height of input array by iterating through the height array
+#     and input data array.
+#
+#     Parameters
+#     ----------
+#     xarr : array
+#         First array to be used, plotted along x-axis.
+#     htarr : array
+#         Height array to be used, plotted along y-axis.
+#     height_axis : int
+#         The axis of 2-D xarr that is the height axis. This will
+#         be used to iterate over.
+#     xbinsminmax : 2-tuple
+#         A tuple with the minimum and maximax values to
+#         use with xarr. None will use min/max of xarr.
+#     nbinsx : int
+#         The number of bins to use with xarr, default is 50.
+#     mask_below : float
+#         If provided, values less than mask_below will be masked.
+#     plot_percent : boolean
+#         True to display percentage. Default is to display fraction.
+#     plot_colorbar : boolean
+#         True to diaplay colorbar. False does not display colorbar.
+#     x_min : float
+#         Minimum value for X-axis.
+#     x_max : float
+#         Maximum value for X-axis.
+#     y_min : float
+#         Minimum value for Y-axis.
+#     y_max : float
+#         Maximum value for Y-axis.
+#     title : str
+#         Plot title.
+#     titleFontSize : int
+#         Font size to use for Title label.
+#     xlab : str
+#         X-axis label.
+#     ylab : str
+#         Y-axis label.
+#     xpad : int
+#         Padding for X-axis label.
+#     ypad : int
+#         Padding for Y-axis label.
+#     xlabFontSize : int
+#         Font size to use for X-axis label.
+#     ylabFontSize : int
+#         Font size to use for Y-axis label.
+#     ax : Matplotlib axis instance
+#         Axis to plot. None will use the current axis.
+#     fig : Matplotlib figure instance
+#         Figure on which to add the plot. None will use the current figure.
+#     """
+#     # parse parameters
+#     ax = _parse_ax(ax)
+#
+#     if xbinsminmax is None:
+#         xbinsminmax = (np.ma.min(xarr), np.ma.max(xarr))
+#     binsx = np.linspace(xbinsminmax[0], xbinsminmax[1], nbinsx, endpoint=True)
+#
+#     cb_title = "Frequency"
+#     percent = False
+#
+#     if plot_percent:
+#         cb_title = cb_title + " (%)"
+#         percent = True
+#
+#     # Create CFAD array to fill
+#     nh = len(htarr)
+#     CFAD = np.empty((nh, len(binsx)-1))
+#     for nn in range(nh):
+#         CFAD[nn, :], bin_edges = np.histogram(xarr[:, nn], bins=binsx, density=percent)
+#
+#     X, Y = np.meshgrid(bin_edges, htarr)
+#     if mask_below is not None:
+#         CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
+#
+#     # Set the axes
+#     _set_axes(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
+#               title=title, titleFontSize=titleFontSize,
+#               xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
+#               xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize,
+#               ax=ax)
+#     # Plot the data
+#     p = ax.pcolormesh(X, Y, CFAD)
+#
+# #     if plot_contour_levels is not None:
+# #         print("CONTOURING")
+# #         xtick = binsx[2] - binsx[1]
+# #         x1 = binsx[:-1] + ( xtick * .5 )
+# #         X1, Y1 = np.meshgrid(x1, htarr)
+# #         c = ax.contour(X1, Y1, CFAD, levels=plot_contour_levels,
+# #                     colors=contour_levels_color)
+#
+#     if plot_colorbar:
+#         cb = plt.colorbar(p, ax=ax)
+#         cb.set_label(cb_title)
+#     return
 
 #######################
 #   General Methods   #
@@ -654,17 +652,18 @@ def find_nearest_indices(array, values):
     indices = np.abs(np.subtract.outer(array, values)).argmin(0)
     return indices if len(indices) > 1 else indices[0]
 
-def _set_axes(x_min=None, x_max=None,
+def _set_axes(ax, x_min=None, x_max=None,
               y_min=None, y_max=None,
               title=None, titleFontSize=None,
               xlab=None, xlabFontSize=None, xpad=None,
-              ylab=None, ylabFontSize=None, ypad=None,
-              ax=None):
+              ylab=None, ylabFontSize=None, ypad=None):
     """
     Returns a time series plot, with time on X-axis and variable on Y-axis.
 
     Parameters
     ----------
+    ax : Matplotlib axis instance
+        Axis to use.
     x_min : float
         Minimum value for X-axis.
     x_max : float
@@ -689,12 +688,7 @@ def _set_axes(x_min=None, x_max=None,
         Font size to use for X-axis label.
     ylabFontSize : int
         Font size to use for Y-axis label.
-    ax : Matplotlib axis instance
-        Axis to plot. None will use the current axis.
     """
-    # parse parameters
-    ax = _parse_ax(ax)
-
     # Potentially set the X- and Y-axis limits
     if x_min is not None:
         ax.set_xlim(left=x_min)
@@ -728,21 +722,22 @@ def _set_axes(x_min=None, x_max=None,
         if titleFontSize is None:
             titleFontSize = 16
         ax.set_title(title, fontsize = titleFontSize)
-    return
+#    return ax
 
-def _set_ts_axes(dForm='%H:%M', tz=None, xdate=True,
+def _set_ts_axes(ax, dForm='%H:%M', tz=None, xdate=True,
                  date_MinTicker='minute',
                  other_MajTicks=None, other_MinTicks=None,
                  other_min=None, other_max=None,
                  title=None, titleFontSize=None,
                  xlab=None, xlabFontSize=None, xpad=None,
-                 ylab=None, ylabFontSize=None, ypad=None,
-                 ax=None):
+                 ylab=None, ylabFontSize=None, ypad=None):
     """
     Returns a time series plot, with time on X-axis and variable on Y-axis.
 
     Parameters
     ----------
+    ax : Matplotlib axis instance
+        Axis to use.
     dForm : str
         Format of the time string for x-axis labels.
     tz : str
@@ -776,12 +771,7 @@ def _set_ts_axes(dForm='%H:%M', tz=None, xdate=True,
         Minimum value for non-date axis.
     other_max : float
         Maximum value for non-date axis.
-    ax : Matplotlib axis instance
-        Axis to plot. None will use the current axis.
     """
-    # parse parameters
-    ax = _parse_ax(ax)
-
     # Set the date format
     date_Fmt = DateFormatter(dForm, tz=tz)
 
