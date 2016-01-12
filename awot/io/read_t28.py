@@ -11,7 +11,7 @@ from __future__ import absolute_import, print_function
 import numpy as np
 from netCDF4 import num2date
 from .flight import _winduv
-from ..io.common import _get_epoch_units
+from . import common
 
 def read_t28_netcdf(ncFile):
     """
@@ -71,10 +71,10 @@ def _get_time(ncFile):
                      ncFile.variables['Time'].units)
 
     # Now convert this datetime instance into a number of seconds since Epoch
-    TimeSec = date2num(dtHrs, _get_epoch_units())
+    TimeSec = date2num(dtHrs, common._get_epoch_units())
 
-    Time_unaware = num2date(TimeSec, _get_epoch_units())
-    Time = {'data': Time_unaware, 'units': _get_epoch_units(),
+    Time_unaware = num2date(TimeSec, common._get_epoch_units())
+    Time = {'data': Time_unaware, 'units': common._get_epoch_units(),
             'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time_unaware
 

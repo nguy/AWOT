@@ -7,8 +7,11 @@ number of file formats.
 
 """
 # Load the needed packages
-import pyart
-
+try:
+    import pyart
+    _PYART_AVAILABLE = True
+except ImportError:
+    _PYART_AVAILABLE = False
 
 def read_tdr_sweep(fname, map_to_awot=True,
                       instrument=None, platform=None):
@@ -16,7 +19,7 @@ def read_tdr_sweep(fname, map_to_awot=True,
     A wrapper using the Py-ART read interface.
 
     In this structure the 'fields' attribute will be
-    structured as in the PyArt package.
+    structured as in the Py-ART package.
 
     Parameters
     ----------
@@ -30,6 +33,9 @@ def read_tdr_sweep(fname, map_to_awot=True,
     platform : str
         If set this supersedes the platform key in AWOT dictionary.
     """
+    if not _PYART_AVAILABLE:
+        raise MissingOptionalDependency(
+            "pyart is required to use read_tdr_sweep but is not installed")
     rad = pyart.io.read(fname)
 
     if map_to_awot:
@@ -70,7 +76,7 @@ def read_lf_sweep(fname, map_to_awot=True,
     A wrapper using the Py-ART read interface to read in
     lower fuselage radar (e.g. NOAA P-3) data files.
     Both cfradial and raw Sigmet formats are accepted.
-    
+
 
     In this structure the 'fields' attribute will be
     structured as in the PyArt package.
@@ -87,7 +93,9 @@ def read_lf_sweep(fname, map_to_awot=True,
     platform : str
         If set this supersedes the platform key in AWOT dictionary.
     """
-
+    if not _PYART_AVAILABLE:
+        raise MissingOptionalDependency(
+            "pyart is required to use read_lf_sweep but is not installed")
     rad = pyart.io.read(fname)
 
     if map_to_awot:

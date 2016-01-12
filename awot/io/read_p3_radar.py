@@ -11,9 +11,8 @@ from __future__ import print_function
 from netCDF4 import Dataset
 import numpy as np
 from datetime import datetime
-import pyart
 
-from ..io.common import _ncvar_to_dict, _var_not_found
+from . import common
 ########################
 #   TDR file methods  ##
 ########################
@@ -83,9 +82,9 @@ def read_windsyn_tdr_netcdf(fname, field_mapping=None):
     # Grab the metadata stored in global attributes as a dictionary
     radar['metadata'] = ncFile.__dict__
 
-    radar['longitude'] = _ncvar_to_dict(ncvars['Lon'])
-    radar['latitude'] = _ncvar_to_dict(ncvars['Lat'])
-    radar['height'] = _ncvar_to_dict(ncvars['Height'])
+    radar['longitude'] = common._ncvar_to_dict(ncvars['Lon'])
+    radar['latitude'] = common._ncvar_to_dict(ncvars['Lat'])
+    radar['height'] = common._ncvar_to_dict(ncvars['Height'])
     if radar['height']['units'] == 'km':
         radar['height']['data'][:] = radar['height']['data'][:] * 1000.
         radar['height']['units'] = 'meters'
@@ -122,10 +121,10 @@ def read_windsyn_tdr_netcdf(fname, field_mapping=None):
     # Loop through the variables and pull data
     for varname in name_map:
         try:
-            fields[varname] = _ncvar_to_dict(ncvars[name_map[varname]])
+            fields[varname] = common._ncvar_to_dict(ncvars[name_map[varname]])
         except:
             fields[varname] = None
-            _var_not_found(varname)
+            common._var_not_found(varname)
 
     # Mask bad data values
     # badval = float(ncFile.MissingValue)
@@ -363,9 +362,9 @@ def read_lf_grid(fname):
     # Grab the metadata stored in global attributes as a dictionary
     radar['metadata'] = ncFile.__dict__
 
-    radar['longitude'] = _ncvar_to_dict(ncvars['Lon'])
-    radar['latitude'] = _ncvar_to_dict(ncvars['Lat'])
-    radar['height'] = _ncvar_to_dict(ncvars['Zlev'])
+    radar['longitude'] = common._ncvar_to_dict(ncvars['Lon'])
+    radar['latitude'] = common._ncvar_to_dict(ncvars['Lat'])
+    radar['height'] = common._ncvar_to_dict(ncvars['Zlev'])
     if radar['height']['units'] == 'km':
         radar['height']['data'][:] = radar['height']['data'][:] * 1000.
         radar['height']['units'] = 'meters'
@@ -390,7 +389,7 @@ def read_lf_grid(fname):
                       0
                       )
 
-    fields = {'reflectivity': _ncvar_to_dict(ncvars['dBZ'])}
+    fields = {'reflectivity': common._ncvar_to_dict(ncvars['dBZ'])}
     # badval = float(ncFile.MissingValue)
     # np.ma.masked_values(fields['dBZ']['data'], badval)
     radar['fields'] = fields

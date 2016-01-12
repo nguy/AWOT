@@ -14,9 +14,7 @@ from netCDF4 import Dataset, num2date, date2num
 import datetime
 import numpy as np
 
-from ..io.common import (_ncvar_subset_to_dict, _ncvar_subset_masked,
-                         _var_found, _var_not_found,
-                         _get_epoch_units)
+from . import common
 
 def read_wcl(fname):
     '''
@@ -80,11 +78,11 @@ def read_wcl(fname):
     # Loop through the variables and pull data
     for varname in name_map_data:
         if name_map_data[varname] in ncvars:
-            data[varname] = _ncvar_subset_masked(
+            data[varname] = common._ncvar_subset_masked(
                 ncFile, name_map_data[varname], Good)
         else:
             data[varname] = None
-            _var_not_found(name_map_data[varname])
+            common._var_not_found(name_map_data[varname])
 
     # Add fields to their own dictionary
     fields = {}
@@ -95,12 +93,12 @@ def read_wcl(fname):
     # Loop through the variables and pull data
     for varname in name_map_fields:
         if name_map_fields[varname] in ncvars:
-            fields[varname] = _ncvar_subset_to_dict(
+            fields[varname] = common._ncvar_subset_to_dict(
                 ncvars[name_map_fields[varname]], Good)
-            _var_found(name_map_fields[varname])
+            common._var_found(name_map_fields[varname])
         else:
             fields[varname] = None
-            _var_not_found(name_map_fields[varname])
+            common._var_not_found(name_map_fields[varname])
 
     # Save to output dictionary
     data['fields'] = fields
@@ -153,8 +151,8 @@ def _get_time(fname, ncFile, Good_Indices):
     """Pull the time from WCL file and convert to AWOT useable."""
     # Pull out the date, convert the date to a datetime friendly string
     # Now convert the time array into a datetime instance
-    Time_unaware = num2date(ncFile.variables['time'][Good_Indices], _get_epoch_units)
-    Time = {'data': Time_unaware, 'units': _get_epoch_units(),
+    Time_unaware = num2date(ncFile.variables['time'][Good_Indices], common._get_epoch_units)
+    Time = {'data': Time_unaware, 'units': common._get_epoch_units(),
             'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time
 

@@ -9,7 +9,7 @@ number of file formats.
 # Load the needed packages
 import pyart
 from netCDF4 import num2date, date2num
-from ..io.common import _get_epoch_units
+from . import common
 
 def read_ground_radar(fname, map_to_awot=True,
                       instrument=None, platform=None):
@@ -69,8 +69,8 @@ def _convert_pyart_time(radar):
 
     # Now convert the time array into a datetime instance
     timedate = pyart.util.datetime_utils.datetimes_from_radar(radar)
-    Timesec = date2num(timedate, _get_epoch_units())
-    Time_unaware = num2date(Timesec, _get_epoch_units())
-    Time = {'data': Time_unaware, 'units': _get_epoch_units(),
+    Timesec = date2num(timedate, common._get_epoch_units())
+    Time_unaware = num2date(Timesec, common._get_epoch_units())
+    Time = {'data': Time_unaware, 'units': common._get_epoch_units(),
             'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time
