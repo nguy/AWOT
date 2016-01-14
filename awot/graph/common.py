@@ -881,7 +881,7 @@ def add_colorbar(ax, plot_instance, orientation=None, pad=None,
         Font size of the colorbar label.
     ticklabel_size : int
         Font size of colorbar tick labels.
-    levs : int
+    clevs : int
         Number of colorbar levels to use in tick calculation.
     tick_interval : int
         Interval to use for colorbar tick labels, higher number "thins" labels.

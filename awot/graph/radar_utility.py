@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 from netCDF4 import date2num, num2date
 from scipy.stats import mstats
 
+from matplotlib.colors import from_levels_and_colors
+
 from . import common
 
 class RadarUtilityPlot(object):
@@ -64,6 +66,8 @@ class RadarUtilityPlot(object):
         else:
             self.height = self.radar[height_name]
 
+        # Numpy meshgrid can do N-Dimensional. May be worth exploring,
+        # BUT would need the indices variables.
         self.heightfield = self.height.copy()
         if len(self.heightfield['data'].shape) == 1:
             self.heightfield['data'] = np.resize(self.height['data'][:], fieldshape)
@@ -235,8 +239,10 @@ class RadarUtilityPlot(object):
 
     def plot_cfad(self, field, height_axis=1,
                   xbinsminmax=None, nbinsx=50,
+                  points_thresh_fraction=0.1,
                   start_time=None, end_time=None,
                   vmin=None, vmax=None, cmap=None,
+                  discrete_levels=True, levels=None,
                   mask_below=None, plot_percent=False,
                   plot_colorbar=True,
                   x_min=None, x_max=None,
@@ -267,6 +273,12 @@ class RadarUtilityPlot(object):
             use with xarr. None will use min/max of xarr.
         nbinsx : int
             The number of bins to use with xarr, default is 50.
+        points_thresh_fraction : float
+            The fraction of points that must be present for the
+            CFAD to be calculated. Following Yuter and Houzed 1995,
+            the default values is 0.1 (10%) of potential data coverage
+            is required. This threshold removes anomolous results when
+            a small number of points is present.
         start_time : str
             UTC time to use as start time for subsetting in datetime format.
             (e.g. 2014-08-20 12:30:00)
@@ -279,6 +291,13 @@ class RadarUtilityPlot(object):
             Maximum value to display.
         cmap : str
             Matplotlib colormap string.
+        discrete_levels : boolean
+            True to create discrete levels for colormap. False will apply
+            the default linear normalization of luminance for colorbar scale.
+        levels : array
+            An list of levels to be used for display. If chosen discrete
+            color will be used in the colorbar instead of a linear luminance
+            mapping.
         mask_below : float
             If provided, values less than mask_below will be masked.
         plot_percent : boolean
@@ -343,7 +362,9 @@ class RadarUtilityPlot(object):
 
         if plot_percent:
             cb_label = cb_label + " (%)"
-            percent = True
+
+        # Create a dictionary to return
+        cfad_dict = {}
 
         # Reshape the array so that height axis is first dimension
         if height_axis != 0:
@@ -354,16 +375,39 @@ class RadarUtilityPlot(object):
 
         # Create CFAD array to fill
         nh = len(self.height['data'][:])
-        CFAD = np.empty((nh, len(binsx)-1))
+        bin_pts = np.empty((nh, len(binsx)-1))
+        bin_perc = np.empty((nh, len(binsx)-1))
+
         for nn in range(nh):
-            CFAD[nn, :], bin_edges = np.histogram(
-                   xarr[nn, ...], bins=binsx, density=percent)
+#            CFAD[nn, :], bin_edges = np.histogram(
+#                   xarr[nn, ...], bins=binsx, density=plot_percent)
+
+            # Check data for good points
+            condition = np.logical_or(
+                         np.isfinite(xarr[nn, ...].ravel()),
+                         xarr.mask[nn, ...].ravel() == 0)
+            # Sort the good data from low to high values
+            array = np.sort(xarr[nn, ...].ravel()[condition])
+            # Calculate the fraction of points out of possible total
+            ptsfrac = float(len(array))/float(len(xarr[nn, ...].ravel()))
+            if ptsfrac > points_thresh_fraction:
+                bin_pts[nn, :], bin_edges  = np.histogram(
+                    array,  bins=binsx, density=False)
+            bin_perc[nn, :] = bin_pts[nn, :] / bin_pts[nn, :].sum() * 100.
+            del(ptsfrac, array, condition)
 
         # Mask any invalid or negative numbers
-        CFAD = np.ma.masked_invalid(CFAD)
-        CFAD = np.ma.masked_less(CFAD, 0.)
+        bin_pts = np.ma.masked_invalid(bin_pts)
+        bin_pts = np.ma.masked_less(bin_pts, 0.)
+        bin_perc = np.ma.masked_invalid(bin_perc)
+        bin_perc = np.ma.masked_less(bin_perc, 0.)
 
-        X, Y = np.meshgrid(bin_edges, self.height['data'][:])
+        if plot_percent:
+            CFAD = bin_perc
+        else:
+            CFAD = bin_pts
+
+        X, Y = np.meshgrid(binsx, self.height['data'][:])
         if mask_below is not None:
             CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
 
@@ -372,8 +416,21 @@ class RadarUtilityPlot(object):
                   title=title, titleFontSize=titleFontSize,
                   xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
                   xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
+
         # Plot the data
-        p = ax.pcolormesh(X, Y, CFAD, vmin=vmin, vmax=vmax, cmap=cmap)
+        norm, levpos, colors = None, None, None
+        cm = plt.get_cmap(cmap)
+        if discrete_levels:
+            # Default to these levels if none chosen
+            if levels is None:
+                levels = [.1, .5, 1, 2, 5, 7, 10, 15, 25]
+            # Get the colormap and calculate data spaced by number of levels
+
+            levpos = np.rint(np.squeeze([np.linspace(0, 255, len(levels))])).astype(int)
+            colors = cm(levpos)
+            # Convert levels to colormap values
+            cmap, norm = from_levels_and_colors(levels, colors, extend='max')
+        p = ax.pcolormesh(X, Y, CFAD, vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
 
         if plot_colorbar:
             cb = common.add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
@@ -381,11 +438,13 @@ class RadarUtilityPlot(object):
                  ticklabel_size=cb_ticklabel_size,
                  clevs=cb_levs, tick_interval=cb_tick_int)
 
-        # Create a dictionary to return
-        cfad_dict = {'frequency' : CFAD,
-                     'frequency_label' : cb_label,
-                     'xaxis' : X,
-                     'yaxis' : Y}
+        # Clean up any potentially lingering variables
+        del(norm, levels, cm, levpos, colors, CFAD)
+        # Populate the dictionary
+        cfad_dict['frequency_points'] = bin_pts
+        cfad_dict['frequency_percent'] = bin_perc
+        cfad_dict['xaxis'] = X
+        cfad_dict['yaxis'] = Y
         return cfad_dict
 
 #     def plot_quantiles(self, field, quantiles=None,
@@ -519,6 +578,48 @@ class RadarUtilityPlot(object):
 # #            print(qArr[num, :].min(), qArr[num, :].max())
 # #            print(qArr[num, -1], ytextloc)
 #         return
+
+###########################
+#   Calculation methods   #
+###########################
+    def calc_cfad_quantile(xarr, binsx, points_thresh_fraction, quantiles=None):
+        # Create CFAD array to fill
+        nh = xarr.shape[0]
+        bin_pts = np.empty((nh, len(binsx)-1))
+        bin_perc = np.empty((nh, len(binsx)-1))
+
+        if quantiles is not None:
+            pass
+
+        for nn in range(nh):
+#            CFAD[nn, :], bin_edges = np.histogram(
+#                   xarr[nn, ...], bins=binsx, density=plot_percent)
+
+            # Check data for good points
+            condition = np.logical_or(
+                         np.isfinite(xarr[nn, ...].ravel()),
+                         xarr.mask[nn, ...].ravel() == 0)
+            # Sort the good data from low to high values
+            array = np.sort(xarr[nn, ...].ravel()[condition])
+            # Calculate the fraction of points out of possible total
+            ptsfrac = float(len(array))/float(len(xarr[nn, ...].ravel()))
+            if ptsfrac > points_thresh_fraction:
+                bin_pts[nn, :], bin_edges  = np.histogram(
+                    array,  bins=binsx, density=False)
+            bin_perc[nn, :] = bin_pts[nn, :] / bin_pts[nn, :].sum() * 100.
+            del(ptsfrac, array, condition)
+
+        # Mask any invalid or negative numbers
+        bin_pts = np.ma.masked_invalid(bin_pts)
+        bin_pts = np.ma.masked_less(bin_pts, 0.)
+        bin_perc = np.ma.masked_invalid(bin_perc)
+        bin_perc = np.ma.masked_less(bin_perc, 0.)
+        cfad_dict = {'frequency_points' : bin_pts,
+                     'frequency_percent' : bin_perc,
+                     'xaxis' : X,
+                     'yaxis' : Y
+                     }
+        return cfad_dict
 
 ###################
 #   Get methods   #
