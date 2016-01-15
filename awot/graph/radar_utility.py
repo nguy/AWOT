@@ -373,41 +373,13 @@ class RadarUtilityPlot(object):
         else:
             ht = self.heightfield['data'].copy()
 
-        # Create CFAD array to fill
-        nh = xarr.shape[0]
-        bin_pts = np.empty((nh, len(binsx)-1))
-        bin_perc = np.empty((nh, len(binsx)-1))
-
-        for nn in range(nh):
-#            CFAD[nn, :], bin_edges = np.histogram(
-#                   xarr[nn, ...], bins=binsx, density=plot_percent)
-
-            # Check data for good points
-            condition = np.logical_or(
-                         np.isfinite(xarr[nn, ...].ravel()),
-                         xarr.mask[nn, ...].ravel() == 0)
-            # Sort the good data from low to high values
-            array = np.sort(xarr[nn, ...].ravel()[condition])
-            # Calculate the fraction of points out of possible total
-            ptsfrac = float(len(array))/float(len(xarr[nn, ...].ravel()))
-            if ptsfrac > points_thresh_fraction:
-                bin_pts[nn, :], bin_edges  = np.histogram(
-                    array,  bins=binsx, density=False)
-            bin_perc[nn, :] = bin_pts[nn, :] / bin_pts[nn, :].sum() * 100.
-            del(ptsfrac, array, condition)
-
-        # Mask any invalid or negative numbers
-        bin_pts = np.ma.masked_invalid(bin_pts)
-        bin_pts = np.ma.masked_less(bin_pts, 0.)
-        bin_perc = np.ma.masked_invalid(bin_perc)
-        bin_perc = np.ma.masked_less(bin_perc, 0.)
-
+        cfad_dict = self.calc_cfad(xarr, binsx, self.height['data'][:],
+                                   points_thresh_fraction)
         if plot_percent:
-            CFAD = bin_perc
+            CFAD = cfad_dict['frequency_percent']
         else:
-            CFAD = bin_pts
+            CFAD = cfad_dict['frequency_points']
 
-        X, Y = np.meshgrid(binsx, self.height['data'][:])
         if mask_below is not None:
             CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
 
@@ -430,7 +402,8 @@ class RadarUtilityPlot(object):
             colors = cm(levpos)
             # Convert levels to colormap values
             cmap, norm = from_levels_and_colors(levels, colors, extend='max')
-        p = ax.pcolormesh(X, Y, CFAD, vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
+        p = ax.pcolormesh(cfad_dict['xaxis'], cfad_dict['yaxis'], CFAD,
+                          vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
 
         if plot_colorbar:
             cb = common.add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
@@ -450,12 +423,6 @@ class RadarUtilityPlot(object):
 
         # Clean up any potentially lingering variables
         del(norm, levels, cm, levpos, colors, CFAD)
-        # Populate the dictionary
-        cfad_dict = {'frequency_points' : bin_pts,
-                     'frequency_percent' : bin_perc,
-                     'xaxis' : X,
-                     'yaxis' : Y
-                     }
         return cfad_dict
 
     def plot_quantiles(self, field, quantiles=None, height_axis=1,
@@ -590,29 +557,50 @@ class RadarUtilityPlot(object):
 ###########################
 #   Calculation methods   #
 ###########################
-    def calc_cfad_quantile(self, data, binsx, points_thresh_fraction, quantiles=None):
-        # Create array to fill
-        nh = data.shape[0]
+    def calc_cfad(self, xarr, binsx, height, points_thresh_fraction):
+        '''
+        Calculate the contoured frequency by altitude (CFAD) distribution.
+
+        Parameters
+        ----------
+        xarr : array
+            An array of floating point values of data to use in
+            CFAD calculation.
+        binsx : array
+            An array of floating point values of bins to use in
+            CFAD calculation.
+        height : array
+            An array of floating point values corresponding to height.
+        points_thresh_fraction : float
+            The fraction of points that must be present for the
+            CFAD to be calculated. Following Yuter and Houzed 1995,
+            the default values is 0.1 (10%) of potential data coverage
+            is required. This threshold removes anomolous results when
+            a small number of points is present.
+        '''
+        # Create CFAD array to fill
+        nh = xarr.shape[0]
         bin_pts = np.empty((nh, len(binsx)-1))
         bin_perc = np.empty((nh, len(binsx)-1))
-
-        if quantiles is not None:
-            pass
 
         for nn in range(nh):
             # Check data for good points
             condition = np.logical_or(
-                         np.isfinite(data[nn, ...].ravel()),
-                         data.mask[nn, ...].ravel() == 0)
+                         np.isfinite(xarr[nn, ...].ravel()),
+                         xarr.mask[nn, ...].ravel() == 0)
             # Sort the good data from low to high values
-            data = np.sort(data[nn, ...].ravel()[condition])
+            array = np.sort(xarr[nn, ...].ravel()[condition])
             # Calculate the fraction of points out of possible total
-            ptsfrac = float(len(data))/float(len(data[nn, ...].ravel()))
+            ptsfrac = float(len(array))/float(len(xarr[nn, ...].ravel()))
             if ptsfrac > points_thresh_fraction:
                 bin_pts[nn, :], bin_edges  = np.histogram(
-                    data,  bins=binsx, density=False)
+                    array,  bins=binsx, density=False)
             bin_perc[nn, :] = bin_pts[nn, :] / bin_pts[nn, :].sum() * 100.
-            del(ptsfrac, data, condition)
+            del(ptsfrac, array, condition)
+#            CFAD[nn, :], bin_edges = np.histogram(
+#                   xarr[nn, ...], bins=binsx, density=plot_percent)
+
+        X, Y = np.meshgrid(binsx, height)
 
         # Mask any invalid or negative numbers
         bin_pts = np.ma.masked_invalid(bin_pts)
@@ -627,6 +615,19 @@ class RadarUtilityPlot(object):
         return cfad_dict
 
     def calc_quantiles(self, xarr, height, quantiles):
+        '''
+        Calculate quantiles of data by height.
+
+        Parameters
+        ----------
+        xarr : array
+            An array of floating point values of data to use in
+            quantile calculation.
+        height : array
+            An array of floating point values corresponding to height.
+        quantiles : list
+            List of percentages to use for calculation of vertical quantiles.
+        '''
         # Create array to fill
         nh = xarr.shape[0]
         qArr = np.empty((nh, len(quantiles)))
@@ -643,6 +644,70 @@ class RadarUtilityPlot(object):
                       'yaxis' : height
                       }
         return quant_dict
+
+    def calc_vertical_profile(self, field, height_axis=1,
+                              start_time=None, end_time=None,):
+        '''
+        Calculate vertical profile statistics.
+
+        Parameters
+        ----------
+        field : str
+            Name of the field to use in CFAD calculation.
+        quantiles : list
+            A list of percentage values for quantile calculations.
+        height_axis : int
+            The dimension to perform quantile calculation over (non-height).
+        start_time : str
+            UTC time to use as start time for subsetting in datetime format.
+            (e.g. 2014-08-20 12:30:00)
+        end_time : str
+            UTC time to use as an end time for subsetting in datetime format.
+            (e.g. 2014-08-20 16:30:00)
+        '''
+        # Snag the data from requested field
+        xarr = self._get_fields_variable_dict_data_time_subset(
+            field, start_time, end_time)
+
+        # Reshape the array so that height axis is first dimension
+        if height_axis != 0:
+            ht = np.rollaxis(self.heightfield['data'], height_axis)
+            xarr = np.rollaxis(xarr, height_axis)
+        else:
+            ht = self.heightfield['data'].copy()
+
+        # Create arrays to fill
+        nh = xarr.shape[0]
+        mean = np.empty((nh))
+        median = np.empty((nh))
+        std_dev = np.empty((nh))
+        min = np.empty((nh))
+        max = np.empty((nh))
+        var = np.empty((nh))
+        skew = np.empty((nh))
+
+        for nn in range(nh):
+            # Sort the good data from low to high values
+            data = np.sort(xarr[nn, ...].ravel())
+            mean[nn] = np.ma.mean(data)
+            median[nn] = np.ma.median(data)
+            std_dev[nn] = np.ma.median(data)
+            min[nn] = np.ma.min(data)
+            max[nn] = np.ma.max(data)
+            var[nn] = np.ma.var(data)
+            skew[nn] = mstats.skew(data)
+
+        vp_dict = {'field' : field,
+                   'vp_mean' : mean,
+                   'vp_median' : median,
+                   'vp_std_dev' : std_dev,
+                   'vp_min' : min,
+                   'vp_max' : max,
+                   'vp_variance' : var,
+                   'vp_skew' : skew,
+                   'yaxis' : self.height['data'][:]
+                  }
+        return vp_dict
 
 ###################
 #   Get methods   #
