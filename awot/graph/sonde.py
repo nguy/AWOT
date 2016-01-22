@@ -298,78 +298,32 @@ def plot_parameter_list():
     ax4.xaxis.set_visible(False)
     ax4.yaxis.set_visible(False)
 
-def run_thermo_calcs(data):
 
-    '''
-    method to calculate thermodynamic parameters from dropsonde data
-
-    Inputs:
-
-    # Dictionary of sounding data.
-    # Uses calculations from thermocalcs.py
-    # ============
-
-    output:
-
-    # multiple arrays containing thermodynamic information
-
-    '''
-
-    tC = ThermoCalcs()
-
-    T = data['temperature']
-    Td = data['dewpoint']
-    p = data['presssure']
-    RH = data['relative_humidity']
-    u = data['u_component']
-    v = data['v_component']
-    h = data['Height']
-
-    LCLT = round((
-        tC._LCL_temperature(h, T+273.15, Td+273.15)-273.15), 2)
-    LCLP = round((
-        tC._LCL_presssure(h, p, T+273.15, Td+273.15)), 0)
-    LCLZ = round((
-        tC._LCL_Height(h, p, T+273.15, Td+273.15)), 0)
-    THETA = tC._PTk2_Theta(p, T+273.15)
-    MIXR = tC._RH_2_MixR(RH, p, T+273.15)
-    THETAE = tC._Tk_RH_MixR_2_ThetaE(
-        p, T+273.15, RH, MIXR/1000.)
-    ESAT = tC._esat(T+273.15)
-
-    thermoCalcData = dict()
-    thermoCalcData['lclt'] = LCLT
-    thermoCalcData['lclp'] = LCLP
-    thermoCalcData['lclz'] = LCLZ
-    thermoCalcData['theta'] = THETA
-    thermoCalcData['mixr'] = MIXR
-    thermoCalcData['thetae'] = THETAE
-    thermoCalcData['esat'] = ESAT
-
-
-    return thermoCalcData
 
 
 
 def plot_thermo_calcs():
+    
+    return
+#
+#    '''
+#    method to plot the thermodynamic parameters on the parameter list.
+#
+#    Inputs:
+#
+#    # None
+#    # ============
+#
+#    output:
+#
+#    # Image
+#    '''
+#
+#    # plot the parameters on the list generated.
+#    ax4.text(.01, .01, 'LCL presssure: ' + str(lclp) + (' hPa'))
+#    ax4.text(.01, .04, 'LCL Temp: ' + str(lclt) + ' c')
+#    ax4.text(.01, .07, 'LCL Height: ' + str(lclz) + ' m')
 
-    '''
-    method to plot the thermodynamic parameters on the parameter list.
-
-    Inputs:
-
-    # None
-    # ============
-
-    output:
-
-    # Image
-    '''
-
-    # plot the parameters on the list generated.
-    ax4.text(.01, .01, 'LCL presssure: ' + str(lclp) + (' hPa'))
-    ax4.text(.01, .04, 'LCL Temp: ' + str(lclt) + ' c')
-    ax4.text(.01, .07, 'LCL Height: ' + str(lclz) + ' m')
 
 def plot_dryadiabats(**kwargs):
 
@@ -445,97 +399,52 @@ def plot_wind_barbs(data, **kwargs):
 
         ax1_copy.barbs(x_const[::40], P[::40], Uwind[::40], Vwind[::40])
 
-def run_shear_calcs(data):
 
-    '''
-    method to calculate thermodynamic parameters from dropsonde data
-
-    Inputs:
-
-    # Dictionary of sounding data.
-    # Uses calculations from thermocalcs.py
-    # ============
-
-    output:
-
-    # multiple arrays containing thermodynamic information
-
-    '''
-
-    T = data['temperature']
-    Td = data['dewpoint']
-    p = data['presssure']
-    RH = data['relative_humidity']
-    uwind = data['u_component']
-    vwind = data['v_component']
-    height = data['Height']
-
-    mask = h.mask
-    uwind = u[~mask]
-    vwind = v[~mask]
-    height = h[~mask]
-
-    SHEAR1KM = sC._VertShear_Sfc_to_1km(h, u, v)
-    SHEAR3KM = sC._VertShear_Sfc_to_3km(h, u, v)
-    SHEAR6KM = sC._VertShear_Sfc_to_6km(h, u, v)
-    BULKSHEAR1km = round(sC._bulkshear_sfc_1km(h, u, v), 2)
-    BULKSHEAR3km = round(sC._bulkshear_sfc_3km(h, u, v), 2)
-    BULKSHEAR6km = round(sC._bulkshear_sfc_6km(h, u, v), 2)
-
-
-    shearCalcData = dict()
-    shearCalcData['SHEAR1KM'] = SHEAR1KM
-    shearCalcData['SHEAR3KM'] = SHEAR3KM
-    shearCalcData['SHEAR6KM'] = SHEAR6KM
-    shearCalcData['BULKSHEAR1km'] = BULKSHEAR1km
-    shearCalcData['BULKSHEAR1km'] = BULKSHEAR3km
-    shearCalcData['BULKSHEAR1km'] = BULKSHEAR6km
-
-    return shearCalcData
 
 
 
 def plot_shear_calcs():
-
-    '''
-    method to plot the thermodynamic parameters on the parameter list.
-
-    Inputs:
-
-    # None
-    # ============
-
-    output:
-
-    # Image
-    '''
-
-
-
-    # plot the parameters on the list generated.
-    ax4.text(.01, .1, '0-1 km shear: '+str(SHEAR1KM)+(' 1/s'))
-    ax4.text(.01, .14, '0-3 km shear: '+str(SHEAR3KM)+' 1/s')
-    ax4.text(.01, .18, '0-6 km shear: '+str(SHEAR6KM)+' 1/s')
-    ax4.text(
-        .01, .22, '0-1km Bulk Shear: '+str(BULKSHEAR1km)+' m/s')
-    ax4.text(
-        .01, .26, '0-3km Bulk Shear: '+str(BULKSHEAR3km)+' m/s')
-    ax4.text(
-        .01, .3, '0-6km Bulk Shear: '+str(BULKSHEAR6km)+' m/s')
+    #
+    #    '''
+    #    method to plot the thermodynamic parameters on the parameter list.
+    #
+    #    Inputs:
+    #
+    #    # None
+    #    # ============
+    #
+    #    output:
+    #
+    #    # Image
+    #    '''
+    #
+    #
+    #
+    #    # plot the parameters on the list generated.
+    #    ax4.text(.01, .1, '0-1 km shear: '+str(SHEAR1KM)+(' 1/s'))
+    #    ax4.text(.01, .14, '0-3 km shear: '+str(SHEAR3KM)+' 1/s')
+    #    ax4.text(.01, .18, '0-6 km shear: '+str(SHEAR6KM)+' 1/s')
+    #    ax4.text(
+    #        .01, .22, '0-1km Bulk Shear: '+str(BULKSHEAR1km)+' m/s')
+    #    ax4.text(
+    #        .01, .26, '0-3km Bulk Shear: '+str(BULKSHEAR3km)+' m/s')
+    #    ax4.text(
+    #        .01, .3, '0-6km Bulk Shear: '+str(BULKSHEAR6km)+' m/s')
 
 #def dry_lift(data):
-#
-#    T = data['temperature']
-#    Td = data['dewpoint']
-#    p = data['presssure']
-#    RH = data['relative_humidity']
-#    u = data['u_component']
-#    v = data['v_component']
-#    h = data['Height']
-#
-#    t_parcel, p_parcel = tC.dry_lift(T, p, LCLT, LCLP)
-#
-#    ax1.semilogy(t_parcel, p_parcel, 'k--', ms=1)
+    #
+    #    T = data['temperature']
+    #    Td = data['dewpoint']
+    #    p = data['presssure']
+    #    RH = data['relative_humidity']
+    #    u = data['u_component']
+    #    v = data['v_component']
+    #    h = data['Height']
+    #
+    #    t_parcel, p_parcel = tC.dry_lift(T, p, LCLT, LCLP)
+    #
+    #    ax1.semilogy(t_parcel, p_parcel, 'k--', ms=1)
+    return
 
 
 
