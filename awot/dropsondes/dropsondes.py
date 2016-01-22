@@ -3,9 +3,9 @@ from matplotlib.collections import LineCollection
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.patches as patches
-from utilities.thermocalcs import ThermoCalcs
-from utilities.shearcalcs import ShearCalcs
-from utilities.skew import SkewXTick
+import ThermoCalcs
+import ShearCalcs
+import SkewXTick
 
 
 # Need to change:
