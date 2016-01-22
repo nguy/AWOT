@@ -10,9 +10,8 @@ import numpy as np
 
 from datetime import datetime
 from netCDF4 import Dataset, num2date, date2num
-from ..io.common import (_get_epoch_units,
-                         _ncvar_to_dict, _var_not_found,
-                         _nasa_ames_var_to_dict)
+
+from . import common
 from ..io.name_maps_flight import _get_name_map
 
 #########################
@@ -135,7 +134,7 @@ def read_netcdf_variable(fname, Rec):
       """
     # Read the NetCDF, grab the variable, close file
     ncFile = Dataset(fname, 'r')
-    VarOut = _ncvar_to_dict(ncFile.variables[Rec])
+    VarOut = common._ncvar_to_dict(ncFile.variables[Rec])
     ncFile.close()
     return VarOut
 
@@ -190,15 +189,15 @@ def _get_time(ncFile, isRAF, RAFrate=None, timevar=None):
     try:
         time_units = ncFile.variables[varname].units
     except:
-        time_units = _get_epoch_units()
+        time_units = common._get_epoch_units()
 
     # Now convert the time array into a datetime instance
     dtHrs = num2date(TimeSec, time_units)
     # Now convert this datetime instance into a number of seconds since Epoch
-    TimeSec = date2num(dtHrs, _get_epoch_units())
+    TimeSec = date2num(dtHrs, common._get_epoch_units())
     # Now once again convert this data into a datetime instance
-    Time_unaware = num2date(TimeSec, _get_epoch_units())
-    Time = {'data': Time_unaware, 'units': _get_epoch_units(),
+    Time_unaware = num2date(TimeSec, common._get_epoch_units())
+    Time = {'data': Time_unaware, 'units': common._get_epoch_units(),
             'standard_name': 'Time', 'long_name': 'Time (UTC)'}
     return Time
 
@@ -208,7 +207,7 @@ def _make_data_dictionary(ncFile, name_map, isRAF, RAFrate=None):
 
     for var in name_map:
         if name_map[var] in ncFile.variables.keys():
-            data[var] = _ncvar_to_dict(ncFile.variables[name_map[var]])
+            data[var] = common._ncvar_to_dict(ncFile.variables[name_map[var]])
             if (isRAF) & (RAFrate in ncFile.variables[name_map[var]].shape):
                 data[var]['data'] = np.array(ncFile.variables[name_map[var]][:]).ravel()
             try:
@@ -283,10 +282,10 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
     StartTime = datetime(hdr['DATE'][0], hdr['DATE'][
                          1], hdr['DATE'][2], 0, 0, 0)
     TimeSec = np.array(readfile['time'][:]) + date2num(
-        StartTime, units=_get_epoch_units())
+        StartTime, units=common._get_epoch_units())
 
     # Finally convert this back to a standard used by this package (Epoch)
-    Time_unaware = num2date(TimeSec[:], units=_get_epoch_units())
+    Time_unaware = num2date(TimeSec[:], units=common._get_epoch_units())
     Time = Time_unaware  # .replace(tzinfo=pytz.UTC)
 
     del readfile['time']
@@ -295,7 +294,7 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
     data = {}
     for varname in name_map:
         try:
-            data[varname] = _nasa_ames_var_to_dict(
+            data[varname] = common._nasa_ames_var_to_dict(
                                readfile[name_map[varname]],
                                varname, name_map[varname])
         except:

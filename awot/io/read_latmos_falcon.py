@@ -15,9 +15,7 @@ import datetime
 import numpy as np
 import pytz
 
-from ..io.common import (_ncvar_subset_to_dict, _ncvar_subset_masked,
-                         _ncvar_to_dict, _var_not_found,
-                         _get_epoch_units)
+from . import common
 
 def read_rasta_wind(fname, field_mapping=None):
     '''A wrapper to call the read_rasta_dynamic module.'''
@@ -117,23 +115,23 @@ def read_rasta_dynamic(fname, field_mapping=None):
     # Loop through the variables and pull data
     for varname in name_map_data:
         if varname in ncvars:
-            data[varname] = _ncvar_subset_masked(
+            data[varname] = common._ncvar_subset_masked(
                 ncFile, name_map_data[varname], Good)
             if varname is 'altitude':
                 data[varname] = data[varname] * 1000.
         else:
             data[varname] = None
-            _var_not_found(varname)
+            common._var_not_found(varname)
 
     try:
-        data['height'] = _ncvar_to_dict(ncvars['height'])
+        data['height'] = common._ncvar_to_dict(ncvars['height'])
         data['height']['data'][:] = data['height']['data'][:] * 1000.
         data['height']['units'] = 'meters'
     except:
         data['height'] = None
 
     try:
-        data['mask_hydro'] = _ncvar_subset_to_dict(ncvars['Mask'], Good)
+        data['mask_hydro'] = common._ncvar_subset_to_dict(ncvars['Mask'], Good)
     except:
         data['mask_hydro'] = None
 
@@ -153,7 +151,7 @@ def read_rasta_dynamic(fname, field_mapping=None):
                 ncvars[name_map_fields[varname]], Good)
         except:
             fields[varname] = None
-            _var_not_found(varname)
+            common._var_not_found(varname)
 
     # Save to output dictionary
     data['fields'] = fields
@@ -264,7 +262,7 @@ def read_rasta_microphysics(fname, field_mapping=None):
     except:
         data['longitude'] = None
     try:
-        data['height'] = _ncvar_to_dict(ncvars['height'])
+        data['height'] = common._ncvar_to_dict(ncvars['height'])
         data['height']['data'][:] = data['height']['data'][:] * 1000.
         data['height']['units'] = 'meters'
     except:
@@ -286,7 +284,7 @@ def read_rasta_microphysics(fname, field_mapping=None):
                 ncvars[name_map[varname]], Good)
         except:
             fields[varname] = None
-            _var_not_found(varname)
+            common._var_not_found(varname)
 
     if fields['Dm'] is not None:
         fields['Dm']['data'][:] = fields['Dm']['data'][:] * 1000.
@@ -395,9 +393,9 @@ def _get_latmos_time(fname, ncFile, Good_Indices):
     dtHrs = num2date(ncFile.variables['time'][
         Good_Indices], 'hours since ' + StartDate + '00:00:00+0:00')
     # Now convert this datetime instance into a number of seconds since Epoch
-    TimeSec = date2num(dtHrs, _get_epoch_units())
+    TimeSec = date2num(dtHrs, common._get_epoch_units())
     # Now once again convert this data into a datetime instance
-    Time_unaware = num2date(TimeSec, _get_epoch_units())
-    Time = {'data': Time_unaware, 'units': _get_epoch_units(),
+    Time_unaware = num2date(TimeSec, common._get_epoch_units())
+    Time = {'data': Time_unaware, 'units': common._get_epoch_units(),
             'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time

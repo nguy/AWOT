@@ -23,11 +23,7 @@ from matplotlib import ticker
 from datetime import datetime
 import scipy.ndimage as scim
 
-from .common import (plot_date_ts, image_2d_date,
-                     _get_earth_radius,
-                     _check_basemap, _check_field,
-                     _parse_ax_fig, _parse_ax,
-                     add_colorbar)
+from . import common
 
 
 class FlightLevel(object):
@@ -101,7 +97,7 @@ class FlightLevel(object):
         self.time = flightdata[timekey]
         self.flight_data = flightdata
         self.basemap = basemap
-        _check_basemap(self, strong=False)
+        common._check_basemap(self, strong=False)
 
         if self.basemap is not None:
             # Calculate x,y map position coordinates
@@ -178,7 +174,7 @@ class FlightLevel(object):
           see Basemap and Matplotlib.
         """
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
         # Check inputs
         if legLab is None:
@@ -300,7 +296,7 @@ class FlightLevel(object):
             field = 'temperature'
 
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
         # Get start and end times (this deals with subsets)
         dt_start = self._get_datetime(start_time, get_start=True)
@@ -362,7 +358,8 @@ class FlightLevel(object):
             color_bar=True, cb_orient='vertical', cb_pad=.05, cb_tick_int=2,
             cb_fontsize=None, cb_ticklabel_size=None,
             x_axis_array='distance', dForm='%H:%M', tz=None,
-            date_MinTicker='minute', ax=None, fig=None):
+            date_MinTicker='minute', plot_km=False,
+            ax=None, fig=None):
         '''
         Plot a cross-section along a flight path segment.
 
@@ -429,13 +426,16 @@ class FlightLevel(object):
         date_MinTicker : str
             Sting to set minor ticks of date axis,
             'second','minute','hour','day' supported.
+        plot_km : boolean
+            True to convert meters to kilometers for cappi_height. False
+            retains meters information.
         ax : Matplotlib axis instance
             Axis to plot on. None will use the current axis.
         fig : Matplotlib figure instance
             Figure which to add the plot. None will use the current figure.
         '''
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
         # Get start and end times (this deals with subsets)
         dt_start = self._get_datetime(start_time, get_start=True)
@@ -478,9 +478,9 @@ class FlightLevel(object):
                 xsDist[ii] = 0.
             else:
                 Xdist[ii] = np.absolute(
-                    (np.pi * _get_earth_radius() / 180.) * (lonSub[ii] - lonSub[ii - 1]))
+                    (np.pi * common._get_earth_radius() / 180.) * (lonSub[ii] - lonSub[ii - 1]))
                 Ydist[ii] = np.absolute(
-                    (np.pi * _get_earth_radius() / 180.) * (latSub[ii] - latSub[ii - 1]))
+                    (np.pi * common._get_earth_radius() / 180.) * (latSub[ii] - latSub[ii - 1]))
                 xsDist[ii] = (np.sqrt(Xdist[ii]**2 + Ydist[ii]**2)
                               ) + xsDist[ii - 1]
 
@@ -498,12 +498,17 @@ class FlightLevel(object):
             Xax = date2num(timeSub)
 
         # Convert Height, distance arrays to 2D
-        Ht2D, Xax2D = np.meshgrid(radar['height']['data'][:], Xax)
+        if plot_km:
+            Ht2D, Xax2D = np.meshgrid(radar['height']['data'][:]/1000., Xax)
+            ylabel = 'Altitude (km)'
+        else:
+            Ht2D, Xax2D = np.meshgrid(radar['height']['data'][:], Xax)
+            ylabel = 'Altitude (m)'
 
         p = ax.pcolormesh(Xax2D, Ht2D, np.ma.masked_less_equal(xs_data, -800.),
                           vmin=vmin, vmax=vmax, cmap=cmap)
 
-        ax.set_ylabel(' Altitude (km)')
+        ax.set_ylabel(ylabel)
         if x_axis_array == 'distance':
             ax.set_xlabel('Distance along track (km)')
         elif x_axis_array == 'time':
@@ -527,7 +532,7 @@ class FlightLevel(object):
         # Add Colorbar
         if color_bar:
             cbStr = Var['long_name'] + ' (' + Var['units'] + ')'
-            cb = add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
+            cb = common.add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
                               label=cbStr, fontsize=cb_fontsize,
                               ticklabel_size=cb_ticklabel_size,
                               clevs=clevs, tick_interval=cb_tick_int)
@@ -741,7 +746,7 @@ class FlightLevel(object):
             Axis on which to plot.
         """
         # parse parameters
-        ax = _parse_ax(ax)
+        ax = common._parse_ax(ax)
 
         # Only plot every nth barb from the barbspacing parameter
         lon_offset, lat_offset = label_offset
@@ -809,7 +814,7 @@ class FlightLevel(object):
         """
 
         # parse parameters
-        ax = _parse_ax(ax)
+        ax = common._parse_ax(ax)
 
         # Only plot every nth barb from the barbspacing parameter
         lon_offset, lat_offset = label_offset
@@ -847,8 +852,8 @@ class FlightLevel(object):
 #  Time Series methods  #
 #########################
 
-    def plot_timeseries(
-            self, field, color='k', marker='o', msize=1.5, lw=2,
+    def plot_timeseries(self,
+            field, color='k', marker='o', msize=1.5, lw=2,
             dForm='%H:%M', tz=None, xdate=True,
             date_MinTicker='minute', other_MajTicks=None, other_MinTicks=None,
             other_min=None, other_max=None, start_time=None, end_time=None,
@@ -906,17 +911,17 @@ class FlightLevel(object):
             Axis on which to plot.
         """
         # parse parameters
-        ax = _parse_ax(ax)
+        ax = common._parse_ax(ax)
 
         # Check to see if field exists
-        _check_field(self.flight_data, field)
+        common._check_field(self.flight_data, field)
 
         # Get the subsetted data
         tSub, VarSub = self._get_time_var_time_subset(
             field, start_time=start_time, end_time=end_time)
 
         # Plot the time series
-        ts = plot_date_ts(
+        ts = common.plot_date_ts(
             tSub, VarSub, color=color, marker=marker, msize=msize, lw=lw,
             dForm=dForm, tz=tz, xdate=xdate, date_MinTicker=date_MinTicker,
             other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
@@ -952,10 +957,10 @@ class FlightLevel(object):
             (e.g. 2014-08-20 16:30:00)
         """
         # parse parameters
-        ax = _parse_ax(ax)
+        ax = common._parse_ax(ax)
 
         # Check to see if field exists
-        _check_field(self.flight_data, field)
+        common._check_field(self.flight_data, field)
 
         # Get the subsetted data
         tSub, VarSub = self._get_time_var_time_subset(
@@ -1041,12 +1046,12 @@ class FlightLevel(object):
             Axis on which to plot.
         """
         # parse parameters
-        ax = _parse_ax(ax)
+        ax = common._parse_ax(ax)
         # Create contour level array
         clevels = np.linspace(vmin, vmax, clevs)
 
         # Check to see if field exists
-        _check_field(self.flight_data, field)
+        common._check_field(self.flight_data, field)
 
         # Get the subsetted data
         tSub, VarSub = self._get_time_var_time_subset(
@@ -1055,7 +1060,7 @@ class FlightLevel(object):
         tSub2D, Ht2D = np.meshgrid(tsub, self.flight_data['height'])
 
         # Plot the time series
-        ts = image_2d_date(
+        ts = common.image_2d_date(
             tSub2D, Ht2D, VarSub, vmin=vmin, vmax=vmax,
             dForm=dForm, tz=tz, xdate=xdate, date_MinTicker=date_MinTicker,
             other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,

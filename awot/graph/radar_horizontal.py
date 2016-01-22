@@ -14,10 +14,7 @@ from matplotlib import ticker
 import numpy as np
 import scipy.ndimage as scim
 
-from .common import find_nearest_indices, get_masked_data
-from .common import (_check_basemap, _get_earth_radius,
-                     _parse_ax_fig, _parse_ax)
-
+from . import common
 from .radar_3d import Radar3DPlot
 from .radar_vertical import RadarVerticalPlot
 
@@ -53,7 +50,7 @@ class RadarHorizontalPlot(object):
         # Save the airborne class to this class in case cross-section is passed
         self.radar = radar
         self.basemap = basemap
-        _check_basemap(self, strong=True)
+        common._check_basemap(self, strong=True)
         self.fields = self.radar['fields']
 
         if lon_name is None:
@@ -73,8 +70,9 @@ class RadarHorizontalPlot(object):
 #   Plot modules  ##
 ####################
 
-    def plot_cappi(self, field, cappi_height, mask_procedure=None,
-                 mask_tuple=None, cminmax=(0., 60.), clevs=25, vmin=15.,
+    def plot_cappi(self, field, cappi_height, plot_km=False,
+                 mask_procedure=None, mask_tuple=None,
+                 cminmax=(0., 60.), clevs=25, vmin=15.,
                  vmax=60., clabel='dBZ', title=" ", title_size=20,
                  cmap='gist_ncar', color_bar=True, cb_pad="5%",
                  cb_loc='right', cb_tick_int=2, ax=None, fig=None):
@@ -87,7 +85,10 @@ class RadarHorizontalPlot(object):
         field : str
             3-D variable (e.g. Reflectivity [dBZ]) to use in plot.
         cappi_height : float
-            Height in kilometers at which to plot the horizontal field.
+            Height in meters at which to plot the horizontal field.
+        plot_km : boolean
+            True to convert meters to kilometers for cappi_height. False
+            retains meters information.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
             'less', 'less_equal', 'greater', 'greater_equal',
@@ -134,7 +135,7 @@ class RadarHorizontalPlot(object):
         Defaults are established during DYNAMO project analysis.
         """
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
         # Grab the variable dictionary of interest to plot
         Var = self.fields[field]
@@ -142,14 +143,19 @@ class RadarHorizontalPlot(object):
         # Return masked or unmasked variable
         Var, Data = self._get_variable_dict_data(field)
         if mask_procedure is not None:
-            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            Data = common.get_masked_data(Data, mask_procedure, mask_tuple)
 
         # Create contour level array
         clevels = np.linspace(cminmax[0], cminmax[1], clevs)
 
         # Find the closest vertical point
-        Zind = find_nearest_indices(self.height['data'][:], cappi_height)
-        print("Closest level: %4.1f" % self.height['data'][Zind])
+        Zind = common.find_nearest_indices(
+                  self.height['data'][:], cappi_height)
+        if plot_km:
+            levelht = self.height['data'][Zind] / 1000.
+        else:
+            levelht = self.height['data'][Zind]
+        print("Closest level: %4.1f" % levelht)
 
         # Convert lats/lons to 2D grid
         Lon2D, Lat2D = np.meshgrid(self.longitude['data'][
@@ -180,9 +186,11 @@ class RadarHorizontalPlot(object):
 
         return
 
-    def overlay_wind_vector(self, height_level=2., vtrim=4, vlw=1.3, vhw=2.5,
-                            vscale=400, refVec=True, refU=10., refUposX=1.05,
-                            refUposY=1.015, qcolor='k', ax=None, fig=None):
+    def overlay_wind_vector(self, height_level=None, vtrim=None,
+                            vlw=None, vhw=None, vscale=None, refVec=True,
+                            refU=None, refUposX=None, refUposY=None,
+                            qcolor='k', plot_km=False,
+                            ax=None, fig=None):
         """
         Overlays a 2-D wind field at specified height onto map
 
@@ -190,12 +198,18 @@ class RadarHorizontalPlot(object):
         ----------
         height_level : float
             Height level for winds in horizontal plot.
+        plot_km : boolean
+            True to convert meters to kilometers for cappi_height. False
+            retains meters information.
         vtrim : float
             The number of vector arrows will be thinned by this factor.
+            None uses a default of 4.
         vlw : float
             Vector arrow linewidth.
+            None uses a default of 1.3.
         vhw : float
             Vector arrow headwidth.
+            None uses a default of 2.5.
         vscale : int
             Vector arrow scale (smaller = longer arrow).
         refVec : boolean
@@ -217,10 +231,30 @@ class RadarHorizontalPlot(object):
         V  is Perpendicular aircraft longitudinal axis wind.
         """
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
+        # If height_level not chosen then pull the minimum
+        if height_level is None:
+            height_level = np.ma.min(self.height['data'][:])
         # Find the closest vertical point for desired wind field
-        Htind = find_nearest_indices(self.height['data'][:], height_level)
+        Htind = common.find_nearest_indices(
+                   self.height['data'][:], height_level)
+        levelht = self.height['data'][Htind]
+
+        if vtrim is None:
+            vtrim = 4
+        if vlw is None:
+            vlw = 1.3
+        if vhw is None:
+            hlw = 2.5
+        if vscale is None:
+            vscale = 400
+        if refU is None:
+            refU = 10.
+        if refUposX is None:
+            refUposX = 1.05
+        if refUposY is None:
+            refUposY = 1.015
 
         # transform to porjection grid
         U = self.fields['Uwind']['data'][Htind, :, :]
@@ -236,8 +270,10 @@ class RadarHorizontalPlot(object):
                                 headwidth=vhw, linewidths=vlw, color=qcolor)
 
         # Make a quiver key to attach to figure.
-        qkLab = str("%4.1f" % refU) + 'm/s at ' + \
-            str("%4.1f" % height_level) + ' km'
+        if plot_km:
+            qkLab = str("%4.1f m/s at %4.1f km"%(refU, levelht/1000.))
+        else:
+            qkLab = str("%4.1f m/s at %4.1f m"%(refU, levelht))
         # , fontproperties={'weight': 'bold'})
         qk = ax.quiverkey(Q, refUposX, refUposY, refU, qkLab)
 
@@ -296,7 +332,7 @@ class RadarHorizontalPlot(object):
             Figure on which to add the plot. None will use the current figure.
         """
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
         # Grab the variable dictionary of interest to plot
         if field is None:
@@ -305,7 +341,7 @@ class RadarHorizontalPlot(object):
         # Return masked or unmasked variable
         Var, Data = self._get_variable_dict_data(field)
         if mask_procedure is not None:
-            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            Data = common.get_masked_data(Data, mask_procedure, mask_tuple)
 
         # Create contour level array
         clevels = np.linspace(cminmax[0], cminmax[1], clevs)
@@ -405,7 +441,7 @@ class RadarHorizontalPlot(object):
         """
         # parse parameters
         if ax is None:
-            ax = _parse_ax(ax)
+            ax = common._parse_ax(ax)
 
         x, y = self.basemap(line_lons, line_lats)
         self.basemap.plot(x, y, line_style, lw=lw, alpha=alpha, ax=ax)
@@ -447,6 +483,7 @@ class RadarHorizontalPlot(object):
 #############################
 
     def plot_cross_section(self, field, start_pt, end_pt, xs_length=500,
+                           plot_km=False,
                            mask_procedure=None, mask_tuple=None,
                            title=" ", title_size=20, cminmax=(0., 60.),
                            clevs=25, vmin=15., vmax=60., cmap='gist_ncar',
@@ -464,6 +501,9 @@ class RadarHorizontalPlot(object):
             (lat, lon) Tuple of start, end points for cross-section.
         xs_length : int
             Number of to use for the cross section.
+        plot_km : boolean
+            True to convert meters to kilometers for cappi_height. False
+            retains meters information.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
             'less', 'less_equal', 'greater', 'greater_equal',
@@ -507,6 +547,7 @@ class RadarHorizontalPlot(object):
 
         rvp.plot_cross_section(
             field, start_pt, end_pt, xs_length=xs_length,
+            plot_km=plot_km,
             mask_procedure=mask_procedure, mask_tuple=mask_tuple,
             title=title, title_size=title_size,
             cminmax=cminmax, clevs=clevs, vmin=vmin, vmax=vmax,
