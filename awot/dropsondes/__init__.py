@@ -12,6 +12,6 @@ Probe Subpackage (:mod:'awot)
 """
 from __future__ import absolute_import
 from .thermocalcs import ThermoCalcs
-from .shearclacs import ShearCalcs
+from .shearcalcs import ShearCalcs
 from .skew import SkewXTick
 
