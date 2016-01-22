@@ -11,7 +11,7 @@ Probe Subpackage (:mod:'awot)
 
 """
 from __future__ import absolute_import
-from .dropsondes.thermocalcs import ThermoCalcs
-from .dropsondes.shearclacs import ShearCalcs
-from .dropsondes.skew import SkewXTick
+from .thermocalcs import ThermoCalcs
+from .shearclacs import ShearCalcs
+from .skew import SkewXTick
 
