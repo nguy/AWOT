@@ -19,7 +19,6 @@ packages = ['awot',
             'awot.io',
             'awot.display',
             'awot.graph',
-            'awot.dropsondes',
             'awot.util']
 package_dirs = {'awot'}
 # datafiles = glob.glob(os.path.join(pathout, '*'))
