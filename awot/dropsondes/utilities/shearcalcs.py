@@ -3,14 +3,16 @@ import numpy as np
 
 
 class ShearCalcs:
+    
+    def __init__(self):
+        self.u_6km = []
+        self.v_6km = []
+    
+
     '''A class for shear calculations.
     All calculations can be found in Lucas et al. (2000); Journal of
     Atmospheric Sciences.
     '''
-    def __init__(self):
-        self.u_6km = []
-        self.v_6km = []
-
     def _VertShear_Sfc_to_6km(self, Height, U, V):
         '''
         Calculate vertical shear [s^-1] using the

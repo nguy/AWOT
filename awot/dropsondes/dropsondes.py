@@ -3,12 +3,18 @@ from matplotlib.collections import LineCollection
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.patches as patches
-from thermocalcs import ThermoCalcs
-from shearcalcs import ShearCalcs
-from skew import SkewXTick
+from utilities.thermocalcs import ThermoCalcs
+from utilities.shearcalcs import ShearCalcs
+from utilities.skew import SkewXTick
 
 
-#begin##
+# Need to change:
+# ndarrays to dictionaries
+# 
+#
+#
+#
+
 
 
 
@@ -53,17 +59,17 @@ def get_sounding_data(filePath):
     RH = RH[~mask]
 
     mask = u.mask
-    U = u[~mask]
-    V = v[~mask]
+    Uwind = u[~mask]
+    Vwind = v[~mask]
 
     data = dict()
     data['Header'] = header
-    data['Temperature'] = T
-    data['Dewpoint'] = Td
-    data['Pressure'] = p
-    data['Relative Humidity'] = RH
-    data['U Component'] = U
-    data['V Component'] = V
+    data['temperature'] = T
+    data['dewpoint'] = Td
+    data['presssure'] = p
+    data['relative_humidity'] = RH
+    data['u_component'] = Uwind
+    data['v_component'] = Vwind
     data['Height'] = h
     data['Type'] = 'radioSonde'
 
@@ -106,7 +112,7 @@ def get_dropsonde_data(filePath):
     T = np.ma.masked_greater_equal(T, 999.0)
     Td = np.ma.masked_greater_equal(Td, 999.0)
     RH = np.ma.masked_greater_equal(RH, 999.0)
-    h = np.ma.masked_greater_equal(h, 99999.0)
+    height = np.ma.masked_greater_equal(h, 99999.0)
 
     mask = T.mask
     T = T[~mask]
@@ -116,23 +122,23 @@ def get_dropsonde_data(filePath):
     RH = RH[~mask]
 
     mask = u.mask
-    U = u[~mask]
-    V = v[~mask]
+    Uwind = u[~mask]
+    Vwind = v[~mask]
 
     data = dict()
     data['Header'] = header
-    data['Temperature'] = T
-    data['Dewpoint'] = TD
-    data['Pressure'] = P
-    data['Relative Humidity'] = RH
-    data['U Component'] = U
-    data['V Component'] = V
-    data['Height'] = H
+    data['temperature'] = T
+    data['dewpoint'] = TD
+    data['presssure'] = P
+    data['relative_humidity'] = RH
+    data['u_component'] = Uwind
+    data['v_component'] = Vwind
+    data['Height'] = Height
     data['Type'] = 'dropsonde'
 
     return data
 
-def plot_skewtlogp(data, **kwargs):
+def plot_skewt_logp(data, **kwargs):
 
     '''
     method to plot sounding or dropsonde data
@@ -151,9 +157,9 @@ def plot_skewtlogp(data, **kwargs):
 
     '''
 
-    T = data['Temperature']
-    TD = data['Dewpoint']
-    P = data['Pressure']
+    T = data['temperature']
+    TD = data['dewpoint']
+    P = data['presssure']
 
     fig = plt.figure(figsize=(10, 8))
     ax1 = fig.add_axes([0.05, 0.1, 0.6, 0.8],
@@ -173,8 +179,8 @@ def plot_skewtlogp(data, **kwargs):
     ax1.yaxis.set_major_formatter(ScalarFormatter())
     ax1.set_yticks(np.linspace(100, 1000, 10))
     ax1.set_ylim(1050, 100)
-    ax1.set_ylabel('Pressure mb')
-    ax1.set_xlabel('Temperature C')
+    ax1.set_ylabel('presssure mb')
+    ax1.set_xlabel('temperature C')
     ax1.xaxis.set_major_locator(MultipleLocator(10))
     ax1.set_title('Skew T log P')
 
@@ -228,9 +234,9 @@ def plot_hodograph(data):
     # create axis and invert masks and assign values
     # for U, V, and h coordinates
 
-    U = data['U Component']
-    V = data['V Component']
-    H = data['Height']
+    Uwind = data['u_component']
+    Vwind = data['v_component']
+    Height = data['Height']
     
     
     u_3km = []
@@ -329,18 +335,18 @@ def plot_hodograph(data):
     # Draw hodograph range rings
     # 10 20 30 40 m/s circles
 
-    circ1 = patches.Circle((0, 0), 10, fc='white')
-    circ2 = patches.Circle((0, 0), 20, fc='white')
-    circ3 = patches.Circle((0, 0), 30, fc='white')
-    circ4 = patches.Circle((0, 0), 40, fc='white')
+    circ10 = patches.Circle((0, 0), 10, fc='white')
+    circ20 = patches.Circle((0, 0), 20, fc='white')
+    circ30 = patches.Circle((0, 0), 30, fc='white')
+    circ40 = patches.Circle((0, 0), 40, fc='white')
 
     # Add circles to plot as patches#
     # descending order to make sure they layer ontop of each other.
 
-    ax2.add_patch(circ4)
-    ax2.add_patch(circ3)
-    ax2.add_patch(circ2)
-    ax2.add_patch(circ1)
+    ax2.add_patch(circ40)
+    ax2.add_patch(circ30)
+    ax2.add_patch(circ20)
+    ax2.add_patch(circ10)
 
 def plot_aux_graph(x_value, y_value, **kwargs):
 
@@ -439,18 +445,18 @@ def run_thermo_calcs(data):
     
     tC = ThermoCalcs()
 
-    T = data['Temperature']
-    Td = data['Dewpoint']
-    p = data['Pressure']
-    RH = data['Relative Humidity']
-    u = data['U Component']
-    v = data['V Component']
+    T = data['temperature']
+    Td = data['dewpoint']
+    p = data['presssure']
+    RH = data['relative_humidity']
+    u = data['u_component']
+    v = data['v_component']
     h = data['Height']
 
     LCLT = round((
-        tC._LCL_Temperature(h, T+273.15, Td+273.15)-273.15), 2)
+        tC._LCL_temperature(h, T+273.15, Td+273.15)-273.15), 2)
     LCLP = round((
-        tC._LCL_Pressure(h, p, T+273.15, Td+273.15)), 0)
+        tC._LCL_presssure(h, p, T+273.15, Td+273.15)), 0)
     LCLZ = round((
         tC._LCL_Height(h, p, T+273.15, Td+273.15)), 0)
     THETA = tC._PTk2_Theta(p, T+273.15)
@@ -460,20 +466,18 @@ def run_thermo_calcs(data):
     ESAT = tC._esat(T+273.15)
     
     thermoCalcData = dict()
-    thermoCalcData['LCLT'] = LCLT
-    thermoCalcData['LCLP'] = LCLP
-    thermoCalcData['LCLZ'] = LCLZ
-    thermoCalcData['THETA'] = THETA
-    thermoCalcData['MIXR'] = MIXR
-    thermoCalcData['THETAE'] = THETAE
-    thermoCalcData['ESTA'] = ESAT
+    thermoCalcData['lclt'] = LCLT
+    thermoCalcData['lclp'] = LCLP
+    thermoCalcData['lclz'] = LCLZ
+    thermoCalcData['theta'] = THETA
+    thermoCalcData['mixr'] = MIXR
+    thermoCalcData['thetae'] = THETAE
+    thermoCalcData['esat'] = ESAT
 
 
-return thermoCalcData
+    return thermoCalcData
     
-    
 
-    return
 
 def plot_thermo_calcs():
 
@@ -491,9 +495,9 @@ def plot_thermo_calcs():
     '''
 
     # plot the parameters on the list generated.
-    ax4.text(.01, .01, 'LCL Pressure: ' + str(LCLP) + (' hPa'))
-    ax4.text(.01, .04, 'LCL Temp: ' + str(LCLT) + ' c')
-    ax4.text(.01, .07, 'LCL Height: ' + str(LCLZ) + ' m')
+    ax4.text(.01, .01, 'LCL presssure: ' + str(lclp) + (' hPa'))
+    ax4.text(.01, .04, 'LCL Temp: ' + str(lclt) + ' c')
+    ax4.text(.01, .07, 'LCL Height: ' + str(lclz) + ' m')
 
 def plot_dryadiabats(**kwargs):
 
@@ -512,7 +516,7 @@ def plot_dryadiabats(**kwargs):
     '''
     # test = shear1km
 
-    # temperature array and pressure array
+    # temperature array and presssure array
 
     t0 = np.linspace(200, 430, 17)
     press = np.linspace(100, 1000.)
@@ -536,10 +540,10 @@ def plot_dryadiabats(**kwargs):
 
 def plot_wind_barbs(data, **kwargs):
 
-    P = data['Pressure']
-    U = data['U Component']
-    V = data['V Component']
-    H = data['Height']
+    P = data['presssure']
+    Uwind = data['u_component']
+    Vwind = data['v_component']
+    Height = data['Height']
 
     # Copy y axis to plot wind barbs
     # Set x lim for windpbarbs
@@ -551,19 +555,23 @@ def plot_wind_barbs(data, **kwargs):
     ax1_copy.set_ylim(y_min, y_max)
     x_const = np.zeros(P.shape) + (x_max - 2)
     ax1_copy.xaxis.set_visible(False)
+    
+    
+    #choses specific wind barb plotting pattern based on the density of wind observations.
+    #Need to make this a function of the number of observations per second/vertical velocity 
 
     if data['Type'] == 'radioSonde':
 
         mask = U.mask
-        U = U[~mask]
-        V = V[~mask]
+        Uwind = Uwind[~mask]
+        Vwind = Vwind[~mask]
         P = P[~mask]
 
-        ax1_copy.barbs(x_const[::3], P[::3], U[::3], V[::3])
+        ax1_copy.barbs(x_const[::3], P[::3], Uwind[::3], Vwind[::3])
 
     else:
 
-        ax1_copy.barbs(x_const[::40], P[::40], U[::40], V[::40])
+        ax1_copy.barbs(x_const[::40], P[::40], Uwind[::40], Vwind[::40])
 
 def run_shear_calcs(data):
 
@@ -582,18 +590,18 @@ def run_shear_calcs(data):
 
     '''
 
-    T = data['Temperature']
-    Td = data['Dewpoint']
-    p = data['Pressure']
-    RH = data['Relative Humidity']
-    u = data['U Component']
-    v = data['V Component']
-    h = data['Height']
+    T = data['temperature']
+    Td = data['dewpoint']
+    p = data['presssure']
+    RH = data['relative_humidity']
+    uwind = data['u_component']
+    vwind = data['v_component']
+    height = data['Height']
 
     mask = h.mask
-    u = u[~mask]
-    v = v[~mask]
-    h = h[~mask]
+    uwind = u[~mask]
+    vwind = v[~mask]
+    height = h[~mask]
 
     SHEAR1KM = sC._VertShear_Sfc_to_1km(h, u, v)
     SHEAR3KM = sC._VertShear_Sfc_to_3km(h, u, v)
@@ -645,12 +653,12 @@ def plot_shear_calcs():
 
 #def dry_lift(data):
 #
-#    T = data['Temperature']
-#    Td = data['Dewpoint']
-#    p = data['Pressure']
-#    RH = data['Relative Humidity']
-#    u = data['U Component']
-#    v = data['V Component']
+#    T = data['temperature']
+#    Td = data['dewpoint']
+#    p = data['presssure']
+#    RH = data['relative_humidity']
+#    u = data['u_component']
+#    v = data['v_component']
 #    h = data['Height']
 #
 #    t_parcel, p_parcel = tC.dry_lift(T, p, LCLT, LCLP)

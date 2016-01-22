@@ -11,9 +11,7 @@ Probe Subpackage (:mod:'awot)
 
 """
 from __future__ import absolute_import
-from thermocalcs import ThermoCalcs
-from shearcalcs import ShearCalcs
-from skew import SkewXTick
+from dropsondes.utilities import ThermoCalcs
+from dropsondes.utilities import ShearCalcs
+from dropsondes.utilities import SkewXTick
 
-
-__all__ = [s for s in dir() if not s.startswith('_')]
