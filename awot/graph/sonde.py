@@ -278,7 +278,7 @@ def plot_aux_graph(x_value, y_value, **kwargs):
     ax3.set_xlabel(x_lable)
     ax3.set_title(title)
 
-def generate_parameter_list():
+def plot_parameter_list():
 
     '''
     method to generate a list of parameters calculated
