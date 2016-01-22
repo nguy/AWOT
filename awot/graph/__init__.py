@@ -17,5 +17,7 @@ from .radar_utility import RadarUtilityPlot
 from .radar_3d import Radar3DPlot
 from .common import (
     create_basemap)
+from .skew import SkewXTick
+
 
 __all__ = [s for s in dir() if not s.startswith('_')]
