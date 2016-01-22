@@ -8,31 +8,9 @@ from shearcalcs import ShearCalcs
 from skew import SkewXTick
 
 
+#begin##
 
-#def __init__():
-#
-#    # ============================================#
-#    # initiate a new instance of thermocalcs class#
-#    # ============================================#
-#
-#    tC = ThermoCalcs()
-#
-#    # ===========================================#
-#    # initiate a new instance of shearcalcs class#
-#    # ===========================================#
-#
-#    sC = ShearCalcs()
-#
-#    # Global height arrays for wind shear
-#
-#    u_3km = []
-#    v_3km = []
-#    u_6km = []
-#    v_6km = []
-#    u_9km = []
-#    v_9km = []
-#    u_12km = []
-#    v_12km = []
+
 
 def get_sounding_data(filePath):
 
