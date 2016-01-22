@@ -1,11 +1,5 @@
-from matplotlib.ticker import ScalarFormatter, MultipleLocator
-from matplotlib.collections import LineCollection
-import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.patches as patches
-from ..util import ThermoCalcs
-from ..util import ShearCalcs
-from ..graph import SkewXTick
 from .common import _build_dict
 
 
