@@ -54,7 +54,7 @@ def add_thermo_calcs(data):
     p, T+273.15, RH, MIXR/1000.)
     ESAT = tC._esat(T+273.15)
 
-    thermoCalcData = dict(
+    thermoCalcData = dict()
     thermoCalcData['lclt'] = _build_dict(LCLT, 'K', 'Lifting Condensation Level Temperature', 'LCL Temp')
     thermoCalcData['lclp'] = build_dict(LCLP, 'hPa', 'Lifting Condensation Level Pressure', 'LCL Pressure')
     thermoCalcData['lclz'] = build_dict(LCLZ, 'm', 'Lifting Condensation Level Height', 'LCL Height')
