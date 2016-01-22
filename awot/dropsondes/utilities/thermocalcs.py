@@ -6,7 +6,7 @@ class ThermoCalcs:
 
     def __init__(self):
         '''
-        This is a grouping of modules various thermodynamic calculations.
+        This is a grouping of various thermodynamic calculations.
 
         Some routines are based upon Atmospheric Physics routines in IDL
         written by Dominik Brunner
