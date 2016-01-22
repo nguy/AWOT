@@ -10,7 +10,7 @@ from utilities.skew import SkewXTick
 
 # Need to change:
 # ndarrays to dictionaries
-# 
+# split file to work with current data gathering 
 #
 #
 #
