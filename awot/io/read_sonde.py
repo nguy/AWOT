@@ -60,10 +60,10 @@ def read_sounding_data(filePath):
 
     data = dict()
     data['metadata'] = header
-    data['temperature'] = _build_dict(T, 'celsius', 'Temperature of ambient air', 'Temperature')
-    data['dewpoint'] = _build_dict(TD, 'celsius', 'Dewpoint temperature of ambient air', 'Dewpoint_Temperature')
+    data['temperature'] = _build_dict(T, 'c', 'Temperature of ambient air', 'Temperature')
+    data['dewpoint'] = _build_dict(TD, 'c', 'Dewpoint temperature of ambient air', 'Dewpoint_Temperature')
     data['presssure'] = _build_dict(P, 'hPa', 'Pressure of ambient air', 'Pressure')
-    data['relative_humidity'] = _build_dict(RH, 'Dimensionless', 'Relative Humidity of ambient air’, ‘Relative_Humidity')
+    data['relative_humidity'] = _build_dict(RH, '%', 'Relative Humidity of ambient air’, ‘Relative_Humidity')
     data['u_component'] = _build_dict(Uwind, 'm/s', 'u component of wind', 'U_component')
     data['v_component'] = _build_dict(Vwind, 'm/s', 'v component of wind', 'V_component')
     data['height'] = _build_dict(H, 'm', 'Geometric Height in meters', 'Height')
@@ -71,7 +71,6 @@ def read_sounding_data(filePath):
 
     fp.close()
 
-    # type = 'radioSonde'
 
     return data
 
@@ -125,16 +124,19 @@ def read_dropsonde_data(filePath, split_file=True):
 
     data = dict()
     data['metadata'] = header
-    data['temperature'] = _build_dict(T, 'celsius', 'Temperature of ambient air', 'Temperature')
-    data['dewpoint'] = _build_dict(TD, 'celsius', 'Dewpoint temperature of ambient air', 'Dewpoint_Temperature')
+    data['temperature'] = _build_dict(T, 'c', 'Temperature of ambient air', 'Temperature')
+    data['dewpoint'] = _build_dict(TD, 'c', 'Dewpoint temperature of ambient air', 'Dewpoint Temperature')
     data['presssure'] = _build_dict(P, 'hPa', 'Pressure of ambient air', 'Pressure')
-    data['relative_humidity'] = _build_dict(RH, 'Dimensionless', 'Relative Humidity of ambient air’, ‘Relative_Humidity')
-    data['u_component'] = _build_dict(Uwind, 'm/s', 'u component of wind', 'U_component')
-    data['v_component'] = _build_dict(Vwind, 'm/s', 'v component of wind', 'V_component')
+    data['relative_humidity'] = _build_dict(RH, '%', 'Relative Humidity of ambient air’, ‘Relative Humidity')
+    data['u_component'] = _build_dict(Uwind, 'm/s', 'u component of wind', 'U component')
+    data['v_component'] = _build_dict(Vwind, 'm/s', 'v component of wind', 'V component')
     data['height'] = _build_dict(H, 'm', 'Geometric Height in meters', 'Height')
     data['data_format'] = 'dropsonde'
 
     return data
+
+
+#splits a cls file for use in the programm(needs fixing)
 
 
 

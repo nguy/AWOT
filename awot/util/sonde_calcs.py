@@ -40,7 +40,10 @@ def add_thermo_calcs(data):
     RH = data['relative_humidity']['data'][:]
     u = data['u_component']['data'][:]
     v = data['v_component']['data'][:]
-    h = data['Height']['data'][:]
+    h = data['height']['data'][:]
+    
+    
+    #runs the thermocalcs from therocalcs.py
 
     LCLT = round((
     tC._LCL_temperature(h, T+273.15, Td+273.15)-273.15), 2)
@@ -53,6 +56,9 @@ def add_thermo_calcs(data):
     THETAE = tC._Tk_RH_MixR_2_ThetaE(
     p, T+273.15, RH, MIXR/1000.)
     ESAT = tC._esat(T+273.15)
+    
+    
+    #builds nice dictionary of all the thermodynamic/moisture data
 
     thermoCalcData = dict()
     thermoCalcData['lclt'] = _build_dict(LCLT, 'K', 'Lifting Condensation Level Temperature', 'LCL Temp')
@@ -84,6 +90,9 @@ def add_shear_calcs(data):
     # multiple arrays containing thermodynamic information
 
     '''
+    
+    
+    #pulls data from the main data dictionary(Needs updating)
 
     T = data['temperature']
     Td = data['dewpoint']
@@ -91,12 +100,15 @@ def add_shear_calcs(data):
     RH = data['relative_humidity']
     uwind = data['u_component']
     vwind = data['v_component']
-    height = data['Height']
+    height = data['height']
 
     mask = h.mask
     uwind = u[~mask]
     vwind = v[~mask]
     height = h[~mask]
+    
+    
+    #Runs the shear calcs routines from shearcac.py
 
     SHEAR1KM = sC._VertShear_Sfc_to_1km(h, u, v)
     SHEAR3KM = sC._VertShear_Sfc_to_3km(h, u, v)
@@ -104,17 +116,23 @@ def add_shear_calcs(data):
     BULKSHEAR1km = round(sC._bulkshear_sfc_1km(h, u, v), 2)
     BULKSHEAR3km = round(sC._bulkshear_sfc_3km(h, u, v), 2)
     BULKSHEAR6km = round(sC._bulkshear_sfc_6km(h, u, v), 2)
+    
+    
+    #Builds nice dictionary of shear data
 
 
     shearCalcData = dict()
-    shearCalcData['SHEAR1KM'] = SHEAR1KM
-    shearCalcData['SHEAR3KM'] = SHEAR3KM
-    shearCalcData['SHEAR6KM'] = SHEAR6KM
-    shearCalcData['BULKSHEAR1km'] = BULKSHEAR1km
-    shearCalcData['BULKSHEAR1km'] = BULKSHEAR3km
-    shearCalcData['BULKSHEAR1km'] = BULKSHEAR6km
+    shearCalcData['SHEAR1KM'] = _build_dict(SHEAR1KM, 's^-1', '1km vertical wind shear', '1km wind shear')
+    shearCalcData['SHEAR3KM'] = _build_dict(SHEAR3KM, 's^-1', '3km vertical wind shear', '3km wind shear')
+    shearCalcData['SHEAR6KM'] = _build_dict(SHEAR6KM, 's^-1', '6km vertical wind shear', '6km wind shear')
+    shearCalcData['BULKSHEAR1km'] = _build_dict(BULKSHEAR1km, 'm/s', '1km Bulk wind shear', '1km Bulk shear')
+    shearCalcData['BULKSHEAR1km'] = _build_dict(BULKSHEAR3km, 'm/s', '3km Bulk wind shear', '3km Bulk shear')
+    shearCalcData['BULKSHEAR1km'] = _build_dict(BULKSHEAR6km, 'm/s', '6km Bulk wind shear', '6km Bulk shear')
 
     return shearCalcData
+
+
+
 
 
 #def dry_lift(data):
