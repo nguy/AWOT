@@ -203,6 +203,7 @@ def plot_fill_surface(xarr, surface, color=None, ymin=None, ax=None):
     p = ax.fill_between(xarr, ymin, surface, facecolor=color)
     return
 
+
 def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
                  dForm='%H:%M', tz=None, xdate=True,
                  date_MinTicker='minute',
@@ -289,7 +290,8 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
 
 def image_2d_date(Time, AxVar, PlotVar,
                   plot_log10_var=False,
-                  vmin=None, vmax=None, clevs=25, cmap=None,
+                  vmin=None, vmax=None, clevs=25,
+                  cmap=None, norm=None,
                   dForm='%H:%M', tz=None, xdate=True,
                   date_MinTicker='minute',
                   other_MajTicks=None, other_MinTicks=None,
@@ -321,6 +323,8 @@ def image_2d_date(Time, AxVar, PlotVar,
         Number of levels to use in colorbar tick calculation.
     cmap : str
         Matplotlib color map to use.
+    norm : Matplotlib.colors.Normalize instance
+        Matplotlib normaliztion instance used to scale luminance data.
     dForm : str
         Format of the time string for x-axis labels.
     tz : str
@@ -401,7 +405,7 @@ def image_2d_date(Time, AxVar, PlotVar,
 
     # Create the plot
     p = ax.pcolormesh(XVar, YVar, PlotVar,
-                          vmin=vmin, vmax=vmax, cmap=cmap)
+                          vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
 
     # Add Colorbar
     if color_bar:
@@ -432,6 +436,7 @@ def find_nearest_indices(array, values):
     # Find the nearest neighbor indices
     indices = np.abs(np.subtract.outer(array, values)).argmin(0)
     return indices if len(indices) > 1 else indices[0]
+
 
 def _set_axes(ax, x_min=None, x_max=None,
               y_min=None, y_max=None,
@@ -503,7 +508,7 @@ def _set_axes(ax, x_min=None, x_max=None,
         if titleFontSize is None:
             titleFontSize = 16
         ax.set_title(title, fontsize = titleFontSize)
-#    return ax
+
 
 def _set_ts_axes(ax, dForm='%H:%M', tz=None, xdate=True,
                  date_MinTicker='minute',
@@ -639,6 +644,7 @@ def _set_ts_axes(ax, dForm='%H:%M', tz=None, xdate=True,
         ax.set_title(title, fontsize = titleFontSize)
     return
 
+
 def add_colorbar(ax, plot_instance, orientation=None, pad=None,
                  label=None, fontsize=None, ticklabel_size=None,
                  clevs=None, tick_interval=None):
@@ -685,6 +691,7 @@ def add_colorbar(ax, plot_instance, orientation=None, pad=None,
         cb.locator = tick_locator
         cb.update_ticks()
     return cb
+
 
 def create_polar_fig_ax(nrows=1, ncols=1, figsize=(5, 5)):
     '''
@@ -738,6 +745,7 @@ def get_masked_data(data, mask_procedure, mask_tuple):
         print("Check the mask_procedure operation string!")
     return data
 
+
 def _get_start_datetime(time, start_time):
     '''Get a start time as datetime instance for subsetting.'''
     # Check to see if time is subsetted
@@ -758,6 +766,7 @@ def _get_start_datetime(time, start_time):
             return
     return dt_start
 
+
 def _get_end_datetime(time, end_time):
     '''Get a start time as datetime instance for subsetting.'''
     # Check to see if the time is subsetted
@@ -776,15 +785,18 @@ def _get_end_datetime(time, end_time):
             return
     return dt_end
 
+
 def _get_variable_dict(dict, field):
     '''Get the variable from the fields dictionary.'''
     Var = dict[field]
     return Var
 
+
 def _get_variable_dict_data(dict, field):
     '''Get the variable from the fields dictionary.'''
     Var, data = dict[field], dict[field]['data'][:]
     return Var, data
+
 
 def _get_earth_radius():
     return 6371.
@@ -792,7 +804,6 @@ def _get_earth_radius():
 ########################
 #   Parsing Methods    #
 ########################
-
 
 def _parse_ax_fig(ax, fig):
     """Parse and return ax and fig parameters."""
@@ -802,11 +813,13 @@ def _parse_ax_fig(ax, fig):
         fig = plt.gcf()
     return ax, fig
 
+
 def _parse_ax(ax):
     """Parse and return ax parameters."""
     if ax is None:
         ax = plt.gca()
     return ax
+
 
 def _parse_fig(fig):
     """Parse and return fig parameters."""
@@ -817,7 +830,6 @@ def _parse_fig(fig):
 #####################
 #   Check methods   #
 #####################
-
 
 def _check_basemap(instance, strong=True):
     """
@@ -840,6 +852,7 @@ def _check_basemap(instance, strong=True):
         else:
             print("WARNING: A basemap instance may be required for some plots")
             return False
+
 
 def _check_field(instance, field):
     """

@@ -71,11 +71,12 @@ class RadarHorizontalPlot(object):
 ####################
 
     def plot_cappi(self, field, cappi_height, plot_km=False,
-                 mask_procedure=None, mask_tuple=None,
-                 cminmax=(0., 60.), clevs=25, vmin=15.,
-                 vmax=60., clabel='dBZ', title=" ", title_size=20,
-                 cmap='gist_ncar', color_bar=True, cb_pad="5%",
-                 cb_loc='right', cb_tick_int=2, ax=None, fig=None):
+                   mask_procedure=None, mask_tuple=None,
+                   cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
+                   cmap='gist_ncar',  discrete_cmap_levels=None,
+                   title=" ", title_size=20,
+                   color_bar=True, clabel='dBZ', cb_pad="5%",
+                   cb_loc='right', cb_tick_int=2, ax=None, fig=None):
         """
         Produce a CAPPI (constant altitude plan position indicator) plot
         using the Tail Doppler Radar data.
@@ -104,16 +105,20 @@ class RadarHorizontalPlot(object):
             Minimum contour value to display.
         vmax : float
             Maximum contour value to display.
-        clabel : str
-            Label for colorbar (e.g. units 'dBZ').
+        cmap : str
+            Matplotlib color map to use.
+        discrete_cmap_levels : array
+            An list of levels to be used for display. If chosen discrete
+            color will be used in the colorbar instead of a linear luminance
+            mapping.
         title : str
             Plot title.
         title_size : int
             Font size of title to display.
-        cmap : str
-            Matplotlib color map to use.
         color_bar : boolean
             True to add colorbar, False does not.
+        clabel : str
+            Label for colorbar (e.g. units 'dBZ').
         cb_pad : str
             Pad to move colorbar, in the form "5%", pos is to
             right for righthand location.
@@ -163,10 +168,23 @@ class RadarHorizontalPlot(object):
         # Convert lats/lons to map projection coordinates
         x, y = self.basemap(Lon2D, Lat2D)
 
-        # Plot the contours
-#        cs = m.contourf(x,y,Z[Zind,:,:],clevels,vmin=vmin,vmax=vmax,cmap=cmap)
+        # Get the colormap and calculate data spaced by number of levels
+        norm = None
+        if discrete_cmap_levels is not None:
+            cm = plt.get_cmap(cmap)
+            try:
+                levpos = np.rint(np.squeeze(
+                    [np.linspace(0, 255, len(discrete_cmap_levels))])).astype(int)
+                # Convert levels to colormap values
+                cmap, norm = from_levels_and_colors(
+                    discrete_cmap_levels, cm(levpos), extend='max')
+            except:
+                print("Keyword error: 'discrete_cmap_levels' must "
+                      "be a list of float or integer")
+
+        # Plot the data
         cs = self.basemap.pcolormesh(x, y, Data[Zind, :, :],
-                                     vmin=vmin, vmax=vmax, cmap=cmap)
+                                     vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
 #    plt.colors.colormap.set_under('white')
         # Add Colorbar
         if color_bar:
@@ -183,8 +201,8 @@ class RadarHorizontalPlot(object):
 
         # Add title
         ax.set_title(title, fontsize=title_size)
-
         return
+
 
     def overlay_wind_vector(self, height_level=None, vtrim=None,
                             vlw=None, vhw=None, vscale=None, refVec=True,
@@ -279,10 +297,13 @@ class RadarHorizontalPlot(object):
 
         return
 
+
     def plot_lf(self, field=None, mask_procedure=None, mask_tuple=None,
-                cminmax=(0., 60.), clevs=25, vmin=15., vmax=60., clabel='dBZ',
-                title=" ", title_size=20, cmap='gist_ncar',
-                color_bar=True, cb_pad="5%", cb_loc='right', cb_tick_int=2,
+                cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
+                cmap='gist_ncar', discrete_cmap_levels=None,
+                title=" ", title_size=20,
+                color_bar=True, clabel='dBZ',
+                cb_pad="5%", cb_loc='right', cb_tick_int=2,
                 ax=None, fig=None):
         """
         Produce a CAPPI (constant altitude plan position indicator) plot
@@ -307,14 +328,18 @@ class RadarHorizontalPlot(object):
             Minimum contour value to display.
         vmax : float
             Maximum contour value to display.
-        clabel : str
-            Label for colorbar (e.g. units 'dBZ').
+        cmap : str
+            Matplotlib color map to use.
+        discrete_cmap_levels : array
+            An list of levels to be used for display. If chosen discrete
+            color will be used in the colorbar instead of a linear luminance
+            mapping.
         title : str
             Plot title.
         title_size : int
             Font size of title to display.
-        cmap : str
-            Matplotlib color map to use.
+        clabel : str
+            Label for colorbar (e.g. units 'dBZ').
         color_bar : boolean
             True to add colorbar, False does not.
         cb_pad : str
@@ -352,8 +377,22 @@ class RadarHorizontalPlot(object):
         # Convert lats/lons to map projection coordinates
         x, y = self.basemap(Lon2D, Lat2D)
 
-        p = self.basemap.pcolormesh(x, y, Data,
-                                    vmin=vmin, vmax=vmax, cmap=cmap)
+        # Get the colormap and calculate data spaced by number of levels
+        norm = None
+        if discrete_cmap_levels is not None:
+            cm = plt.get_cmap(cmap)
+            try:
+                levpos = np.rint(np.squeeze(
+                    [np.linspace(0, 255, len(discrete_cmap_levels))])).astype(int)
+                # Convert levels to colormap values
+                cmap, norm = from_levels_and_colors(
+                    discrete_cmap_levels, cm(levpos), extend='max')
+            except:
+                print("Keyword error: 'discrete_cmap_levels' must "
+                      "be a list of float or integer")
+
+        p = self.basemap.pcolormesh(x, y, Data, vmin=vmin, vmax=vmax,
+                                    norm=norm, cmap=cmap)
 
         # Add Colorbar
         if color_bar:
@@ -369,6 +408,7 @@ class RadarHorizontalPlot(object):
 
         # Add title
         ax.set_title(title, fontsize=title_size)
+
 
     def plot_point(self, lon, lat, symbol='ro', label_text=None,
                    label_offset=(None, None), **kwargs):
@@ -407,6 +447,7 @@ class RadarHorizontalPlot(object):
             x_text, y_text = self.basemap(lon + lon_offset,
                                           lat + lat_offset)
             self.basemap.ax.text(x_text, y_text, label_text)
+
 
     def plot_line_geo(self, line_lons, line_lats,
                       line_style='r-', lw=3, alpha=0.2,
@@ -486,7 +527,8 @@ class RadarHorizontalPlot(object):
                            plot_km=False,
                            mask_procedure=None, mask_tuple=None,
                            title=" ", title_size=20, cminmax=(0., 60.),
-                           clevs=25, vmin=15., vmax=60., cmap='gist_ncar',
+                           clevs=25, vmin=15., vmax=60.,
+                           cmap='gist_ncar', discrete_cmap_levels=None,
                            clabel='dBZ', color_bar=True, cb_pad=.05,
                            cb_orient='vertical', cb_tick_int=2,
                            ax=None, fig=None):
@@ -526,7 +568,11 @@ class RadarHorizontalPlot(object):
         title_size : int
             Font size of title to display.
         cmap : string
-            Matplotlib color map to use
+            Matplotlib color map to use.
+        discrete_cmap_levels : array
+            An list of levels to be used for display. If chosen discrete
+            color will be used in the colorbar instead of a linear luminance
+            mapping.
         color_bar : bool
             True to add colorbar, False does not.
         cb_pad : str
@@ -549,9 +595,10 @@ class RadarHorizontalPlot(object):
             field, start_pt, end_pt, xs_length=xs_length,
             plot_km=plot_km,
             mask_procedure=mask_procedure, mask_tuple=mask_tuple,
+            cmap=cmap, discrete_cmap_levels=discrete_cmap_levels,
             title=title, title_size=title_size,
             cminmax=cminmax, clevs=clevs, vmin=vmin, vmax=vmax,
-            cmap=cmap, clabel=clabel, color_bar=color_bar, cb_pad=cb_pad,
+            clabel=clabel, color_bar=color_bar, cb_pad=cb_pad,
             cb_orient=cb_orient, cb_tick_int=cb_tick_int, ax=ax, fig=fig)
 
 ###################
@@ -563,10 +610,12 @@ class RadarHorizontalPlot(object):
         Var = self.fields[field]
         return Var
 
+
     def _get_variable_dict_data(self, field):
         '''Get the variable from the fields dictionary.'''
         Var, data = self.fields[field], self.fields[field]['data'][:]
         return Var, data
+
 
     def _get_lat_index(self, value):
         '''Calculate the exact index position within latitude array.'''
@@ -576,6 +625,7 @@ class RadarHorizontalPlot(object):
         # Calculate the relative position
         pos = (value - self.latitude['data'][0]) / dp
         return pos
+
 
     def _get_lon_index(self, value):
         '''Calculate the exact index position within latitude array.'''

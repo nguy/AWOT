@@ -19,6 +19,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter, date2num
 from matplotlib import ticker
+from matplotlib.colors import from_levels_and_colors
 import scipy.ndimage as scim
 
 from . import common
@@ -98,12 +99,11 @@ class RadarVerticalPlot(object):
 #############################
 
     def plot_cross_section(self, field, start_pt, end_pt, xs_length=500,
-                           plot_km=False,
                            mask_procedure=None, mask_tuple=None,
-                           title=" ", title_size=20,
+                           plot_km=False, title=" ", title_size=20,
                            cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
-                           cmap='gist_ncar', clabel='dBZ',
-                           color_bar=True, cb_pad=None, cb_orient=None,
+                           cmap='gist_ncar', discrete_cmap_levels=None,
+                           color_bar=True, clabel='dBZ',cb_pad=None, cb_orient=None,
                            cb_fontsize=None, cb_ticklabel_size=None,
                            cb_tick_int=None, ax=None, fig=None):
         '''
@@ -117,9 +117,6 @@ class RadarVerticalPlot(object):
             (lat, lon) Tuple of start, end points for cross-section.
         xs_length : int
             Number of to use for the cross section.
-        plot_km : boolean
-            True to convert meters to kilometers for cappi_height. False
-            retains meters information.
         mask_procedure : str
             String indicating how to apply mask via numpy, possibilities are:
             'less', 'less_equal', 'greater', 'greater_equal',
@@ -127,6 +124,13 @@ class RadarVerticalPlot(object):
         mask_tuple : (str, float[, float])
             Tuple containing the field name and value(s) below which to mask
             field prior to plotting, for example to mask all data where.
+        plot_km : boolean
+            True to convert meters to kilometers for cappi_height. False
+            retains meters information.
+        title : str
+            Plot title.
+        title_size : int
+            Font size of title to display.
         cminmax : tuple
             (min,max) values for controur levels.
         clevs : int
@@ -135,16 +139,16 @@ class RadarVerticalPlot(object):
             Minimum contour value to display.
         vmax : float
             Maximum contour value to display.
-        clabel : str
-            Label for colorbar (e.g. units 'dBZ').
-        title : str
-            Plot title.
-        title_size : int
-            Font size of title to display.
         cmap : str
             Matplotlib color map to use.
+        discrete_cmap_levels : array
+            An list of levels to be used for display. If chosen discrete
+            color will be used in the colorbar instead of a linear luminance
+            mapping.
         color_bar : bool
             True to add colorbar, False does not.
+        clabel : str
+            Label for colorbar (e.g. units 'dBZ').
         cb_fontsize : int
             Font size of the colorbar label.
         cb_ticklabel_size : int
@@ -221,9 +225,23 @@ class RadarVerticalPlot(object):
             Ht2D, Dist2D = np.meshgrid(self.height['data'][:], xsDist)
             ylabel = 'Altitude (m)'
 
+        # Get the colormap and calculate data spaced by number of levels
+        norm = None
+        if discrete_cmap_levels is not None:
+            cm = plt.get_cmap(cmap)
+            try:
+                levpos = np.rint(np.squeeze(
+                    [np.linspace(0, 255, len(discrete_cmap_levels))])).astype(int)
+                # Convert levels to colormap values
+                cmap, norm = from_levels_and_colors(
+                    discrete_cmap_levels, cm(levpos), extend='max')
+            except:
+                print("Keyword error: 'discrete_cmap_levels' must "
+                      "be a list of float or integer")
+
         p = ax.pcolormesh(Dist2D, Ht2D,
                           np.ma.masked_less_equal(xs_data, -800.),
-                          vmin=vmin, vmax=vmax, cmap=cmap)
+                          vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
 
         ax.set_xlabel('Distance along track (km)')
         ax.set_ylabel(ylabel)
@@ -233,19 +251,21 @@ class RadarVerticalPlot(object):
 
         # Add Colorbar
         if color_bar:
+            cbStr = Var['long_name'] + ' ' + self.height['units']
             cb = common.add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
-                              label=cbStr, fontsize=cb_fontsize,
-                              ticklabel_size=cb_ticklabel_size,
-                              clevs=clevs, tick_interval=cb_tick_int)
+                                     label=cbStr, fontsize=cb_fontsize,
+                                     ticklabel_size=cb_ticklabel_size,
+                                     clevs=clevs, tick_interval=cb_tick_int)
 
         # Add title
         ax.set_title(title, fontsize=title_size)
+
 
     def time_height_image(self, field, plot_km=False,
                            mask_procedure=None, mask_tuple=None,
                            plot_log10_var=False,
                            cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
-                           cmap='gist_ncar',
+                           cmap='gist_ncar', discrete_cmap_levels=None,
                            dForm='%H:%M', tz=None, xdate=True,
                            date_MinTicker='minute',
                            height_MajTicks=None, height_MinTicks=None,
@@ -276,6 +296,8 @@ class RadarVerticalPlot(object):
         mask_tuple : (str, float[, float])
             Tuple containing the field name and value(s) below which to mask
             field prior to plotting, for example to mask all data where.
+        plot_log10_var : bool
+                True plots the log base 10 of Data field.
         cminmax : tuple
             (min,max) values for controur levels.
         clevs : int
@@ -284,10 +306,12 @@ class RadarVerticalPlot(object):
             Minimum value to display.
         vmax : float
             Maximum value to display.
-        plot_log10_var : bool
-                True plots the log base 10 of Data field.
         cmap : str
             Matplotlib color map to use.
+        discrete_cmap_levels : array
+            An list of levels to be used for display. If chosen discrete
+            color will be used in the colorbar instead of a linear luminance
+            mapping.
         dForm : str
             Format of the time string for x-axis labels.
         tz : str
@@ -379,10 +403,25 @@ class RadarVerticalPlot(object):
 
         if plot_km:
             Ht2D = Ht2D / 1000.
+
+        # Get the colormap and calculate data spaced by number of levels
+        norm = None
+        if discrete_cmap_levels is not None:
+            cm = plt.get_cmap(cmap)
+            try:
+                levpos = np.rint(np.squeeze(
+                    [np.linspace(0, 255, len(discrete_cmap_levels))])).astype(int)
+                # Convert levels to colormap values
+                cmap, norm = from_levels_and_colors(
+                    discrete_cmap_levels, cm(levpos), extend='max')
+            except:
+                print("Keyword error: 'discrete_cmap_levels' must "
+                      "be a list of float or integer")
+
         # Plot the time series
         ts = common.image_2d_date(tSub2D, Ht2D, Data.T,
                              vmin=vmin, vmax=vmax, clevs=clevs,
-                             cmap=cmap,
+                             cmap=cmap, norm=norm,
                              dForm=dForm, tz=tz, xdate=xdate,
                              date_MinTicker=date_MinTicker,
                              other_MajTicks=height_MajTicks,
@@ -406,153 +445,6 @@ class RadarVerticalPlot(object):
             else:
                 print("No surface height information, cannot fill...")
         return
-### NG - THIS CODE IS LIKELY OUTDATED AND SHOULD BE DEPRECATED ###
-    def wcr_time_height_image(self, field,
-                           mask_procedure=None, mask_tuple=None,
-                           mask_off_6degree=False, mask_subsurface=False,
-                           mask_out_of_range=False, mask_surface_clutter=False,
-                           mask_transmitter_leakage=False,
-                           plot_log10_var=False,
-                           cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
-                           cmap='gist_ncar', color_bar=True,
-                           cb_orient='vertical',
-                           cb_pad=.05, cb_tick_int=2, cb_label=None,
-                           dForm='%H:%M', tz=None, xdate=True,
-                           date_MinTicker='minute',
-                           height_MajTicks=None, height_MinTicks=None,
-                           height_min=None, height_max=None,
-                           start_time=None, end_time=None,
-                           title=None, xlab=' ', xlabFontSize=16, xpad=7,
-                           ylab=' ', ylabFontSize=16, ypad=7,
-                           ax=None, fig=None):
-        """
-        Wrapper function to produce a time series vs. height plot
-        for the Wyoming Cloud Radar. Specific keywords are added
-        that pertain to WCR.
-
-        Parameters
-        ----------
-        field : float
-            Variable to plot as time series.
-        mask_procedure : str
-            String indicating how to apply mask via numpy, possibilities are:
-            'less', 'less_equal', 'greater', 'greater_equal',
-            'equal', 'inside', 'outside'.
-        mask_tuple : (str, float[, float])
-            Tuple containing the field name and value(s) below which to mask
-            field prior to plotting, for example to mask all data where.
-        mask_off_6degree : bool
-        	True to apply mask where beam is more than 6 degrees off
-        	of vertical pointing.
-        mask_subsurface : bool
-        	True to apply mask where gate occur below the surface.
-        mask_out_of_range : bool
-            True to apply mask to gates outside of the maximum range.
-        mask_surface_clutter : bool
-            True to apply mask to gates affected by surface clutter.
-        mask_transmitter_leakage : bool
-            True to apply mask to gates affected by transmitter leakage.
-        cminmax : tuple
-            (min,max) values for controur levels.
-        clevs : int
-            Number of contour levels.
-        vmin : float
-            Minimum contour value to display.
-        vmax : float
-            Maximum contour value to display.
-        plot_log10_var : bool
-                True plots the log base 10 of Data field.
-        cmap : str
-            Matplotlib color map to use.
-        color_bar : bool
-            True to add colorbar, False does not.
-        cb_pad : str
-            Pad to move colorbar, in the form "5%",
-            pos is to right for righthand location.
-        cb_orient : str
-            Colorbar orientation, either 'vertical' or 'horizontal'.
-        cb_tick_int : int
-            Interval to use for colorbar tick labels,
-            higher number "thins" labels.
-        cb_label : str
-            Label for colorbar (e.g. units 'dBZ').
-        dForm : str
-            Format of the time string for x-axis labels.
-        tz : str
-            Time zone info to use when creating axis labels (see datetime).
-        xdate : bool
-            True to use X-axis as date axis, false implies Y-axis is date axis.
-        date_MinTicker : str
-            Sting to set minor ticks of date axis,
-            'second','minute','hour','day' supported.
-        height_MajTicks : float
-            Values for major tickmark spacing for height axis.
-        height_MinTicks : float
-            Values for minor tickmark spacing for height axis.
-        height_min : float
-            Minimum value for height axis.
-        height_max : float
-            Maximum value for height axis.
-        start_time : str
-            UTC time to use as start time for subsetting in datetime format.
-            (e.g. 2014-08-20 12:30:00)
-        end_time : str
-            UTC time to use as an end time for subsetting in datetime format.
-            (e.g. 2014-08-20 16:30:00)
-        title : str
-            Plot title.
-        xlab : str
-            X-axis label.
-        ylab : str
-            Y-axis label.
-        xpad : int
-            Padding for X-axis label.
-        ypad : int
-            Padding for Y-axis label.
-        ax : Matplotlib axis instance
-            Axis to plot. None will use the current axis.
-        fig : Matplotlib figure instance
-            Figure on which to add the plot. None will use the current figure.
-        """
-        # parse parameters
-        ax, fig = common._parse_ax_fig(ax, fig)
-
-        # Return masked or unmasked variable
-        # Subsetted if desired
-        Var, tsub, Data = self._get_variable_dict_data_time_subset(
-            field, start_time, end_time)
-        if mask_procedure is not None:
-            Data = common.get_masked_data(Data, mask_procedure, mask_tuple)
-
-        if plot_log10_var:
-            Data = np.log10(Data)
-            if cb_label is not None:
-                cb_label = r'log$_{10}$[' + cb_label + ']'
-
-        # Create contour level array
-        clevels = np.linspace(cminmax[0], cminmax[1], clevs)
-
-        tSub2D, Ht2D = np.meshgrid(date2num(tsub), self.height['data'][:])
-
-        # Plot the time series
-        ts = common.image_2d_date(tSub2D, Ht2D, Data.T,
-                             vmin=vmin, vmax=vmax, clevs=clevs,
-                             cmap=cmap,
-                             color_bar=color_bar, cb_orient=cb_orient,
-                             cb_pad=cb_pad, cb_tick_int=cb_tick_int,
-                             cb_label=cb_label,
-                             cb_fontsize=cb_fontsize,
-                             cb_ticklabel_size=cb_ticklabel_size,
-                             dForm=dForm, tz=tz, xdate=xdate,
-                             date_MinTicker=date_MinTicker,
-                             other_MajTicks=height_MajTicks,
-                             other_MinTicks=height_MinTicks,
-                             other_min=height_min, other_max=height_max,
-                             title=title,
-                             xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
-                             ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
-                             ax=ax, fig=fig)
-        return
 
 ###################
 #   Get methods   #
@@ -574,6 +466,7 @@ class RadarVerticalPlot(object):
                        (self.time['data'] <= dt_end)]
         return Var, tsub, datasub
 
+
     def _get_variable_subset(self, data, start_time, end_time):
         '''
         Get the variable from the fields dictionary.
@@ -591,6 +484,7 @@ class RadarVerticalPlot(object):
         datasub = np.ma.masked_invalid(datasub)
         return datasub
 
+
     def _get_2d_height_time_subset(self, start_time, end_time):
         '''Get subsetted data if requested.'''
         # Check to see if time is subsetted
@@ -602,6 +496,7 @@ class RadarVerticalPlot(object):
         hsub = np.ma.masked_invalid(hsub)
         return hsub
 
+
     def _get_lat_index(self, value):
         '''Calculate the exact index position within latitude array.'''
         # Find the spacing
@@ -610,6 +505,7 @@ class RadarVerticalPlot(object):
         # Calculate the relative position
         pos = (value - self.latitude['data'][0]) / dp
         return pos
+
 
     def _get_lon_index(self, value):
         '''Calculate the exact index position within latitude array'''
@@ -683,8 +579,9 @@ class MicrophysicalVerticalPlot(object):
     def time_height_image(self, field,
                            mask_procedure=None, mask_tuple=None,
                            plot_log10_var=False,
-                           cminmax=(0., 60.), clevs=25, cmap='gist_ncar',
+                           cminmax=(0., 60.), clevs=25,
                            vmin=None, vmax=None,
+                           cmap='gist_ncar', discrete_cmap_levels=None,
                            dForm='%H:%M', tz=None, xdate=True,
                            date_MinTicker='minute',
                            height_MajTicks=None, height_MinTicks=None,
@@ -723,6 +620,12 @@ class MicrophysicalVerticalPlot(object):
             Minimum contour value to display.
         vmax : float
             Maximum contour value to display.
+        cmap : str
+            Matplotlib color map to use.
+        discrete_cmap_levels : array
+            An list of levels to be used for display. If chosen discrete
+            color will be used in the colorbar instead of a linear luminance
+            mapping.
         dForm : str
             Format of the time string for x-axis labels.
         tz : str
@@ -746,8 +649,6 @@ class MicrophysicalVerticalPlot(object):
         end_time : str
             UTC time to use as an end time for subsetting in datetime format.
             (e.g. 2014-08-20 16:30:00)
-        cmap : str
-            Matplotlib color map to use.
         title : str
             Plot title.
         xlab : str
@@ -810,6 +711,20 @@ class MicrophysicalVerticalPlot(object):
 
         tSub2D, Ht2D = np.meshgrid(date2num(tsub), self.height['data'][:])
 
+        # Get the colormap and calculate data spaced by number of levels
+        norm = None
+        if discrete_cmap_levels is not None:
+            cm = plt.get_cmap(cmap)
+            try:
+                levpos = np.rint(np.squeeze(
+                    [np.linspace(0, 255, len(discrete_cmap_levels))])).astype(int)
+                # Convert levels to colormap values
+                cmap, norm = from_levels_and_colors(
+                    discrete_cmap_levels, cm(levpos), extend='max')
+            except:
+                print("Keyword error: 'discrete_cmap_levels' must "
+                      "be a list of float or integer")
+
         # Plot the time series
         ts = common.image_2d_date(tSub2D, Ht2D, Data,
                            vmin=vmin, vmax=vmax, clevs=clevs,
@@ -827,13 +742,11 @@ class MicrophysicalVerticalPlot(object):
                            cb_fontsize=cb_fontsize,
                            cb_ticklabel_size=cb_ticklabel_size,
                            ax=ax, fig=fig)
-
         return
 
 #################
 #  Get methods  #
 #################
-
 
     def _get_variable_dict_data_time_subset(self, field, start_time, end_time):
         '''
@@ -854,6 +767,7 @@ class MicrophysicalVerticalPlot(object):
         datasub = np.ma.masked_invalid(datasub)
         return Var, tsub, datasub
 
+
     def _get_variable_subset(self, data, start_time, end_time):
         '''
         Get the variable from the fields dictionary.
@@ -871,6 +785,7 @@ class MicrophysicalVerticalPlot(object):
         datasub = np.ma.masked_invalid(datasub)
         return datasub
 
+
     def _get_2d_height_time_subset(self, start_time, end_time):
         '''Get subsetted data if requested.'''
         # Check to see if time is subsetted
@@ -883,6 +798,7 @@ class MicrophysicalVerticalPlot(object):
         hsub = np.ma.masked_invalid(hsub)
         return hsub
 
+
     def _get_lat_index(self, value):
         '''Calculate the exact index position within latitude array.'''
         # Find the spacing
@@ -891,6 +807,7 @@ class MicrophysicalVerticalPlot(object):
         # Calculate the relative position
         pos = (value - self.latitude['data'][0]) / dp
         return pos
+
 
     def _get_lon_index(self, value):
         '''Calculate the exact index position within latitude array.'''
