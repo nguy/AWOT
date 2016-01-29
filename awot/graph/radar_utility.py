@@ -407,9 +407,9 @@ class RadarUtilityPlot(object):
 
         if plot_colorbar:
             cb = common.add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
-                 label=cb_label, fontsize=cb_fontsize,
-                 ticklabel_size=cb_ticklabel_size,
-                 clevs=cb_levs, tick_interval=cb_tick_int)
+                                     label=cbStr, fontsize=cb_fontsize,
+                                     ticklabel_size=cb_ticklabel_size,
+                                     clevs=clevs, tick_interval=cb_tick_int)
 
         if quantiles is not None:
             qArr = self.plot_quantiles(field, quantiles=quantiles,
@@ -419,7 +419,6 @@ class RadarUtilityPlot(object):
                                        qlabel_color=qlabel_color,
                                        qlabel_size=qlabel_size,
                                        setup_axes=False, ax=ax)
-
 
         # Clean up any potentially lingering variables
         del(norm, levels, cm, levpos, colors, CFAD)
