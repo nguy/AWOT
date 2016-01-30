@@ -32,8 +32,8 @@ class RadarVerticalPlot(object):
     """Create vertical plot of radar data."""
 
     def __init__(self, radar, basemap=None,
-                lon_name=None, lat_name=None, height_name=None,
-                time_name=None, surface_name=None):
+                 lon_name=None, lat_name=None, height_name=None,
+                 time_name=None, surface_name=None):
         """
         Initialize the class to create plots
 
@@ -103,9 +103,10 @@ class RadarVerticalPlot(object):
                            plot_km=False, title=" ", title_size=20,
                            cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
                            cmap='gist_ncar', discrete_cmap_levels=None,
-                           color_bar=True, clabel='dBZ',cb_pad=None, cb_orient=None,
-                           cb_fontsize=None, cb_ticklabel_size=None,
-                           cb_tick_int=None, ax=None, fig=None):
+                           color_bar=True, clabel='dBZ', cb_pad=None,
+                           cb_orient=None, cb_fontsize=None,
+                           cb_ticklabel_size=None, cb_tick_int=None,
+                           ax=None, fig=None):
         '''
         Plot a cross-section between two points.
 
@@ -231,7 +232,8 @@ class RadarVerticalPlot(object):
             cm = plt.get_cmap(cmap)
             try:
                 levpos = np.rint(np.squeeze(
-                    [np.linspace(0, 255, len(discrete_cmap_levels))])).astype(int)
+                    [np.linspace(0, 255,
+                                 len(discrete_cmap_levels))])).astype(int)
                 # Convert levels to colormap values
                 cmap, norm = from_levels_and_colors(
                     discrete_cmap_levels, cm(levpos), extend='max')
@@ -260,24 +262,23 @@ class RadarVerticalPlot(object):
         # Add title
         ax.set_title(title, fontsize=title_size)
 
-
     def time_height_image(self, field, plot_km=False,
-                           mask_procedure=None, mask_tuple=None,
-                           plot_log10_var=False,
-                           cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
-                           cmap='gist_ncar', discrete_cmap_levels=None,
-                           dForm='%H:%M', tz=None, xdate=True,
-                           date_MinTicker='minute',
-                           height_MajTicks=None, height_MinTicks=None,
-                           height_min=None, height_max=None,
-                           fill_surface=False, fill_min=None, fill_color=None,
-                           start_time=None, end_time=None, color_bar=True,
-                           cb_orient='vertical',
-                           cb_pad=.05, cb_tick_int=2, cb_label=None,
-                           cb_fontsize=None, cb_ticklabel_size=None,
-                           title=None, xlab=' ', xlabFontSize=16, xpad=7,
-                           ylab=' ', ylabFontSize=16, ypad=7,
-                           ax=None, fig=None):
+                          mask_procedure=None, mask_tuple=None,
+                          plot_log10_var=False,
+                          cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
+                          cmap='gist_ncar', discrete_cmap_levels=None,
+                          dForm='%H:%M', tz=None, xdate=True,
+                          date_MinTicker='minute',
+                          height_MajTicks=None, height_MinTicks=None,
+                          height_min=None, height_max=None,
+                          fill_surface=False, fill_min=None, fill_color=None,
+                          start_time=None, end_time=None, color_bar=True,
+                          cb_orient='vertical',
+                          cb_pad=.05, cb_tick_int=2, cb_label=None,
+                          cb_fontsize=None, cb_ticklabel_size=None,
+                          title=None, xlab=' ', xlabFontSize=16, xpad=7,
+                          ylab=' ', ylabFontSize=16, ypad=7,
+                          ax=None, fig=None):
         """
         Wrapper function to produce a time series vs. height plot
         of variable indicated.
@@ -395,7 +396,8 @@ class RadarVerticalPlot(object):
         clevels = np.linspace(cminmax[0], cminmax[1], clevs)
 
         if len(self.height['data'].shape) == 2:
-            tSub2D, junk = np.meshgrid(date2num(tsub), self.height['data'][0, :])
+            tSub2D, junk = np.meshgrid(date2num(tsub),
+                                       self.height['data'][0, :])
             Ht2D = Height.T
             del junk
         else:
@@ -410,7 +412,8 @@ class RadarVerticalPlot(object):
             cm = plt.get_cmap(cmap)
             try:
                 levpos = np.rint(np.squeeze(
-                    [np.linspace(0, 255, len(discrete_cmap_levels))])).astype(int)
+                    [np.linspace(0, 255,
+                                 len(discrete_cmap_levels))])).astype(int)
                 # Convert levels to colormap values
                 cmap, norm = from_levels_and_colors(
                     discrete_cmap_levels, cm(levpos), extend='max')
@@ -420,28 +423,31 @@ class RadarVerticalPlot(object):
 
         # Plot the time series
         ts = common.image_2d_date(tSub2D, Ht2D, Data.T,
-                             vmin=vmin, vmax=vmax, clevs=clevs,
-                             cmap=cmap, norm=norm,
-                             dForm=dForm, tz=tz, xdate=xdate,
-                             date_MinTicker=date_MinTicker,
-                             other_MajTicks=height_MajTicks,
-                             other_MinTicks=height_MinTicks,
-                             other_min=height_min, other_max=height_max,
-                             title=title,
-                             xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
-                             ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
-                             color_bar=color_bar, cb_orient=cb_orient,
-                             cb_pad=cb_pad, cb_tick_int=cb_tick_int,
-                             cb_label=cb_label,
-                             cb_fontsize=cb_fontsize,
-                             cb_ticklabel_size=cb_ticklabel_size,
-                             ax=ax, fig=fig)
+                                  vmin=vmin, vmax=vmax, clevs=clevs,
+                                  cmap=cmap, norm=norm,
+                                  dForm=dForm, tz=tz, xdate=xdate,
+                                  date_MinTicker=date_MinTicker,
+                                  other_MajTicks=height_MajTicks,
+                                  other_MinTicks=height_MinTicks,
+                                  other_min=height_min,
+                                  other_max=height_max,
+                                  title=title,
+                                  xlab=xlab, xlabFontSize=xlabFontSize,
+                                  xpad=xpad,
+                                  ylab=ylab, ylabFontSize=ylabFontSize,
+                                  ypad=ypad,
+                                  color_bar=color_bar, cb_orient=cb_orient,
+                                  cb_pad=cb_pad, cb_tick_int=cb_tick_int,
+                                  cb_label=cb_label,
+                                  cb_fontsize=cb_fontsize,
+                                  cb_ticklabel_size=cb_ticklabel_size,
+                                  ax=ax, fig=fig)
         if fill_surface:
             if self.surface is not None:
-                sfc= self._get_variable_subset(self.surface['data'][:],
-                                               start_time, end_time)
-                ft = common.plot_fill_surface(tsub, sfc,
-                                     ymin=fill_min, color=fill_color, ax=ax)
+                sfc = self._get_variable_subset(self.surface['data'][:],
+                                                start_time, end_time)
+                ft = common.plot_fill_surface(tsub, sfc, ymin=fill_min,
+                                              color=fill_color, ax=ax)
             else:
                 print("No surface height information, cannot fill...")
         return
@@ -466,7 +472,6 @@ class RadarVerticalPlot(object):
                        (self.time['data'] <= dt_end)]
         return Var, tsub, datasub
 
-
     def _get_variable_subset(self, data, start_time, end_time):
         '''
         Get the variable from the fields dictionary.
@@ -484,7 +489,6 @@ class RadarVerticalPlot(object):
         datasub = np.ma.masked_invalid(datasub)
         return datasub
 
-
     def _get_2d_height_time_subset(self, start_time, end_time):
         '''Get subsetted data if requested.'''
         # Check to see if time is subsetted
@@ -492,10 +496,9 @@ class RadarVerticalPlot(object):
         dt_end = common._get_end_datetime(self.time, end_time)
 
         hsub = self.height['data'][(self.time['data'] >= dt_start) &
-                                    (self.time['data'] <= dt_end), :]
+                                   (self.time['data'] <= dt_end), :]
         hsub = np.ma.masked_invalid(hsub)
         return hsub
-
 
     def _get_lat_index(self, value):
         '''Calculate the exact index position within latitude array.'''
@@ -505,7 +508,6 @@ class RadarVerticalPlot(object):
         # Calculate the relative position
         pos = (value - self.latitude['data'][0]) / dp
         return pos
-
 
     def _get_lon_index(self, value):
         '''Calculate the exact index position within latitude array'''
@@ -526,8 +528,8 @@ class MicrophysicalVerticalPlot(object):
     """
 
     def __init__(self, microphysdata, basemap=None,
-                lon_name=None, lat_name=None, height_name=None,
-                time_name=None):
+                 lon_name=None, lat_name=None, height_name=None,
+                 time_name=None):
         """
         Intitialize the class to create plots
 
@@ -577,24 +579,24 @@ class MicrophysicalVerticalPlot(object):
 #############################
 
     def time_height_image(self, field,
-                           mask_procedure=None, mask_tuple=None,
-                           plot_log10_var=False,
-                           cminmax=(0., 60.), clevs=25,
-                           vmin=None, vmax=None,
-                           cmap='gist_ncar', discrete_cmap_levels=None,
-                           dForm='%H:%M', tz=None, xdate=True,
-                           date_MinTicker='minute',
-                           height_MajTicks=None, height_MinTicks=None,
-                           height_min=None, height_max=None,
-                           start_time=None, end_time=None,
-                           title=None,
-                           xlab=' ', xlabFontSize=16, xpad=7,
-                           ylab=' ', ylabFontSize=16, ypad=7,
-                           color_bar=True, cb_orient='vertical',
-                           cb_pad=.05, cb_tick_int=2,
-                           cb_label=None,
-                           cb_fontsize=None, cb_ticklabel_size=None,
-                           ax=None, fig=None):
+                          mask_procedure=None, mask_tuple=None,
+                          plot_log10_var=False,
+                          cminmax=(0., 60.), clevs=25,
+                          vmin=None, vmax=None,
+                          cmap='gist_ncar', discrete_cmap_levels=None,
+                          dForm='%H:%M', tz=None, xdate=True,
+                          date_MinTicker='minute',
+                          height_MajTicks=None, height_MinTicks=None,
+                          height_min=None, height_max=None,
+                          start_time=None, end_time=None,
+                          title=None,
+                          xlab=' ', xlabFontSize=16, xpad=7,
+                          ylab=' ', ylabFontSize=16, ypad=7,
+                          color_bar=True, cb_orient='vertical',
+                          cb_pad=.05, cb_tick_int=2,
+                          cb_label=None,
+                          cb_fontsize=None, cb_ticklabel_size=None,
+                          ax=None, fig=None):
         """
         Wrapper function to produce a contoured time series plot
         of variable indicated.
@@ -717,7 +719,8 @@ class MicrophysicalVerticalPlot(object):
             cm = plt.get_cmap(cmap)
             try:
                 levpos = np.rint(np.squeeze(
-                    [np.linspace(0, 255, len(discrete_cmap_levels))])).astype(int)
+                    [np.linspace(0, 255,
+                                 len(discrete_cmap_levels))])).astype(int)
                 # Convert levels to colormap values
                 cmap, norm = from_levels_and_colors(
                     discrete_cmap_levels, cm(levpos), extend='max')
@@ -727,21 +730,23 @@ class MicrophysicalVerticalPlot(object):
 
         # Plot the time series
         ts = common.image_2d_date(tSub2D, Ht2D, Data,
-                           vmin=vmin, vmax=vmax, clevs=clevs,
-                           dForm=dForm, tz=tz, xdate=xdate,
-                           date_MinTicker=date_MinTicker,
-                           other_MajTicks=height_MajTicks,
-                           other_MinTicks=height_MinTicks,
-                           other_min=height_min, other_max=height_max,
-                           title=title,
-                           xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
-                           ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad,
-                           color_bar=color_bar, cb_orient=cb_orient,
-                           cb_pad=cb_pad, cb_tick_int=cb_tick_int,
-                           cb_label=cb_label,
-                           cb_fontsize=cb_fontsize,
-                           cb_ticklabel_size=cb_ticklabel_size,
-                           ax=ax, fig=fig)
+                                  vmin=vmin, vmax=vmax, clevs=clevs,
+                                  dForm=dForm, tz=tz, xdate=xdate,
+                                  date_MinTicker=date_MinTicker,
+                                  other_MajTicks=height_MajTicks,
+                                  other_MinTicks=height_MinTicks,
+                                  other_min=height_min, other_max=height_max,
+                                  title=title,
+                                  xlab=xlab, xlabFontSize=xlabFontSize,
+                                  xpad=xpad,
+                                  ylab=ylab, ylabFontSize=ylabFontSize,
+                                  ypad=ypad,
+                                  color_bar=color_bar, cb_orient=cb_orient,
+                                  cb_pad=cb_pad, cb_tick_int=cb_tick_int,
+                                  cb_label=cb_label,
+                                  cb_fontsize=cb_fontsize,
+                                  cb_ticklabel_size=cb_ticklabel_size,
+                                  ax=ax, fig=fig)
         return
 
 #################
@@ -767,7 +772,6 @@ class MicrophysicalVerticalPlot(object):
         datasub = np.ma.masked_invalid(datasub)
         return Var, tsub, datasub
 
-
     def _get_variable_subset(self, data, start_time, end_time):
         '''
         Get the variable from the fields dictionary.
@@ -785,7 +789,6 @@ class MicrophysicalVerticalPlot(object):
         datasub = np.ma.masked_invalid(datasub)
         return datasub
 
-
     def _get_2d_height_time_subset(self, start_time, end_time):
         '''Get subsetted data if requested.'''
         # Check to see if time is subsetted
@@ -794,10 +797,9 @@ class MicrophysicalVerticalPlot(object):
 
         # Create temporary 2D arrays for subsetting
         hsub = self.height['data'][[(self.time['data'] >= dt_start) &
-                                 (self.time['data'] <= dt_end)], :]
+                                   (self.time['data'] <= dt_end)], :]
         hsub = np.ma.masked_invalid(hsub)
         return hsub
-
 
     def _get_lat_index(self, value):
         '''Calculate the exact index position within latitude array.'''
@@ -807,7 +809,6 @@ class MicrophysicalVerticalPlot(object):
         # Calculate the relative position
         pos = (value - self.latitude['data'][0]) / dp
         return pos
-
 
     def _get_lon_index(self, value):
         '''Calculate the exact index position within latitude array.'''

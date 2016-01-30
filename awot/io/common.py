@@ -13,13 +13,16 @@ from netCDF4 import num2date, date2num
 #################################
 #  variable/dictionary methods  #
 #################################
+EPOCH_UNITS = 'seconds since 1970-1-1 00:00:00+0:00'
+
 
 def _build_dict(data, units, longname, stdname):
     newdict = {'data': data,
-               'units' : units,
-               'long_name' : longname,
-               'standard_name' : stdname}
+               'units': units,
+               'long_name': longname,
+               'standard_name': stdname}
     return newdict
+
 
 def _ncvar_subset_masked(ncFile, ncvar, Good_Indices):
     """
@@ -29,6 +32,7 @@ def _ncvar_subset_masked(ncFile, ncvar, Good_Indices):
     d = ncFile.variables[ncvar][Good_Indices]
     np.ma.masked_invalid(d)
     return d
+
 
 def _ncvar_subset_to_dict(ncvar, Good_Indices):
     """
@@ -45,6 +49,7 @@ def _ncvar_subset_to_dict(ncvar, Good_Indices):
         d['data'].shape = (1, )
     return d
 
+
 def _ncvar_to_dict(ncvar):
     """
     Convert a NetCDF Dataset variable to a dictionary.
@@ -58,6 +63,7 @@ def _ncvar_to_dict(ncvar):
         d['data'] = np.array(d['data'][:])
         d['data'].shape = (1, )
     return d
+
 
 def _ncvar_to_dict_masked(ncvar, Good_Indices):
     """
@@ -73,13 +79,15 @@ def _ncvar_to_dict_masked(ncvar, Good_Indices):
         d['data'].shape = (1, )
     return d
 
-def _nasa_ames_var_to_dict(var, standard_name, long_name ):
+
+def _nasa_ames_var_to_dict(var, standard_name, long_name):
     d = {}
     d['standard_name'] = standard_name
     d['long_name'] = long_name
     d['units'] = " "
     d['data'] = var
     return d
+
 
 def _h5var_to_dict(dataset, units=None, long_name=None, standard_name=None):
     """ Convert an HDF5 Dataset to a dictionary."""
@@ -97,9 +105,11 @@ def _h5var_to_dict(dataset, units=None, long_name=None, standard_name=None):
         d['units'] = units
     return d
 
+
 def _var_found(var):
     '''Print variable found message.'''
     print("Found %s" % var)
+
 
 def _var_not_found(var):
     '''Print variable not found message.'''
@@ -109,35 +119,34 @@ def _var_not_found(var):
 #  time methods  #
 ##################
 
-def _get_epoch_units():
-    """Set common time units for AWOT. Using Epoch time."""
-    return 'seconds since 1970-1-1 00:00:00+0:00'
 
 def _get_epoch_dict(TimeSec, time_units):
     '''Output Epoch time dictionary.'''
     # Convert the time array into a datetime instance
     dtHrs = num2date(TimeSec, time_units)
     # Now convert this datetime instance into a number of seconds since Epoch
-    TimeEpoch = date2num(dtHrs, _get_epoch_units())
+    TimeEpoch = date2num(dtHrs, EPOCH_UNITS)
     # Now once again convert this data into a datetime instance
-    Time_unaware = num2date(TimeEpoch, _get_epoch_units())
-    Time = {'data': Time_unaware, 'units': _get_epoch_units(),
+    Time_unaware = num2date(TimeEpoch, EPOCH_UNITS)
+    Time = {'data': Time_unaware, 'units': EPOCH_UNITS,
             'standard_name': 'Time', 'long_name': 'Time (UTC)'}
     return Time
+
 
 def convert_to_epoch_dict(datetime_dict):
     '''Output Epoch time dictionary.'''
     # Now convert this datetime instance into a number array
-    TimeSec = date2num(datetime_dict['data'], _get_epoch_units())
+    TimeSec = date2num(datetime_dict['data'], EPOCH_UNITS)
     # Now once again convert  data into a datetime instance
-    Time_unaware = num2date(TimeSec, _get_epoch_units())
-    Time = {'data': Time_unaware, 'units': _get_epoch_units(),
+    Time_unaware = num2date(TimeSec, EPOCH_UNITS)
+    Time = {'data': Time_unaware, 'units': EPOCH_UNITS,
             'standard_name': 'Time', 'long_name': 'Time (UTC)'}
     return Time
 
 ########################
 #  image save methods  #
 ########################
+
 
 def save_figure(self, figName='awot_plot', figType='png', **kwargs):
     '''Save the current plot

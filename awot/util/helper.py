@@ -11,6 +11,7 @@ import numpy as np
 from ..graph.common import _get_start_datetime, _get_end_datetime
 from ..io.common import _build_dict
 
+
 def time_subset_awot_dict(time, data, start_time, end_time, time_axis=0):
     '''
     Get the variable from the fields dictionary.
@@ -36,8 +37,9 @@ def time_subset_awot_dict(time, data, start_time, end_time, time_axis=0):
     if time_axis > 0:
         np.rollaxis(datasub['data'], time_axis)
     datasub['data'] = data['data'][(time['data'] >= dt_start) &
-                   (time['data'] <= dt_end), ...]
+                                   (time['data'] <= dt_end), ...]
     return datasub
+
 
 def add_dict_to_awot(awot, keyname, newdict=None, data=None, units=None,
                      longname=None, stdname=None, mask_value=None):
@@ -64,17 +66,19 @@ def add_dict_to_awot(awot, keyname, newdict=None, data=None, units=None,
         The standard name associated with keyname dictionary. Optional.
     '''
     if newdict is None:
-       newdict = _build_dict(data, units, longname, stdname)
+        newdict = _build_dict(data, units, longname, stdname)
     awot[keyname] = newdict
 
     # Mask any invalid entries
     awot[keyname]['data'] = np.ma.masked_invalid(awot['fields']['data'])
     if mask_value is not None:
-        awot[keyname]['data'] =np.masked_equal(awot['fields']['data'], mask_value)
+        awot[keyname]['data'] = np.masked_equal(
+            awot['fields']['data'], mask_value)
     return
 
+
 def add_dict_to_awot_fields(awot, keyname, newdict=None, data=None, units=None,
-                     longname=None, stdname=None, mask_value=None):
+                            longname=None, stdname=None, mask_value=None):
     '''
     Add a dictionary to the fields dictionary in an AWOT data instance.
 
@@ -98,11 +102,13 @@ def add_dict_to_awot_fields(awot, keyname, newdict=None, data=None, units=None,
         The standard name associated with keyname dictionary. Optional.
     '''
     if newdict is None:
-       newdict = _build_dict(data, units, longname, stdname)
+        newdict = _build_dict(data, units, longname, stdname)
     awot['fields'][keyname] = newdict
 
     # Mask any invalid entries
-    awot['fields'][keyname]['data'] = np.ma.masked_invalid(awot['fields'][keyname]['data'])
+    awot['fields'][keyname]['data'] = np.ma.masked_invalid(
+        awot['fields'][keyname]['data'])
     if mask_value is not None:
-        awot['fields'][keyname]['data'] =np.masked_equal(awot['fields'][keyname]['data'], mask_value)
+        awot['fields'][keyname]['data'] = np.masked_equal(
+            awot['fields'][keyname]['data'], mask_value)
     return

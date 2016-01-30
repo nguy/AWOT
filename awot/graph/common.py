@@ -405,7 +405,7 @@ def image_2d_date(Time, AxVar, PlotVar,
 
     # Create the plot
     p = ax.pcolormesh(XVar, YVar, PlotVar,
-                          vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
+                      vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
 
     # Add Colorbar
     if color_bar:
@@ -507,7 +507,7 @@ def _set_axes(ax, x_min=None, x_max=None,
     if title is not None:
         if titleFontSize is None:
             titleFontSize = 16
-        ax.set_title(title, fontsize = titleFontSize)
+        ax.set_title(title, fontsize=titleFontSize)
 
 
 def _set_ts_axes(ax, dForm='%H:%M', tz=None, xdate=True,
@@ -641,7 +641,7 @@ def _set_ts_axes(ax, dForm='%H:%M', tz=None, xdate=True,
     if title is not None:
         if titleFontSize is None:
             titleFontSize = 16
-        ax.set_title(title, fontsize = titleFontSize)
+        ax.set_title(title, fontsize=titleFontSize)
     return
 
 
@@ -805,6 +805,7 @@ def _get_earth_radius():
 #   Parsing Methods    #
 ########################
 
+
 def _parse_ax_fig(ax, fig):
     """Parse and return ax and fig parameters."""
     if ax is None:
@@ -830,6 +831,7 @@ def _parse_fig(fig):
 #####################
 #   Check methods   #
 #####################
+
 
 def _check_basemap(instance, strong=True):
     """

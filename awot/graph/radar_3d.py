@@ -14,6 +14,7 @@ import numpy as np
 
 from .common import find_nearest_indices, get_masked_data
 
+
 class Radar3DPlot(object):
     """
     To create a RadarHorizontalPlot instance:

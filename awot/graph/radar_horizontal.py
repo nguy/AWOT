@@ -23,8 +23,8 @@ class RadarHorizontalPlot(object):
     """Class to plot a horizontal radar image."""
 
     def __init__(self, radar, basemap=None,
-                lon_name=None, lat_name=None, height_name=None,
-                time_name=None):
+                 lon_name=None, lat_name=None, height_name=None,
+                 time_name=None):
         '''
         Parameters
         ----------
@@ -174,7 +174,8 @@ class RadarHorizontalPlot(object):
             cm = plt.get_cmap(cmap)
             try:
                 levpos = np.rint(np.squeeze(
-                    [np.linspace(0, 255, len(discrete_cmap_levels))])).astype(int)
+                    [np.linspace(0, 255,
+                                 len(discrete_cmap_levels))])).astype(int)
                 # Convert levels to colormap values
                 cmap, norm = from_levels_and_colors(
                     discrete_cmap_levels, cm(levpos), extend='max')
@@ -184,12 +185,14 @@ class RadarHorizontalPlot(object):
 
         # Plot the data
         cs = self.basemap.pcolormesh(x, y, Data[Zind, :, :],
-                                     vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
+                                     vmin=vmin, vmax=vmax,
+                                     norm=norm, cmap=cmap)
 #    plt.colors.colormap.set_under('white')
         # Add Colorbar
         if color_bar:
             cbStr = "%s at %4.1f %s" % (Var['long_name'],
-                        self.height['data'][Zind], self.height['units'])
+                                        self.height['data'][Zind],
+                                        self.height['units'])
             cb = self.basemap.colorbar(
                 cs, location=cb_loc, pad=cb_pad)  # ,ticks=clevels)
             cb.set_label(cbStr)
@@ -202,7 +205,6 @@ class RadarHorizontalPlot(object):
         # Add title
         ax.set_title(title, fontsize=title_size)
         return
-
 
     def overlay_wind_vector(self, height_level=None, vtrim=None,
                             vlw=None, vhw=None, vscale=None, refVec=True,
@@ -289,14 +291,13 @@ class RadarHorizontalPlot(object):
 
         # Make a quiver key to attach to figure.
         if plot_km:
-            qkLab = str("%4.1f m/s at %4.1f km"%(refU, levelht/1000.))
+            qkLab = str("%4.1f m/s at %4.1f km" % (refU, levelht/1000.))
         else:
-            qkLab = str("%4.1f m/s at %4.1f m"%(refU, levelht))
+            qkLab = str("%4.1f m/s at %4.1f m" % (refU, levelht))
         # , fontproperties={'weight': 'bold'})
         qk = ax.quiverkey(Q, refUposX, refUposY, refU, qkLab)
 
         return
-
 
     def plot_lf(self, field=None, mask_procedure=None, mask_tuple=None,
                 cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
@@ -383,7 +384,8 @@ class RadarHorizontalPlot(object):
             cm = plt.get_cmap(cmap)
             try:
                 levpos = np.rint(np.squeeze(
-                    [np.linspace(0, 255, len(discrete_cmap_levels))])).astype(int)
+                    [np.linspace(0, 255,
+                                 len(discrete_cmap_levels))])).astype(int)
                 # Convert levels to colormap values
                 cmap, norm = from_levels_and_colors(
                     discrete_cmap_levels, cm(levpos), extend='max')
@@ -408,7 +410,6 @@ class RadarHorizontalPlot(object):
 
         # Add title
         ax.set_title(title, fontsize=title_size)
-
 
     def plot_point(self, lon, lat, symbol='ro', label_text=None,
                    label_offset=(None, None), **kwargs):
@@ -447,7 +448,6 @@ class RadarHorizontalPlot(object):
             x_text, y_text = self.basemap(lon + lon_offset,
                                           lat + lat_offset)
             self.basemap.ax.text(x_text, y_text, label_text)
-
 
     def plot_line_geo(self, line_lons, line_lats,
                       line_style='r-', lw=3, alpha=0.2,
@@ -610,12 +610,10 @@ class RadarHorizontalPlot(object):
         Var = self.fields[field]
         return Var
 
-
     def _get_variable_dict_data(self, field):
         '''Get the variable from the fields dictionary.'''
         Var, data = self.fields[field], self.fields[field]['data'][:]
         return Var, data
-
 
     def _get_lat_index(self, value):
         '''Calculate the exact index position within latitude array.'''
@@ -625,7 +623,6 @@ class RadarHorizontalPlot(object):
         # Calculate the relative position
         pos = (value - self.latitude['data'][0]) / dp
         return pos
-
 
     def _get_lon_index(self, value):
         '''Calculate the exact index position within latitude array.'''

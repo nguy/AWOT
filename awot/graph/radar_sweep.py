@@ -18,10 +18,11 @@ from .common import (_check_basemap, _get_earth_radius,
                      _parse_ax_fig, _parse_ax,
                      plot_polar_contour, get_masked_data,
                      _get_start_datetime, _get_end_datetime,
-                     _get_variable_dict, _get_variable_dict_data, 
+                     _get_variable_dict, _get_variable_dict_data,
                      image_2d_date)
-from .coord_transform import radar_coords_to_cart_track_relative, \
-    radar_coords_to_cart_earth_relative, radar_coords_to_cart_aircraft_relative
+from .coord_transform import (radar_coords_to_cart_track_relative,
+                              radar_coords_to_cart_earth_relative,
+                              radar_coords_to_cart_aircraft_relative)
 
 ##########################
 #  Vertical Sweep Class  #
@@ -41,7 +42,7 @@ class RadarSweepPlot(object):
             'awot' uses AWOT radar instance format.
             'pyart' uses PyART radar instance format.
         basemap : basemap instance
-        
+
         Initialize the class to create plots.
         '''
         # Check the instrument to see how to import airborne class
@@ -51,7 +52,7 @@ class RadarSweepPlot(object):
         # Now initialize the RadarHorizontalPlot Class
         self.radar = radar
         self.basemap = basemap
-        
+
         try:
             self.radar['data_format']
             map_type = 'awot'
@@ -681,7 +682,6 @@ class RadarSweepPlot(object):
 #################
 #  Get methods  #
 #################
-
 
     def _get_2D_var(self, Var):
         '''Return a 2D variable

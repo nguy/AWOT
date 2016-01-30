@@ -49,13 +49,6 @@ def read_netcdf(fname, time_var=None, mapping_dict=None, platform=None):
     # Read the NetCDF
     ncFile = Dataset(fname, 'r')
 
-    # If this is a T-28 file, use a separate read function
-##    t28_names = ['t28', 't-28', 'sdsmt', 'sdsmtt28', 'sdsm&t',
-##                 'sdsm&tt-28', 'sdsmtt-28', 'sdsm&tt28']
-##    if platform.lower().replace(" ", "") in t28_names:
-##        from .read_t28 import read_t28_netcdf
-##        return read_t28_netcdf(ncFile)
-
     # Check to see if this file follows RAF Nimbus conventions
     try:
         jnk = ncFile.Conventions
@@ -175,12 +168,14 @@ def _get_time(ncFile, isRAF, RAFrate=None, timevar=None):
 
         # Check if it is a high rate file and 2D - yep instances of this
         # out there as well...
-        if (isRAF) & (RAFrate > 1) & (RAFrate not in ncFile.variables[varname].shape):
+        if ((isRAF) & (RAFrate > 1) &
+            (RAFrate not in ncFile.variables[varname].shape)):
             Timehirate = np.linspace(
-            TimeSec[0], TimeSec[-1], len(TimeSec) * RAFrate)
+                TimeSec[0], TimeSec[-1], len(TimeSec) * RAFrate)
             TimeSec = Timehirate
     else:
-        print("No time variable found, using StarTime to make AWOT time variable")
+        print("No time variable found, using StarTime "
+              "to make AWOT time variable")
         StartTime = ncFile.StartTime
         length = len(ncFile.dimensions['Time'])
         # Create a time array
@@ -189,15 +184,15 @@ def _get_time(ncFile, isRAF, RAFrate=None, timevar=None):
     try:
         time_units = ncFile.variables[varname].units
     except:
-        time_units = common._get_epoch_units()
+        time_units = common.EPOCH_UNITS
 
     # Now convert the time array into a datetime instance
     dtHrs = num2date(TimeSec, time_units)
     # Now convert this datetime instance into a number of seconds since Epoch
-    TimeSec = date2num(dtHrs, common._get_epoch_units())
+    TimeSec = date2num(dtHrs, common.EPOCH_UNITS)
     # Now once again convert this data into a datetime instance
-    Time_unaware = num2date(TimeSec, common._get_epoch_units())
-    Time = {'data': Time_unaware, 'units': common._get_epoch_units(),
+    Time_unaware = num2date(TimeSec, common.EPOCH_UNITS)
+    Time = {'data': Time_unaware, 'units': common.EPOCH_UNITS,
             'standard_name': 'Time', 'long_name': 'Time (UTC)'}
     return Time
 
@@ -209,11 +204,13 @@ def _make_data_dictionary(ncFile, name_map, isRAF, RAFrate=None):
         if name_map[var] in ncFile.variables.keys():
             data[var] = common._ncvar_to_dict(ncFile.variables[name_map[var]])
             if (isRAF) & (RAFrate in ncFile.variables[name_map[var]].shape):
-                data[var]['data'] = np.array(ncFile.variables[name_map[var]][:]).ravel()
+                data[var]['data'] = np.array(
+                    ncFile.variables[name_map[var]][:]).ravel()
             try:
                 mask = data[var]['data'].mask
             except:
-                data[var]['data'] = np.ma.masked_array(data[var]['data'], mask=False)
+                data[var]['data'] = np.ma.masked_array(data[var]['data'],
+                                                       mask=False)
         else:
             data[var] = None
     return data
@@ -282,10 +279,10 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
     StartTime = datetime(hdr['DATE'][0], hdr['DATE'][
                          1], hdr['DATE'][2], 0, 0, 0)
     TimeSec = np.array(readfile['time'][:]) + date2num(
-        StartTime, units=common._get_epoch_units())
+        StartTime, units=common.EPOCH_UNITS)
 
     # Finally convert this back to a standard used by this package (Epoch)
-    Time_unaware = num2date(TimeSec[:], units=common._get_epoch_units())
+    Time_unaware = num2date(TimeSec[:], units=common.EPOCH_UNITS)
     Time = Time_unaware  # .replace(tzinfo=pytz.UTC)
 
     del readfile['time']
@@ -412,7 +409,8 @@ def _winduv(data):
     """
     try:
         U = {}
-        U['data'] = -np.cos(np.radians(data['wind_dir']['data'][:])) * data['wind_spd']['data'][:]
+        U['data'] = -np.cos(np.radians(
+            data['wind_dir']['data'][:])) * data['wind_spd']['data'][:]
         U['units'] = data['wind_spd']['units']
         U['standard_name'] = "U Wind"
         U['long_name'] = "Zonal Wind, positive blowing towards east"
@@ -420,7 +418,8 @@ def _winduv(data):
         U = None
     try:
         V = {}
-        V ['data']= -np.sin(np.radians(data['wind_dir']['data'][:])) * data['wind_spd']['data'][:]
+        V['data'] = -np.sin(np.radians(
+            data['wind_dir']['data'][:])) * data['wind_spd']['data'][:]
         V['units'] = data['wind_spd']['units']
         V['standard_name'] = "V Wind"
         V['long_name'] = "Meridional Wind, positive blowing towards east"

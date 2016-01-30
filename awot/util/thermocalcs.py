@@ -49,7 +49,7 @@ class ThermoCalcs:
         (http://weather.uwyo.edu/upperair/indices.html) as
         LCLT = [1 / ( 1 / ( TdewK - 56 ) + LN ( TempK / TdewK ) / 800 )] + 56
 
-        Parameters::
+        Parameters
         ----------
         Pressure : float
             Pressure [hPa]
@@ -60,7 +60,6 @@ class ThermoCalcs:
         Tdew : float
             Dewpoint temperature [K]
         '''
-
         # Make sure Height is a numpy array
         Height = np.array(Height)
 
@@ -76,8 +75,6 @@ class ThermoCalcs:
                       (np.log(TempK_mean / TdewK_mean) / 800.))) + 56.
         return LCLT
 
-    ###############
-
     def _LCL_Pressure(self, Height, Pressure, TempK, TdewK):
         '''
         Calculate the pressure at the lifting condensation levl [hPa],
@@ -87,7 +84,7 @@ class ThermoCalcs:
         (http://weather.uwyo.edu/upperair/indices.html) as
         LCLP    = PRES * ( LCLT / TempK ) ** ( 1 / KAPPA )
 
-        Parameters::
+        Parameters
         ----------
         Pressure : float
             Pressure [hPa]
@@ -115,8 +112,6 @@ class ThermoCalcs:
         LCLP = Pres_mean * (LCLT / TempK_mean)**self.KAPPA
         return LCLP
 
-    ###############
-
     def _LCL_Height(self, Height, Pressure, TempK, TdewK):
         '''
         Calculate the height of the lifting condensation level [m],
@@ -126,7 +121,7 @@ class ThermoCalcs:
         H = (Rd*Temp/g) * (LN(p0 / LCLP))
         where R is gas constant, g is gravity, p0 is SLP
 
-        Parameters::
+        Parameters
         ----------
         Pressure : float
             Pressure in hPa
@@ -159,7 +154,7 @@ class ThermoCalcs:
 
         Equations from Stull 2000 "Meteorology for Scientists and Engineers"
 
-        Parameters::
+        Parameters
         ----------
         TempK : float
             Temperature [deg K]
@@ -189,14 +184,13 @@ class ThermoCalcs:
         Calculate potential temperature [K]
         using pressure and temperature.
 
-        Parameters::
+        Parameters
         ----------
         Pressure : float
             Pressure [hPa]
         TempK : float
             Temperature [deg K]
         '''
-
         Theta = TempK * ((1000. / Pressure)**(self.RD / self.CPD))
         return Theta
 
@@ -210,7 +204,7 @@ class ThermoCalcs:
                         e = (RH/100.) * esat
            Note: 1000. converts units to g/kg instead of g/g
 
-        Parameters::
+        Parameters
         ----------
         RH : float
             Relative Humidity [%]
@@ -240,7 +234,7 @@ class ThermoCalcs:
         followed by the dry potential temperature.
         A discussion is provided in the above manuscript.
 
-        Parameters::
+        Parameters
         ----------
         Pressure : float
             Pressure [hPa]
@@ -290,7 +284,7 @@ class ThermoCalcs:
         '''
         Calculate The RH given a dewpoint temperature
 
-        Parameters::
+        Parameters
         ----------
 
         TempK : float
@@ -305,17 +299,13 @@ class ThermoCalcs:
             Relative Humidity [%]
 
         '''
-
         esat = self._esat(T)
 
         e = (self.E0 / 100.) * np.exp((self.LV / self.RV) *
                                       ((1.0 / self.T0) - (1.0 / Td)))
 
         RH = (e / esat) * 100
-
         return RH
-
-    # ##############
 
     def plot_dryadiabats(self):
         t0 = np.linspace(200, 430, 17)
@@ -360,7 +350,6 @@ class ThermoCalcs:
             #     theta-273.15), press, color='b-- ', linewidth = 0.3)
 
         # self.ax1.semilogy(t_avg, p_avg, 'r^', ms = 10)
-
         return(theta - 273.15, parcel_press)
 
 

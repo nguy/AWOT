@@ -13,6 +13,7 @@ from netCDF4 import num2date
 from .flight import _winduv
 from . import common
 
+
 def read_t28_netcdf(ncFile):
     """
     T-28 has enough differences from other aircraft netCDF files to
@@ -71,10 +72,10 @@ def _get_time(ncFile):
                      ncFile.variables['Time'].units)
 
     # Now convert this datetime instance into a number of seconds since Epoch
-    TimeSec = date2num(dtHrs, common._get_epoch_units())
+    TimeSec = date2num(dtHrs, common.EPOCH_UNITS)
 
-    Time_unaware = num2date(TimeSec, common._get_epoch_units())
-    Time = {'data': Time_unaware, 'units': common._get_epoch_units(),
+    Time_unaware = num2date(TimeSec, common.EPOCH_UNITS)
+    Time = {'data': Time_unaware, 'units': common.EPOCH_UNITS,
             'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time_unaware
 
