@@ -143,7 +143,7 @@ class RadarVerticalPlot(object):
         cmap : str
             Matplotlib color map to use.
         discrete_cmap_levels : array
-            An list of levels to be used for display. If chosen discrete
+            A list of levels to be used for display. If chosen discrete
             color will be used in the colorbar instead of a linear luminance
             mapping.
         color_bar : bool
@@ -310,7 +310,7 @@ class RadarVerticalPlot(object):
         cmap : str
             Matplotlib color map to use.
         discrete_cmap_levels : array
-            An list of levels to be used for display. If chosen discrete
+            A list of levels to be used for display. If chosen discrete
             color will be used in the colorbar instead of a linear luminance
             mapping.
         dForm : str
@@ -625,7 +625,7 @@ class MicrophysicalVerticalPlot(object):
         cmap : str
             Matplotlib color map to use.
         discrete_cmap_levels : array
-            An list of levels to be used for display. If chosen discrete
+            A list of levels to be used for display. If chosen discrete
             color will be used in the colorbar instead of a linear luminance
             mapping.
         dForm : str

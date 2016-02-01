@@ -108,7 +108,7 @@ class RadarHorizontalPlot(object):
         cmap : str
             Matplotlib color map to use.
         discrete_cmap_levels : array
-            An list of levels to be used for display. If chosen discrete
+            A list of levels to be used for display. If chosen discrete
             color will be used in the colorbar instead of a linear luminance
             mapping.
         title : str
@@ -332,7 +332,7 @@ class RadarHorizontalPlot(object):
         cmap : str
             Matplotlib color map to use.
         discrete_cmap_levels : array
-            An list of levels to be used for display. If chosen discrete
+            A list of levels to be used for display. If chosen discrete
             color will be used in the colorbar instead of a linear luminance
             mapping.
         title : str
@@ -570,7 +570,7 @@ class RadarHorizontalPlot(object):
         cmap : string
             Matplotlib color map to use.
         discrete_cmap_levels : array
-            An list of levels to be used for display. If chosen discrete
+            A list of levels to be used for display. If chosen discrete
             color will be used in the colorbar instead of a linear luminance
             mapping.
         color_bar : bool

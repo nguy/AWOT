@@ -246,7 +246,6 @@ class RadarUtilityPlot(object):
                   points_thresh_fraction=0.1,
                   start_time=None, end_time=None,
                   vmin=None, vmax=None, cmap=None,
-                  discrete_levels=True, levels=None,
                   discrete_cmap_levels=None,
                   mask_below=None, plot_percent=False,
                   plot_colorbar=True,
@@ -299,11 +298,8 @@ class RadarUtilityPlot(object):
             Maximum value to display.
         cmap : str
             Matplotlib colormap string.
-        discrete_levels : boolean
-            True to create discrete levels for colormap. False will apply
-            the default linear normalization of luminance for colorbar scale.
-        levels : array
-            An list of levels to be used for display. If chosen discrete
+        discrete_cmap_levels : array
+            A list of levels to be used for display. If chosen discrete
             color will be used in the colorbar instead of a linear luminance
             mapping.
         mask_below : float
@@ -396,19 +392,6 @@ class RadarUtilityPlot(object):
                          xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
 
         # Plot the data
-#         norm, levpos, colors = None, None, None
-#         cm = plt.get_cmap(cmap)
-#         if discrete_levels:
-#             # Default to these levels if none chosen
-#             if levels is None:
-#                 levels = [.1, .5, 1, 2, 5, 7, 10, 15, 25]
-#             # Get the colormap and calculate data spaced by number of levels
-#
-#             levpos = np.rint(np.squeeze(
-#                 [np.linspace(0, 255, len(levels))])).astype(int)
-#             colors = cm(levpos)
-#             # Convert levels to colormap values
-#             cmap, norm = from_levels_and_colors(levels, colors, extend='max')
         # Get the colormap and calculate data spaced by number of levels
         norm = None
         if discrete_cmap_levels is not None:
