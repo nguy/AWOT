@@ -247,6 +247,7 @@ class RadarUtilityPlot(object):
                   start_time=None, end_time=None,
                   vmin=None, vmax=None, cmap=None,
                   discrete_levels=True, levels=None,
+                  discrete_cmap_levels=None,
                   mask_below=None, plot_percent=False,
                   plot_colorbar=True,
                   x_min=None, x_max=None,
@@ -366,7 +367,6 @@ class RadarUtilityPlot(object):
                             nbinsx, endpoint=True)
 
         cb_label = "Frequency"
-        percent = False
 
         if plot_percent:
             cb_label = cb_label + " (%)"
@@ -396,27 +396,42 @@ class RadarUtilityPlot(object):
                          xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
 
         # Plot the data
-        norm, levpos, colors = None, None, None
-        cm = plt.get_cmap(cmap)
-        if discrete_levels:
-            # Default to these levels if none chosen
-            if levels is None:
-                levels = [.1, .5, 1, 2, 5, 7, 10, 15, 25]
-            # Get the colormap and calculate data spaced by number of levels
+#         norm, levpos, colors = None, None, None
+#         cm = plt.get_cmap(cmap)
+#         if discrete_levels:
+#             # Default to these levels if none chosen
+#             if levels is None:
+#                 levels = [.1, .5, 1, 2, 5, 7, 10, 15, 25]
+#             # Get the colormap and calculate data spaced by number of levels
+#
+#             levpos = np.rint(np.squeeze(
+#                 [np.linspace(0, 255, len(levels))])).astype(int)
+#             colors = cm(levpos)
+#             # Convert levels to colormap values
+#             cmap, norm = from_levels_and_colors(levels, colors, extend='max')
+        # Get the colormap and calculate data spaced by number of levels
+        norm = None
+        if discrete_cmap_levels is not None:
+            cm = plt.get_cmap(cmap)
+            try:
+                levpos = np.rint(np.squeeze(
+                    [np.linspace(0, 255,
+                                 len(discrete_cmap_levels))])).astype(int)
+                # Convert levels to colormap values
+                cmap, norm = from_levels_and_colors(
+                    discrete_cmap_levels, cm(levpos), extend='max')
+            except:
+                print("Keyword error: 'discrete_cmap_levels' must "
+                      "be a list of float or integer")
 
-            levpos = np.rint(np.squeeze(
-                [np.linspace(0, 255, len(levels))])).astype(int)
-            colors = cm(levpos)
-            # Convert levels to colormap values
-            cmap, norm = from_levels_and_colors(levels, colors, extend='max')
         p = ax.pcolormesh(cfad_dict['xaxis'], cfad_dict['yaxis'], CFAD,
                           vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
 
         if plot_colorbar:
             cb = common.add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
-                                     label=cbStr, fontsize=cb_fontsize,
+                                     label=cb_label, fontsize=cb_fontsize,
                                      ticklabel_size=cb_ticklabel_size,
-                                     clevs=clevs, tick_interval=cb_tick_int)
+                                     clevs=cb_levs, tick_interval=cb_tick_int)
 
         if quantiles is not None:
             qArr = self.plot_quantiles(field, quantiles=quantiles,
@@ -428,8 +443,7 @@ class RadarUtilityPlot(object):
                                        qlabel_size=qlabel_size,
                                        setup_axes=False, ax=ax)
 
-        # Clean up any potentially lingering variables
-        del(norm, levels, cm, levpos, colors, CFAD)
+        del(CFAD, norm)
         return cfad_dict
 
     def plot_quantiles(self, field, quantiles=None, height_axis=1,
