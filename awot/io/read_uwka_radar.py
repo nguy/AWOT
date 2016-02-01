@@ -202,7 +202,7 @@ def _get_time(fname, ncFile, Good_Indices):
 
     # Now convert the time array into a datetime instance
     Time_unaware = num2date(ncFile.variables['time'][Good_Indices],
-                            common._get_epoch_units())
-    Time = {'data': Time_unaware, 'units': common._get_epoch_units(),
+                            common.EPOCH_UNITS)
+    Time = {'data': Time_unaware, 'units': common.EPOCH_UNITS,
             'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time
