@@ -13,8 +13,9 @@ try:
 except ImportError:
     _PYART_AVAILABLE = False
 
+
 def read_tdr_sweep(fname, map_to_awot=True,
-                      instrument=None, platform=None):
+                   instrument=None, platform=None):
     """
     A wrapper using the Py-ART read interface.
 
@@ -71,7 +72,7 @@ def read_tdr_sweep(fname, map_to_awot=True,
 
 
 def read_lf_sweep(fname, map_to_awot=True,
-                      instrument=None, platform=None):
+                  instrument=None, platform=None):
     """
     A wrapper using the Py-ART read interface to read in
     lower fuselage radar (e.g. NOAA P-3) data files.

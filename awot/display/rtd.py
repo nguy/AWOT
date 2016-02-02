@@ -15,9 +15,7 @@ Functions
  sweep_track_relative - Polar coord data transformed to track-relative frame
  sweep_earth_relative - Polar coord data transformed to earth-relative frame
 
-History
--------
-  15 Apr 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
+Created: 15 Apr 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
 """
 
 # Load the needed packages

@@ -5,15 +5,15 @@ awot.io.read_uwka
 Scripts to read Wyoming Cloud Radar NetCDF data files.
  http://flights.uwyo.edu/wcr/
 
+Testing was done on test data from 2014 flights.
 """
-# NOTES:: Testing was done on test data from 2014 flights.
-#-------------------------------------------------------------------
-# Load the needed packages
+
 from netCDF4 import Dataset, num2date, date2num
 import datetime
 import numpy as np
 
 from . import common
+
 
 def read_wcr2(fname, field_mapping=None, file_mapping=None):
     '''
@@ -40,8 +40,8 @@ def read_wcr2(fname, field_mapping=None, file_mapping=None):
             Aircraft longitude [decimal degrees].
         height : float
             Height of center of radar range gate [km].
-	    altitude : float
-    	    Aircraft altitude via GPS [km].
+        altitude : float
+            Aircraft altitude via GPS [km].
         tas : float
             Platform true airspeed [m/s].
         ground_speed : float
@@ -55,13 +55,13 @@ def read_wcr2(fname, field_mapping=None, file_mapping=None):
         aircraft_wind : float
             In situ wind component at platform altitude along WCR beam.
             Positive is away from radar.
-	    fields : Dictionary of variables in file
-    	    dBZ : float
-        	    Radar Equivalent Reflectivity Factor [dBZ].
-	        velocity : float
-    	        Mean Doppler radial velocity [m/s].
-	        mask : int
-    	        Target mask, see variable for notes.
+        fields : Dictionary of variables in file
+            dBZ : float
+                Radar Equivalent Reflectivity Factor [dBZ].
+            velocity : float
+                Mean Doppler radial velocity [m/s].
+            mask : int
+                Target mask, see variable for notes.
         metadata : dict
             Dictionary of global attributes in file.
         project : str
@@ -75,7 +75,7 @@ def read_wcr2(fname, field_mapping=None, file_mapping=None):
     data = {}
 
     # Read the NetCDF
-    ncFile = Dataset(fname,'r')
+    ncFile = Dataset(fname, 'r')
     ncvars = ncFile.variables
 
     # Grab the metadata stored in global attributes as a dictionary
@@ -110,8 +110,8 @@ def read_wcr2(fname, field_mapping=None, file_mapping=None):
     # Loop through the variables and pull data
     for varname in name_map_data:
         if name_map_data[varname] in ncvars:
-##            data[varname] = _nc_var_masked(ncFile, name_map_data[varname], Good)
-            data[varname] = common._ncvar_to_dict(ncvars[name_map_data[varname]])
+            data[varname] = common._ncvar_to_dict(
+                ncvars[name_map_data[varname]])
         else:
             data[varname] = None
             common._var_not_found(varname)
@@ -124,23 +124,26 @@ def read_wcr2(fname, field_mapping=None, file_mapping=None):
     # Loop through the variables and pull data
     for varname in name_map_fields:
         if name_map_fields[varname] in ncvars:
-            fields[varname] = common._ncvar_subset_to_dict(ncvars[name_map_fields[varname]], Good)
+            fields[varname] = common._ncvar_subset_to_dict(
+                ncvars[name_map_fields[varname]], Good)
         else:
             fields[varname] = None
             common._var_not_found(varname)
 
     # Find the surface variable
-    # See http://flights.uwyo.edu/uwka/wcr/projects/owles13/PROCESSED_DATA/WCR_L2_OWLES13.20131015.cdl
+    # At http://flights.uwyo.edu/uwka/wcr/projects/owles13/
+    # See PROCESSED_DATA/WCR_L2_OWLES13.20131015.cdl
     # for details of mask properties
     surface = np.empty_like(data['latitude']['data'])
     condition = np.equal(fields['mask']['data'], 32)
     for nn in range(len(surface)):
-         if np.any(condition[nn, :]):
-             surface[nn] = data['height']['data'][np.where(condition[nn, :])[0][0]]
-    data['surface'] = {'name' : "surface",
-                       'long_name' : "Height of Surface",
-                       'data' : surface,
-                       'units' : 'meters'
+        if np.any(condition[nn, :]):
+            surface[nn] = data['height']['data'][np.where(
+                condition[nn, :])[0][0]]
+    data['surface'] = {'name': "surface",
+                       'long_name': "Height of Surface",
+                       'data': surface,
+                       'units': 'meters'
                        }
 
     # Save to output dictionary
@@ -156,9 +159,10 @@ def read_wcr2(fname, field_mapping=None, file_mapping=None):
 
     return data
 
-####################
-##  _get methods  ##
-####################
+##################
+#  _get methods  #
+##################
+
 
 def _get_wcr_data_map_level2():
     '''Map WCR variable names to AWOT dictionary.'''
@@ -178,6 +182,7 @@ def _get_wcr_data_map_level2():
                }
     return name_map
 
+
 def _get_wcr_field_name_map():
     '''Map WCR file names to AWOT dictionary.'''
     name_map = {
@@ -189,13 +194,15 @@ def _get_wcr_field_name_map():
                }
     return name_map
 
+
 def _get_time(fname, ncFile, Good_Indices):
     """Pull the time from WCR NetCDF file and convert to AWOT useable."""
 
     # Pull out the date, convert the date to a datetime friendly string
 
     # Now convert the time array into a datetime instance
-    Time_unaware = num2date(ncFile.variables['time'][Good_Indices], common._get_epoch_units())
-    Time = {'data': Time_unaware, 'units': common._get_epoch_units(),
+    Time_unaware = num2date(ncFile.variables['time'][Good_Indices],
+                            common.EPOCH_UNITS)
+    Time = {'data': Time_unaware, 'units': common.EPOCH_UNITS,
             'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time

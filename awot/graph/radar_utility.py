@@ -16,12 +16,13 @@ from matplotlib.colors import from_levels_and_colors
 
 from . import common
 
+
 class RadarUtilityPlot(object):
     """Create vertical plot of radar data."""
 
     def __init__(self, radar, basemap=None,
-                lon_name=None, lat_name=None, height_name=None,
-                time_name=None):
+                 lon_name=None, lat_name=None, height_name=None,
+                 time_name=None):
         """
         Initialize the class to create plots
 
@@ -70,7 +71,8 @@ class RadarUtilityPlot(object):
         # BUT would need the indices variables.
         self.heightfield = self.height.copy()
         if len(self.heightfield['data'].shape) == 1:
-            self.heightfield['data'] = np.resize(self.height['data'][:], fieldshape)
+            self.heightfield['data'] = np.resize(self.height['data'][:],
+                                                 fieldshape)
 
         # Attempt to pull in time if found
         if time_name is None:
@@ -78,9 +80,10 @@ class RadarUtilityPlot(object):
                 self.time = self.radar['time']
                 self.timefield = self.time.copy()
                 # This step is slow converting back-and-forth between datenum
-                # instances, but Numpy does not support meshgrid with datenum dtype
+                # instances, but no Numpy meshgrid support with datenum dtype
                 if len(self.timefield['data'].shape) == 1:
-                    timenum = date2num(self.time['data'][:], self.time['units'])
+                    timenum = date2num(self.time['data'][:],
+                                       self.time['units'])
                     self.timefield['data'] = num2date(
                           np.resize(timenum, fieldshape), self.time['units'])
             except:
@@ -94,21 +97,21 @@ class RadarUtilityPlot(object):
 ##################
 
     def plot_bivariate_frequency(self, xfield, yfield,
-                             xbinsminmax=None, nbinsx=50,
-                             ybinsminmax=None, nbinsy=50,
-                             start_time=None, end_time=None,
-                             vmin=None, vmax=None, cmap=None,
-                             mask_below=None,
-                             plot_percent=False, plot_colorbar=True,
-                             x_min=None, x_max=None,
-                             y_min=None, y_max=None,
-                             xlab=None, xlabFontSize=None, xpad=None,
-                             ylab=None, ylabFontSize=None, ypad=None,
-                             title=None, titleFontSize=None,
-                             cb_fontsize=None, cb_ticklabel_size=None,
-                             cb_orient=None, cb_pad=None,
-                             cb_levs=None, cb_tick_int=None,
-                             ax=None, fig=None):
+                                 xbinsminmax=None, nbinsx=50,
+                                 ybinsminmax=None, nbinsy=50,
+                                 start_time=None, end_time=None,
+                                 vmin=None, vmax=None, cmap=None,
+                                 mask_below=None,
+                                 plot_percent=False, plot_colorbar=True,
+                                 x_min=None, x_max=None,
+                                 y_min=None, y_max=None,
+                                 xlab=None, xlabFontSize=None, xpad=None,
+                                 ylab=None, ylabFontSize=None, ypad=None,
+                                 title=None, titleFontSize=None,
+                                 cb_fontsize=None, cb_ticklabel_size=None,
+                                 cb_orient=None, cb_pad=None,
+                                 cb_levs=None, cb_tick_int=None,
+                                 ax=None, fig=None):
         """
         Create a bivariate frequency distribution plot of two variables.
 
@@ -219,22 +222,23 @@ class RadarUtilityPlot(object):
         p = ax.pcolormesh(X, Y, bifreq.T, vmin=vmin, vmax=vmax, cmap=cmap)
 
         # Set the axes
-        common._set_axes(ax, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
-                  title=title, titleFontSize=titleFontSize,
-                  xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
-                  xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
+        common._set_axes(ax, x_min=x_min, x_max=x_max,
+                         y_min=y_min, y_max=y_max,
+                         title=title, titleFontSize=titleFontSize,
+                         xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
+                         xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
 
         if plot_colorbar:
             cb = common.add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
-                 label=cb_label, fontsize=cb_fontsize,
-                 ticklabel_size=cb_ticklabel_size,
-                 clevs=cb_levs, tick_interval=cb_tick_int)
+                                     label=cb_label, fontsize=cb_fontsize,
+                                     ticklabel_size=cb_ticklabel_size,
+                                     clevs=cb_levs, tick_interval=cb_tick_int)
 
         # Create a dictionary to return
-        bivar = {'frequency' : bifreq.T,
-                 'frequency_label' : cb_label,
-                 'xaxis' : X,
-                 'yaxis' : Y}
+        bivar = {'frequency': bifreq.T,
+                 'frequency_label': cb_label,
+                 'xaxis': X,
+                 'yaxis': Y}
         return bivar
 
     def plot_cfad(self, field, height_axis=1,
@@ -242,7 +246,7 @@ class RadarUtilityPlot(object):
                   points_thresh_fraction=0.1,
                   start_time=None, end_time=None,
                   vmin=None, vmax=None, cmap=None,
-                  discrete_levels=True, levels=None,
+                  discrete_cmap_levels=None,
                   mask_below=None, plot_percent=False,
                   plot_colorbar=True,
                   x_min=None, x_max=None,
@@ -294,11 +298,8 @@ class RadarUtilityPlot(object):
             Maximum value to display.
         cmap : str
             Matplotlib colormap string.
-        discrete_levels : boolean
-            True to create discrete levels for colormap. False will apply
-            the default linear normalization of luminance for colorbar scale.
-        levels : array
-            An list of levels to be used for display. If chosen discrete
+        discrete_cmap_levels : array
+            A list of levels to be used for display. If chosen discrete
             color will be used in the colorbar instead of a linear luminance
             mapping.
         mask_below : float
@@ -358,10 +359,10 @@ class RadarUtilityPlot(object):
 
         if xbinsminmax is None:
             xbinsminmax = (np.ma.min(xarr), np.ma.max(xarr))
-        binsx = np.linspace(xbinsminmax[0], xbinsminmax[1], nbinsx, endpoint=True)
+        binsx = np.linspace(xbinsminmax[0], xbinsminmax[1],
+                            nbinsx, endpoint=True)
 
         cb_label = "Frequency"
-        percent = False
 
         if plot_percent:
             cb_label = cb_label + " (%)"
@@ -384,60 +385,63 @@ class RadarUtilityPlot(object):
             CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
 
         # Set the axes
-        common._set_axes(ax, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
-                  title=title, titleFontSize=titleFontSize,
-                  xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
-                  xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
+        common._set_axes(ax, x_min=x_min, x_max=x_max,
+                         y_min=y_min, y_max=y_max,
+                         title=title, titleFontSize=titleFontSize,
+                         xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
+                         xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
 
         # Plot the data
-        norm, levpos, colors = None, None, None
-        cm = plt.get_cmap(cmap)
-        if discrete_levels:
-            # Default to these levels if none chosen
-            if levels is None:
-                levels = [.1, .5, 1, 2, 5, 7, 10, 15, 25]
-            # Get the colormap and calculate data spaced by number of levels
+        # Get the colormap and calculate data spaced by number of levels
+        norm = None
+        if discrete_cmap_levels is not None:
+            cm = plt.get_cmap(cmap)
+            try:
+                levpos = np.rint(np.squeeze(
+                    [np.linspace(0, 255,
+                                 len(discrete_cmap_levels))])).astype(int)
+                # Convert levels to colormap values
+                cmap, norm = from_levels_and_colors(
+                    discrete_cmap_levels, cm(levpos), extend='max')
+            except:
+                print("Keyword error: 'discrete_cmap_levels' must "
+                      "be a list of float or integer")
 
-            levpos = np.rint(np.squeeze([np.linspace(0, 255, len(levels))])).astype(int)
-            colors = cm(levpos)
-            # Convert levels to colormap values
-            cmap, norm = from_levels_and_colors(levels, colors, extend='max')
         p = ax.pcolormesh(cfad_dict['xaxis'], cfad_dict['yaxis'], CFAD,
                           vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
 
         if plot_colorbar:
             cb = common.add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
-                 label=cb_label, fontsize=cb_fontsize,
-                 ticklabel_size=cb_ticklabel_size,
-                 clevs=cb_levs, tick_interval=cb_tick_int)
+                                     label=cb_label, fontsize=cb_fontsize,
+                                     ticklabel_size=cb_ticklabel_size,
+                                     clevs=cb_levs, tick_interval=cb_tick_int)
 
         if quantiles is not None:
             qArr = self.plot_quantiles(field, quantiles=quantiles,
                                        height_axis=height_axis,
-                                       start_time=start_time, end_time=end_time,
+                                       start_time=start_time,
+                                       end_time=end_time,
                                        qcolor=qcolor, qlabels_on=qlabels_on,
                                        qlabel_color=qlabel_color,
                                        qlabel_size=qlabel_size,
                                        setup_axes=False, ax=ax)
 
-
-        # Clean up any potentially lingering variables
-        del(norm, levels, cm, levpos, colors, CFAD)
+        del(CFAD, norm)
         return cfad_dict
 
     def plot_quantiles(self, field, quantiles=None, height_axis=1,
-                  start_time=None, end_time=None,
-                  qcolor='k', qlabels_on=True,
-                  qlabel_color=None, qlabel_size=None,
-                  mask_above_height=None, mask_below_height=None,
-                  mask_between_height=None,
-                  x_min=None, x_max=None,
-                  y_min=None, y_max=None,
-                  xlab=None, xlabFontSize=None, xpad=None,
-                  ylab=None, ylabFontSize=None, ypad=None,
-                  title=None, titleFontSize=None,
-                  setup_axes=True,
-                  ax=None, fig=None):
+                       start_time=None, end_time=None,
+                       qcolor='k', qlabels_on=True,
+                       qlabel_color=None, qlabel_size=None,
+                       mask_above_height=None, mask_below_height=None,
+                       mask_between_height=None,
+                       x_min=None, x_max=None,
+                       y_min=None, y_max=None,
+                       xlab=None, xlabFontSize=None, xpad=None,
+                       ylab=None, ylabFontSize=None, ypad=None,
+                       title=None, titleFontSize=None,
+                       setup_axes=True,
+                       ax=None, fig=None):
         """
         Create a frequency by altitude distribution plot of two variables.
         This is the traditional method of calculating a frequency distribution
@@ -517,17 +521,18 @@ class RadarUtilityPlot(object):
             ht = self.heightfield['data'].copy()
 
         # Apply mask to altitudes if indicated
-        ### NG 	THESE ARE NOT WORKING PROPERLY DON'T KNOW WHY ###
+        # XXX THESE ARE NOT WORKING PROPERLY DON'T KNOW WHY ###
         if mask_above_height is not None:
             xarr = np.ma.masked_where(ht > mask_above_height, xarr)
         if mask_below_height is not None:
             xarr = np.ma.masked_where(ht < mask_below_height, xarr)
-        if mask_between_height is not None and np.shape(mask_between_height) != 2:
+        if ((mask_between_height is not None) and
+            (np.shape(mask_between_height) != 2)):
             condc = ((ht < mask_between_height[0]) &
                      (ht > mask_between_height[1]))
             xarr = np.ma.masked_where(condc, xarr)
 
-         # Check data for good points
+        # Check data for good points
         xarr = np.ma.masked_where(~(np.isfinite(xarr)), xarr)
 
         # Calculate the quantile profiles
@@ -535,19 +540,22 @@ class RadarUtilityPlot(object):
 
         # Set the axes
         if setup_axes:
-            common._set_axes(ax, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
-                      title=title, titleFontSize=titleFontSize,
-                      xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
-                      xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
+            common._set_axes(ax, x_min=x_min, x_max=x_max,
+                             y_min=y_min, y_max=y_max,
+                             title=title, titleFontSize=titleFontSize,
+                             xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
+                             xlabFontSize=xlabFontSize,
+                             ylabFontSize=ylabFontSize)
 
         # Plot the data
         self.add_quantiles_to_axis(ax, qArr, qcolor, qlabels_on)
         return qArr
 
-    def add_quantiles_to_axis(self, ax, qArr, qcolor, qlabels_on, qlabel_size=10,
-                              qlabel_color='k'):
+    def add_quantiles_to_axis(self, ax, qArr, qcolor, qlabels_on,
+                              qlabel_size=10, qlabel_color='k'):
         for num in range(len(qArr['quantiles'])):
-            p = ax.plot(qArr['profiles'][:, num], qArr['yaxis'][:], color=qcolor)
+            p = ax.plot(qArr['profiles'][:, num], qArr['yaxis'][:],
+                        color=qcolor)
             ytextloc = self.heightfield['data'][:, 0].max() * 1.05
             if qlabels_on:
                 ax.text(qArr['profiles'][-1, num], ytextloc,
@@ -593,7 +601,7 @@ class RadarUtilityPlot(object):
             # Calculate the fraction of points out of possible total
             ptsfrac = float(len(array))/float(len(xarr[nn, ...].ravel()))
             if ptsfrac > points_thresh_fraction:
-                bin_pts[nn, :], bin_edges  = np.histogram(
+                bin_pts[nn, :], bin_edges = np.histogram(
                     array,  bins=binsx, density=False)
             bin_perc[nn, :] = bin_pts[nn, :] / bin_pts[nn, :].sum() * 100.
             del(ptsfrac, array, condition)
@@ -607,10 +615,10 @@ class RadarUtilityPlot(object):
         bin_pts = np.ma.masked_less(bin_pts, 0.)
         bin_perc = np.ma.masked_invalid(bin_perc)
         bin_perc = np.ma.masked_less(bin_perc, 0.)
-        cfad_dict = {'frequency_points' : bin_pts,
-                     'frequency_percent' : bin_perc,
-                     'xaxis' : X,
-                     'yaxis' : Y
+        cfad_dict = {'frequency_points': bin_pts,
+                     'frequency_percent': bin_perc,
+                     'xaxis': X,
+                     'yaxis': Y
                      }
         return cfad_dict
 
@@ -638,10 +646,12 @@ class RadarUtilityPlot(object):
             data = np.sort(xarr[nn, ...].ravel())
 #             inds = np.rint(np.array(quantiles)/100. * len(data)).astype(int)
 #             qArr[nn, :] = data[inds]
-            qArr[nn, :] = mstats.mquantiles(data, prob=[x / 100. for x in quantiles], axis=None)
-        quant_dict = {'quantiles' : quantiles,
-                      'profiles' : qArr,
-                      'yaxis' : height
+            qArr[nn, :] = mstats.mquantiles(data,
+                                            prob=[x / 100. for x in quantiles],
+                                            axis=None)
+        quant_dict = {'quantiles': quantiles,
+                      'profiles': qArr,
+                      'yaxis': height
                       }
         return quant_dict
 
@@ -697,23 +707,23 @@ class RadarUtilityPlot(object):
             var[nn] = np.ma.var(data)
             skew[nn] = mstats.skew(data)
 
-        vp_dict = {'field' : field,
-                   'vp_mean' : mean,
-                   'vp_median' : median,
-                   'vp_std_dev' : std_dev,
-                   'vp_min' : min,
-                   'vp_max' : max,
-                   'vp_variance' : var,
-                   'vp_skew' : skew,
-                   'yaxis' : self.height['data'][:]
-                  }
+        vp_dict = {'field': field,
+                   'vp_mean': mean,
+                   'vp_median': median,
+                   'vp_std_dev': std_dev,
+                   'vp_min': min,
+                   'vp_max': max,
+                   'vp_variance': var,
+                   'vp_skew': skew,
+                   'yaxis': self.height['data'][:]}
         return vp_dict
 
 ###################
 #   Get methods   #
 ###################
 
-    def _get_fields_variable_dict_data_time_subset(self, field, start_time, end_time):
+    def _get_fields_variable_dict_data_time_subset(self, field,
+                                                   start_time, end_time):
         '''
         Get the variable from the fields dictionary.
         Subset the time when in time series format.
@@ -721,7 +731,7 @@ class RadarUtilityPlot(object):
         data = self.fields[field]['data'][:]
 
         # Check to see if time is subsetted
-        if self.time != None:
+        if self.time is not None:
             dt_start = common._get_start_datetime(self.time, start_time)
             dt_end = common._get_end_datetime(self.time, end_time)
             tsub = self.time['data'][(self.time['data'] >= dt_start) &
@@ -740,7 +750,7 @@ class RadarUtilityPlot(object):
         data = self.radar[field]['data'][:]
 
         # Check to see if time is subsetted
-        if self.time != None:
+        if self.time is not None:
             dt_start = common._get_start_datetime(self.time, start_time)
             dt_end = common._get_end_datetime(self.time, end_time)
             tsub = self.time['data'][(self.time['data'] >= dt_start) &
@@ -752,7 +762,7 @@ class RadarUtilityPlot(object):
         return datasub
 
     def _get_bivariate_data(self, field1, field2,
-                                  start_time, end_time):
+                            start_time, end_time):
         '''
         Return the the data for field1 and field 2.
         Subset the time when in time series format.
@@ -773,15 +783,15 @@ class RadarUtilityPlot(object):
             data2 = self.heightfield['data']
 
         # Check to see if time is subsetted
-        if self.time != None:
+        if self.time is not None:
             dt_start = common._get_start_datetime(self.time, start_time)
             dt_end = common._get_end_datetime(self.time, end_time)
 
             data1sub = data1[(self.timefield['data'] >= dt_start) &
-                           (self.timefield['data'] <= dt_end)]
+                             (self.timefield['data'] <= dt_end)]
 
             data2sub = data2[(self.timefield['data'] >= dt_start) &
-                           (self.timefield['data'] <= dt_end)]
+                             (self.timefield['data'] <= dt_end)]
         else:
             data1sub, data2sub = data1, data2
         return data1sub, data2sub
@@ -793,7 +803,7 @@ class RadarUtilityPlot(object):
         dt_end = common._get_end_datetime(self.time, end_time)
 
         hsub = self.height['data'][(self.time['data'] >= dt_start) &
-                                    (self.time['data'] <= dt_end), :]
+                                   (self.time['data'] <= dt_end), :]
         hsub = np.ma.masked_invalid(hsub)
         return hsub
 

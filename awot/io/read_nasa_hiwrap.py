@@ -19,6 +19,7 @@ except ImportError:
 
 from . import common
 
+
 def read_hiwrap_netcdf(fname, mapping_dict=None, field_mapping=None):
     '''
     Read in NetCDF data file containing HIWRAP radar and flight data.
@@ -120,7 +121,7 @@ def read_hiwrap_netcdf(fname, mapping_dict=None, field_mapping=None):
         if name_map_flightdata[varname] in ncvars:
             data[varname] = common._ncvar_to_dict(
                 ncvars[name_map_flightdata[varname]])
-## NG TEST FILE INCORRECT UNITS - MAY NEED TO REINSTATE
+    # XXX TEST FILE INCORRECT UNITS - MAY NEED TO REINSTATE
 #            if data[varname]['units'] == 'km':
 #                print(varname)
 #                data[varname]['data'] = data[varname]['data'] * 1000.
@@ -142,14 +143,14 @@ def read_hiwrap_netcdf(fname, mapping_dict=None, field_mapping=None):
                       'units': data['altitude']['units']}
 
     # Calculate the surface height
-    ## NG NEED TO CHECK TO MAKE SURE CORRECT
+    # XXX NEED TO CHECK TO MAKE SURE CORRECT
     sfcgateheight = np.array(
        [data['range']['data'][int(s)] for s in ncvars['sgate'][:]])
     surface = data['altitude']['data'][:] - sfcgateheight[:]
-    data['surface'] = {'name' : "surface",
-                       'long_name' : "Height of Surface",
-                       'data' : surface,
-                       'units' : 'meters'
+    data['surface'] = {'name': "surface",
+                       'long_name': "Height of Surface",
+                       'data': surface,
+                       'units': 'meters'
                        }
 
     # Add fields to their own dictionary
@@ -168,7 +169,8 @@ def read_hiwrap_netcdf(fname, mapping_dict=None, field_mapping=None):
                 ncvars[name_map_fields[varname]])
             # Apply mask to any points with missing value
             # indicated by file
-            fields[varname]['data'] = np.ma.masked_equal(fields[varname]['data'], baddata)
+            fields[varname]['data'] = np.ma.masked_equal(
+                 fields[varname]['data'], baddata)
             fields[varname]['data'][:, gate_mask] = np.nan
         except:
             fields[varname] = None
@@ -188,19 +190,23 @@ def read_hiwrap_netcdf(fname, mapping_dict=None, field_mapping=None):
 
     # Include HIWRAP specific metadata if it exists
     try:
-        data['metadata']['year'] = common._ncvar_to_dict(ncvars['year'])
+        data['metadata']['year'] = common._ncvar_to_dict(
+            ncvars['year'])
     except:
         data['metadata']['year'] = None
     try:
-        data['metadata']['radar_frequency'] = common._ncvar_to_dict(ncvars['freq'])
+        data['metadata']['radar_frequency'] = common._ncvar_to_dict(
+            ncvars['freq'])
     except:
         data['metadata']['radar_frequency'] = None
     try:
-        data['metadata']['incidence_angle'] = common._ncvar_to_dict(ncvars['incid'])
+        data['metadata']['incidence_angle'] = common._ncvar_to_dict(
+            ncvars['incid'])
     except:
         data['metadata']['incidence_angle'] = None
     try:
-        data['metadata']['range_gate_spacing'] = common._ncvar_to_dict(ncvars['gatesp'])
+        data['metadata']['range_gate_spacing'] = common._ncvar_to_dict(
+            ncvars['gatesp'])
     except:
         data['metadata']['range_gate_spacing'] = None
 
@@ -210,6 +216,7 @@ def read_hiwrap_netcdf(fname, mapping_dict=None, field_mapping=None):
 
     ncFile.close()
     return data
+
 
 def read_hiwrap_h5(fname, mapping_dict=None, field_mapping=None):
     '''
@@ -334,15 +341,14 @@ def read_hiwrap_h5(fname, mapping_dict=None, field_mapping=None):
                       'units': data['altitude']['units']}
 
     # Calculate the surface height
-    ## NG NEED TO CHECK TO MAKE SURE CORRECT
+    # XXX NEED TO CHECK TO MAKE SURE CORRECT
     sfcgaterange = np.array(
        [data['range']['data'][int(s)] for s in h5File['sgate'][:]])
     surface = data['altitude']['data'][:] - sfcgaterange[:]
-    data['surface'] = {'name' : "surface",
-                    'long_name' : "Height of Surface",
-                    'data' : surface,
-                    'units' : 'meters'
-                    }
+    data['surface'] = {'name': "surface",
+                       'long_name': "Height of Surface",
+                       'data': surface,
+                       'units': 'meters'}
 
     # Add fields to their own dictionary
     fields = {}
@@ -361,7 +367,8 @@ def read_hiwrap_h5(fname, mapping_dict=None, field_mapping=None):
             # Apply mask to any points with missing value
             # indicated by file
             fields[varname]['data'] = fields[varname]['data'].T
-            fields[varname]['data'] = np.ma.masked_equal(fields[varname]['data'], baddata)
+            fields[varname]['data'] = np.ma.masked_equal(
+                fields[varname]['data'], baddata)
             fields[varname]['data'][:, gate_mask] = np.nan
         except:
             fields[varname] = None
@@ -389,54 +396,55 @@ def read_hiwrap_h5(fname, mapping_dict=None, field_mapping=None):
     except:
         data['metadata']['year'] = None
     try:
-        data['metadata']['radar_frequency'] = common._h5var_to_dict(h5File['Frequency'],
-                                                 units="GHz", standard_name="Radar Frequency")
+        data['metadata']['radar_frequency'] = common._h5var_to_dict(
+            h5File['Frequency'], units="GHz", standard_name="Radar Frequency")
     except:
         data['metadata']['radar_frequency'] = None
     try:
-        data['metadata']['radar_wavelength'] = common._h5var_to_dict(h5File['Wavelength'],
-                                                 units="meters", standard_name="Radar Wavelength")
+        data['metadata']['radar_wavelength'] = common._h5var_to_dict(
+            h5File['Wavelength'], units="meters",
+            standard_name="Radar Wavelength")
     except:
         data['metadata']['radar_wavelength'] = None
     try:
-        data['metadata']['incidence_angle'] = common._h5var_to_dict(h5File['incid'],
-                                                 units="degrees", standard_name="Incidence Angle")
+        data['metadata']['incidence_angle'] = common._h5var_to_dict(
+            h5File['incid'], units="degrees", standard_name="Incidence Angle")
     except:
         data['metadata']['incidence_angle'] = None
     try:
-        data['metadata']['range_gate_spacing'] = common._h5var_to_dict(h5File['gatesp'],
-                                                 units="meters", standard_name="Gate spacing")
+        data['metadata']['range_gate_spacing'] = common._h5var_to_dict(
+            h5File['gatesp'], units="meters", standard_name="Gate spacing")
     except:
         data['metadata']['range_gate_spacing'] = None
     try:
-        data['metadata']['antenna_elevation_angle'] = common._h5var_to_dict(h5File['antElevation'],
-                                                 units="degrees", standard_name="Antenna Elevation")
+        data['metadata']['antenna_elevation_angle'] = common._h5var_to_dict(
+            h5File['antElevation'], units="degrees",
+            standard_name="Antenna Elevation")
     except:
         data['metadata']['antenna_elevation_angle'] = None
     try:
-        data['metadata']['range_gate_spacing'] = common._h5var_to_dict(h5File['nbeams'],
-                                                 standard_name="Number of beams")
+        data['metadata']['range_gate_spacing'] = common._h5var_to_dict(
+            h5File['nbeams'], standard_name="Number of beams")
     except:
         data['metadata']['range_gate_spacing'] = None
     try:
-        data['metadata']['dual_nyquist_velocity'] = common._h5var_to_dict(h5File['vnyqDual'],
-                                                 units="m/s", standard_name="Nyquist Velocity",
-                                                 long_name="Dual-frequency Nyquist Velocity")
+        data['metadata']['dual_nyquist_velocity'] = common._h5var_to_dict(
+            h5File['vnyqDual'], units="m/s", standard_name="Nyquist Velocity",
+            long_name="Dual-frequency Nyquist Velocity")
     except:
         data['metadata']['dual_nyquist_velocity'] = None
-#    try:
-#        data['metadata']['creation_date'] = np.array(h5File['creationDate'])[0]
-#    except:
-#        data['metadata']['creation_date'] = None
 
     data['platform'] = 'hiwrap'
     data['data_format'] = 'hiwrap_vertical'
 
     h5File.close()
     return data
+
+
 ###############################
 #   Create Variable methods   #
 ###############################
+
 
 def _get_old_hiwrap_flight_name_map():
     '''Map HIWRAP NetCDF flight variables to AWOT structure.'''
@@ -469,6 +477,7 @@ def _get_old_hiwrap_field_name_map():
                }
     return name_map
 
+
 def _get_hiwrap_flight_name_map():
     '''Map HIWRAP HDF flight variables to AWOT structure.'''
     name_map = {
@@ -477,9 +486,7 @@ def _get_hiwrap_flight_name_map():
                'altitude': 'height',
                'roll': 'roll',
                'pitch': 'pitch',
-#               'tilt': 'tilt',
                'heading': 'head',
-#               'rotation': 'rot',
                'track': 'track',
                'range': 'rangevec',
                'profile_start_range': 'rng0',
@@ -505,6 +512,7 @@ def _get_hiwrap_field_name_map():
                }
     return name_map
 
+
 def _get_old_hiwrap_time(fname, ncFile, Good_Indices):
     """
     Pull the time from HIWRAP file and convert to AWOT useable.
@@ -517,9 +525,12 @@ def _get_old_hiwrap_time(fname, ncFile, Good_Indices):
     # Adds dashes between year, month, and day
     yyyymmdd = fname.split("_")[3]
 
-    # Find the date for Sunday previous and check this (should be = 6 for Sunday)
-    startday = int(yyyymmdd[6:8]) - int(divmod(ncFile.variables['time'][0], 24 * 3600)[0])
-    if datetime.date(ncFile.variables['year'][:], int(yyyymmdd[4:6]), startday).weekday() != 6:
+    # Find the date for Sunday previous and
+    # check this (should be = 6 for Sunday)
+    startday = int(yyyymmdd[6:8]) - int(divmod(
+        ncFile.variables['time'][0], 24 * 3600)[0])
+    if datetime.date(ncFile.variables['year'][:],
+                     int(yyyymmdd[4:6]), startday).weekday() != 6:
         print("Time could be incorrect, check file to see if time units "
               "are 'computer time (sec from last Sunday at 12 am)'")
 
@@ -530,12 +541,13 @@ def _get_old_hiwrap_time(fname, ncFile, Good_Indices):
     dtHrs = num2date(ncFile.variables['time'][
         Good_Indices], 'seconds since ' + StartDate + '00:00:00+0:00')
     # Now convert this datetime instance into a number of seconds since Epoch
-    TimeSec = date2num(dtHrs, common._get_epoch_units())
+    TimeSec = date2num(dtHrs, common.EPOCH_UNITS)
     # Now once again convert this data into a datetime instance
-    Time_unaware = num2date(TimeSec, common._get_epoch_units())
-    Time = {'data': Time_unaware, 'units': common._get_epoch_units(),
+    Time_unaware = num2date(TimeSec, common.EPOCH_UNITS)
+    Time = {'data': Time_unaware, 'units': common.EPOCH_UNITS,
             'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time
+
 
 def _get_hiwrap_time(h5File):
     """
@@ -547,13 +559,15 @@ def _get_hiwrap_time(h5File):
     month = np.array(h5File['utcMonth'])
     day = np.array(h5File['utcDay'])
     seconds = np.array(h5File['timeUTC']) * 3600.
-    t_initial = ("%s-%s-%s 00:00:0.00Z"%(str(year[0]), str(month[0]), str(day[0])))
+    t_initial = ("%s-%s-%s 00:00:0.00Z" % (str(year[0]),
+                                           str(month[0]),
+                                           str(day[0])))
 
-    dtHrs = num2date(seconds, 'seconds since %s'%t_initial)
+    dtHrs = num2date(seconds, 'seconds since %s' % t_initial)
     # Now convert this datetime instance into a number of seconds since Epoch
-    TimeSec = date2num(dtHrs, common._get_epoch_units())
+    TimeSec = date2num(dtHrs, common.EPOCH_UNITS)
     # Now once again convert this data into a datetime instance
-    Time_unaware = num2date(TimeSec, common._get_epoch_units())
-    Time = {'data': Time_unaware, 'units': common._get_epoch_units(),
+    Time_unaware = num2date(TimeSec, common.EPOCH_UNITS)
+    Time = {'data': Time_unaware, 'units': common.EPOCH_UNITS,
             'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time

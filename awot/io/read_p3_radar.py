@@ -133,12 +133,12 @@ def read_windsyn_tdr_netcdf(fname, field_mapping=None):
 
     # Pull out specific information on platform/instrument
     try:
-        radar['platform'] = ncFile.title # ncFile.Platform??
+        radar['platform'] = ncFile.title
     except:
         radar['platform'] = 'p3'
 
     try:
-        radar['instrument'] = ncFile.instrument #ncFile.Instrument??
+        radar['instrument'] = ncFile.instrument
     except:
         radar['instrument'] = 'windsyn_grid'
 
@@ -147,6 +147,7 @@ def read_windsyn_tdr_netcdf(fname, field_mapping=None):
 
     ncFile.close()
     return radar
+
 
 def read_tdr_grid_variable(fname, Rec):
     """
@@ -177,6 +178,7 @@ def read_tdr_grid_variable(fname, Rec):
 
     ncFile.close()
     return VarOut
+
 
 def read_windsyn_binary(fname, platform=None, instrument=None, radar_num=None):
     """
@@ -396,11 +398,11 @@ def read_lf_grid(fname):
 
     # Pull out specific information on platform/instrument
     try:
-        radar['platform'] = ncFile.title #ncFile.Platform??
+        radar['platform'] = ncFile.title  # ncFile.Platform??
     except:
         radar['platform'] = 'p3'
     try:
-        radar['instrument'] = ncFile.instrument  #ncFile.Instrument??
+        radar['instrument'] = ncFile.instrument  # ncFile.Instrument??
     except:
         radar['instrument'] = 'lf'
 

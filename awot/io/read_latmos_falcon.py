@@ -17,6 +17,7 @@ import pytz
 
 from . import common
 
+
 def read_rasta_wind(fname, field_mapping=None):
     '''A wrapper to call the read_rasta_dynamic module.'''
     data = read_rasta_dynamic(fname, field_mapping=None)
@@ -393,9 +394,9 @@ def _get_latmos_time(fname, ncFile, Good_Indices):
     dtHrs = num2date(ncFile.variables['time'][
         Good_Indices], 'hours since ' + StartDate + '00:00:00+0:00')
     # Now convert this datetime instance into a number of seconds since Epoch
-    TimeSec = date2num(dtHrs, common._get_epoch_units())
+    TimeSec = date2num(dtHrs, common.EPOCH_UNITS)
     # Now once again convert this data into a datetime instance
-    Time_unaware = num2date(TimeSec, common._get_epoch_units())
-    Time = {'data': Time_unaware, 'units': common._get_epoch_units(),
+    Time_unaware = num2date(TimeSec, common.EPOCH_UNITS)
+    Time = {'data': Time_unaware, 'units': common.EPOCH_UNITS,
             'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time

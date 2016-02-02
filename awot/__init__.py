@@ -16,7 +16,6 @@ from __future__ import absolute_import
 from . import io
 from . import display
 from . import graph
-from . import dropsondes
 from . import util
 
 __all__ = [s for s in dir() if not s.startswith('_')]

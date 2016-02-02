@@ -16,6 +16,7 @@ import numpy as np
 
 from . import common
 
+
 def read_wcl(fname):
     '''
     Read in NetCDF data file containing Wyoming Cloud Lidar data.
@@ -129,6 +130,7 @@ def _get_wcl_name_map():
                }
     return name_map
 
+
 def _get_wcl_field_name_map():
     '''Map out WCL variable names to AWOT dictionary.'''
     name_map = {
@@ -147,12 +149,14 @@ def _get_wcl_field_name_map():
                }
     return name_map
 
+
 def _get_time(fname, ncFile, Good_Indices):
     """Pull the time from WCL file and convert to AWOT useable."""
     # Pull out the date, convert the date to a datetime friendly string
     # Now convert the time array into a datetime instance
-    Time_unaware = num2date(ncFile.variables['time'][Good_Indices], common._get_epoch_units)
-    Time = {'data': Time_unaware, 'units': common._get_epoch_units(),
+    Time_unaware = num2date(
+        ncFile.variables['time'][Good_Indices], common.EPOCH_UNITS)
+    Time = {'data': Time_unaware, 'units': common.EPOCH_UNITS,
             'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time
 

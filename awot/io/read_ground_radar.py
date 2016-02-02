@@ -11,6 +11,7 @@ import pyart
 from netCDF4 import num2date, date2num
 from . import common
 
+
 def read_ground_radar(fname, map_to_awot=True,
                       instrument=None, platform=None):
     """
@@ -42,9 +43,6 @@ def read_ground_radar(fname, map_to_awot=True,
         Time = _convert_pyart_time(rad)
         # Create a dictionary to transfer the data
         radar = {'metadata': rad.metadata,
-#                 'longitude': rad.longitude,
-#                 'latitude': rad.latitude,
-#                 'height': rad.altitude,
                  'longitude': rad.gate_longitude,
                  'latitude': rad.gate_latitude,
                  'height': rad.gate_z,
@@ -62,6 +60,7 @@ def read_ground_radar(fname, map_to_awot=True,
         radar = rad
     return radar
 
+
 def _convert_pyart_time(radar):
     """Pull the time from WCR NetCDF file and convert to AWOT useable."""
 
@@ -69,8 +68,8 @@ def _convert_pyart_time(radar):
 
     # Now convert the time array into a datetime instance
     timedate = pyart.util.datetime_utils.datetimes_from_radar(radar)
-    Timesec = date2num(timedate, common._get_epoch_units())
-    Time_unaware = num2date(Timesec, common._get_epoch_units())
-    Time = {'data': Time_unaware, 'units': common._get_epoch_units(),
+    Timesec = date2num(timedate, common.EPOCH_UNITS)
+    Time_unaware = num2date(Timesec, common.EPOCH_UNITS)
+    Time = {'data': Time_unaware, 'units': common.EPOCH_UNITS,
             'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time

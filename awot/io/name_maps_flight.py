@@ -15,6 +15,7 @@ custom name_map.
 
 from __future__ import print_function
 
+
 def _get_name_map(platform):
     """
     Retrieve a name_map used to map file variables to
@@ -25,7 +26,7 @@ def _get_name_map(platform):
                 'noaa42', 'noaa43', 'gv']
 
     uwka_names = ['uwka', 'uwkingair', 'kingair',
-                    'n2uw', 'raf']
+                  'n2uw', 'raf']
 
     latmos_names = ['safire', 'latmos', 'french_falcon']
 
@@ -33,7 +34,7 @@ def _get_name_map(platform):
                  'sdsm&tt-28', 'sdsmtt-28', 'sdsm&tt28']
 
     und_citation_names = ['citation', 'und_citation',
-                         'und', 'undcitation']
+                          'und', 'undcitation']
 
     if platform is not None:
         if platform.lower().replace(" ", "") in p3_names:
@@ -56,6 +57,7 @@ def _get_name_map(platform):
 ###########################
 #  NAME MAP DICTIONARIES  #
 ###########################
+
 
 def _p3_flight_namemap():
     '''
@@ -107,6 +109,7 @@ def _p3_flight_namemap():
         'vapor_pressure': 'EE.1',
         'sat_vapor_pressure': 'EW.1', }
     return name_map
+
 
 def _uwka_name_map():
     '''Map UWyo King Air variables to AWOT.'''
@@ -160,6 +163,7 @@ def _uwka_name_map():
         'topo': 'topo',
     }
     return name_map
+
 
 def _t28_flight_namemap():
     '''
@@ -256,6 +260,7 @@ def _t28_flight_namemap():
         'EVENT_MARKERS': 'EVENT_MARKERS'}
     return name_map
 
+
 def _latmos_name_map():
     '''
     Map out names used in SAFIRE/LATMOS Falcon data to AWOT.
@@ -264,37 +269,56 @@ def _latmos_name_map():
     2011 project.
     '''
     name_map = {
-        'time': 'time',
-        'latitude': 'latitude : from GPS (degree)',
-        'longitude': 'longitude : from GPS (degree)',
-        'altitude': 'altitude : from GPS (meter)',
-        'true_heading': 'platform_orientation : from INS (degree)',
-        'temperature':
-        'air_temperature : from deiced Rosemount sensor (Celsius)',
-        'dewpoint_temperature': 'dew_point_temperature : from 1011B top dew-point hygrometer (Celsius)',
-        'wind_spd': 'wind_speed : Attitudes and speed wrt ground from INS, air angles from radome, air speed from pitot (m/s)',
-        'wind_dir': 'wind_from_direction : Attitudes and speed wrt ground from INS, air angles from radome, air speed from pitot (degree)',
-        'relative_humidity': 'relative_humidity : from Aerodata sensor (%)',
-        'mixing_ratio': 'humidity_mixing_ratio : from Aerodata sensor (gram/kg)',
-        'pressure': 'air_pressure : from front sensor, corrected for the so-called static defect (hPa)',
-        'roll': 'platform_roll_angle : from INS (degree)',
-        'pitch': 'platform_pitch_angle : from INS (degree)',
-        'aircraft_air_speed': 'platform_speed_wrt_air : from pitot (m/s)',
-        'platform_ground_speed': 'platform_speed_wrt_ground : from GPS (m/s)',
-        'platform_ground_speed2': 'platform_speed_wrt_ground : from INS (kt)',
-        'aircraft_vert_accel': 'platform_acceleration_along_vertical_axis : from INS (meter second-2)',
-        'altitude2': 'altitude : from INS (meter)',
-        'mixing_ratio2': 'humidity_mixing_ratio : from top dew-point hygrometer (GE 1011B) (gram/kg)',
-        'platform_course': 'platform_course : from INS (degree)',
-        'platform_upward_ground_speed': 'upward_platform_speed_wrt_ground : from INS (m/s)',
-        'platform_upward_ground_speed': 'upward_platform_speed_wrt_ground : from GPS (m/s)',
-        'attack_angle': 'angle_of_attack : from sensor on the boom (degree)',
-        'sideslip_angle': 'angle_of_sideslip : from sensor on the boom (degree)',
-        'Uwind': 'eastward_wind : Attitudes and speed wrt ground from INS, air angles from radome, air speed from pitot (m/s)',
-        'Vwind': 'northward_wind : Attitudes and speed wrt ground from INS, air angles from radome, air speed from pitot (m/s)',
-        'air_vertical_velocity': 'upward_air_velocity : Attitudes and speed wrt ground from INS, air angles from radome, air speed from pitot (m/s)',
-        'wind_dir2': 'wind_from_direction : Attitudes and speed wrt ground from INS, air angles from radome, air speed from pitot (degree)',
-        'wind_spd2': 'wind_speed : Attitudes and speed wrt ground from INS, air angles from radome, air speed from pitot (m/s)',
+        "time": "time",
+        "latitude": "latitude : from GPS (degree)",
+        "longitude": "longitude : from GPS (degree)",
+        "altitude": "altitude : from GPS (meter)",
+        "true_heading": "platform_orientation : from INS (degree)",
+        "temperature":
+        "air_temperature : from deiced Rosemount sensor (Celsius)",
+        "dewpoint_temperature": "dew_point_temperature : from 1011B "
+                                "top dew-point hygrometer (Celsius)",
+        "wind_spd": "wind_speed : Attitudes and speed wrt ground from INS, "
+                    "air angles from radome, air speed from pitot (m/s)",
+        "wind_dir": "wind_from_direction : Attitudes and speed wrt ground "
+                    "from INS, air angles from radome, air speed from "
+                    "pitot (degree)",
+        "relative_humidity": "relative_humidity : from Aerodata sensor (%)",
+        "mixing_ratio": "humidity_mixing_ratio : from Aerodata sensor "
+                        "(gram/kg)",
+        "pressure": "air_pressure : from front sensor, corrected for the "
+                    "so-called static defect (hPa)",
+        "roll": "platform_roll_angle : from INS (degree)",
+        "pitch": "platform_pitch_angle : from INS (degree)",
+        "aircraft_air_speed": "platform_speed_wrt_air : from pitot (m/s)",
+        "platform_ground_speed": "platform_speed_wrt_ground : from GPS (m/s)",
+        "platform_ground_speed2": "platform_speed_wrt_ground : from INS (kt)",
+        "aircraft_vert_accel": "platform_acceleration_along_vertical_axis : "
+                               "from INS (meter second-2)",
+        "altitude2": "altitude : from INS (meter)",
+        "mixing_ratio2": "humidity_mixing_ratio : from top dew-point "
+                         "hygrometer (GE 1011B) (gram/kg)",
+        "platform_course": "platform_course : from INS (degree)",
+        "platform_upward_ground_speed": "upward_platform_speed_wrt_ground : "
+                                        "from INS (m/s)",
+        "platform_upward_ground_speed": "upward_platform_speed_wrt_ground : "
+                                        "from GPS (m/s)",
+        "attack_angle": "angle_of_attack : from sensor on the boom "
+                        "(degree)",
+        "sideslip_angle": "angle_of_sideslip : from sensor on the "
+                          "boom (degree)",
+        "Uwind": "eastward_wind : Attitudes and speed wrt ground from "
+                 "INS, air angles from radome, air speed from pitot (m/s)",
+        "Vwind": "northward_wind : Attitudes and speed wrt ground from "
+                 "INS, air angles from radome, air speed from pitot (m/s)",
+        "air_vertical_velocity": "upward_air_velocity : Attitudes and "
+                                 "speed wrt ground from INS, air angles "
+                                 "from radome, air speed from pitot (m/s)",
+        "wind_dir2": "wind_from_direction : Attitudes and speed wrt "
+                     "ground from INS, air angles from radome, air speed "
+                     "from pitot (degree)",
+        "wind_spd2": "wind_speed : Attitudes and speed wrt ground from "
+                     "INS, air angles from radome, air speed from pitot (m/s)",
     }
     return name_map
 
@@ -308,50 +332,93 @@ def _und_citation_name_map():
     '''
     name_map = {
         'time': 'time',
-        'temperature': "Air Temperature Corrected for Dynamic Heating (Based first on the main temperatue/pitot instrument and secondarly based on the backup temperature/pitot instrument) [degC]",
-        'mach_number': "Mach Number (Based first on the main temperatue/pitot instrument and secondarly based on the backup temperature/pitot instrument)",
-        'ias': "Indicated Air Speed (Based first on the main pitot instrument and secondarly based on the backup pitot instrument) [m/s]",
-        'tas': "True Air Speed (Based first on the main temperatue/pitot instrument and secondarly based on the backup temperature/pitot instrument) [m/s]",
+        'temperature': "Air Temperature Corrected for Dynamic Heating "
+                       "(Based first on the main temperatue/pitot "
+                       "instrument and secondarly based on the backup"
+                       " temperature/pitot instrument) [degC]",
+        'mach_number': "Mach Number (Based first on the main "
+                       "temperatue/pitot instrument and secondarly "
+                       "based on the backup temperature/pitot instrument)",
+        'ias': "Indicated Air Speed (Based first on the main pitot "
+               "instrument and secondarly based on the backup pitot "
+               "instrument) [m/s]",
+        'tas': "True Air Speed (Based first on the main temperatue/pitot "
+               "instrument and secondarly based on the backup "
+               "temperature/pitot instrument) [m/s]",
         'pressure_altitude': "Pressure Altitude [m]",
-        'theta': "Potential Temperature (Based first on the main temperatue/pitot instrument and secondarly based on the backup temperature/pitot instrument) [degK]",
-        'pitot_pressure': "Pitot Pressure from Wing Probe [hPa] {Calibration:  slope = 60.797701 offset = -150.48263}",
+        'theta': "Potential Temperature (Based first on the main "
+                 "temperatue/pitot instrument and secondarly based "
+                 "on the backup temperature/pitot instrument) [degK]",
+        'pitot_pressure': "Pitot Pressure from Wing Probe [hPa] "
+                          "{Calibration:  slope = 60.797701 "
+                          "offset = -150.48263}",
         'cabin_pressure': "Aircraft Cabin Pressure [millibar]",
-        'static_pressure': "Static Pressure [hPa] {Calibration:  slope = 207.08000 offset = -0.71000000}",
-        'dewpoint_temperature1': "Dewpoint Temperature from EG&G Probe [degC] {Calibration:  slope = 20.000000 offset = -70.000000}",
-        'mixing_ratio': "Mixing Ratio by weight from the Laser Hygrometer [ppmw]",
-        'dewpoint_temperature2': "Dew Point Temperature from the Laser Hygrometer [degrees Celsius]",
-        'frost_point_temperature': "Frost Point Temperature from the Laser Hygrometer [degrees Celsius]",
+        'static_pressure': "Static Pressure [hPa] {Calibration:  "
+                           "slope = 207.08000 offset = -0.71000000}",
+        'dewpoint_temperature1': "Dewpoint Temperature from EG&G Probe "
+                                 "[degC] {Calibration:  slope = 20.000000 "
+                                 "offset = -70.000000}",
+        'mixing_ratio': "Mixing Ratio by weight from the Laser "
+                        "Hygrometer [ppmw]",
+        'dewpoint_temperature2': "Dew Point Temperature from the Laser "
+                                 "Hygrometer [degrees Celsius]",
+        'frost_point_temperature': "Frost Point Temperature from the "
+                                   "Laser Hygrometer [degrees Celsius]",
         'roll': "Aircraft Roll Angle from the Applanix POS System [degrees]",
         'pitch': "Aircraft Pitch Angle from the Applanix POS System [degrees]",
-        'true_heading': "Aircraft Heading Angle [degrees]; 0-360 with 0 being North",
-        'aircraft_vert_accel': "Aircraft Z-direction (Vertical) Acceleration for the Applanix POS system [m/s^2]",
+        'true_heading': "Aircraft Heading Angle [degrees]; 0-360 with 0 "
+                        "being North",
+        'aircraft_vert_accel': "Aircraft Z-direction (Vertical) Acceleration "
+                               "for the Applanix POS system [m/s^2]",
         'latitude': "Aircraft Latitude from the Applanix POS System [degrees]",
-        'longitude': "Aircraft Longitude from the Applanix POS system [degrees]",
+        'longitude': "Aircraft Longitude from the Applanix POS system "
+                     "[degrees]",
         'altitude': "Aircraft Altitude from the Applanix POS system [m]",
         'aircraft_speed': "Aircraft Speed from the Applanix POS system [m/s]",
-        'track': "Aircraft Track Angle [degrees]; 0-360 with 0 being North",
-        'attack_angle': "Alpha (Attack) Angle [degrees] {Calibration:  slope = 0.070310700 offset = 0.33308870}",
-        'sideslip_angle': "Beta (Sideslip) Angle [degrees] {Calibration:  slope = -0.073846080 offset = -1.6202790}",
-        'aicrcaft_vert_vel': "Vertical Velocity of the aircraft based on the change in position over a 2 seceond interval [m/s]",
+        'track': "Aircraft Track Angle [degrees]; 0-360 with 0 "
+                 "being North",
+        'attack_angle': "Alpha (Attack) Angle [degrees] "
+                        "{Calibration:  slope = 0.070310700 "
+                        "offset = 0.33308870}",
+        'sideslip_angle': "Beta (Sideslip) Angle [degrees] "
+                          "{Calibration:  slope = -0.073846080 "
+                          "offset = -1.6202790}",
+        'aicrcaft_vert_vel': "Vertical Velocity of the aircraft based on "
+                             "the change in position over a 2 seceond "
+                             "interval [m/s]",
         'Wwind': "Z (Vertical) Component of the Wind Speed [m/s]",
         'wind_spd': "Horizontal Wind Speed [m/s]",
-        'wind_dir': "Horizontal Wind Direction [degrees]; True Direction From Which it Blows",
-        'turb': "Turbulence parameter (Eddy Dissipation Rate) based on Wing Pitot pressure [cm^2/3*s^-1]",
-        'lwc1': "Liquid Water Content based on King Probe measurement adjusted (cloud threshold =  5.1 [#/cm^3], cloud interval = 30.0 [s] and adjustment slope = 0.500) for the baseline offset [g/m^3]",
+        'wind_dir': "Horizontal Wind Direction [degrees]; True Direction "
+                    "From Which it Blows",
+        'turb': "Turbulence parameter (Eddy Dissipation Rate) based on Wing "
+                "Pitot pressure [cm^2/3*s^-1]",
+        'lwc1': "Liquid Water Content based on King Probe measurement "
+                "adjusted (cloud threshold =  5.1 [#/cm^3], cloud interval "
+                "= 30.0 [s] and adjustment slope = 0.500) for the baseline "
+                "offset [g/m^3]",
         'twc': "Total Water Content based on the Nevzorov Probe measurement",
-        'lwc2': "Liquid Water Content based on the Nevzorov Probe measurement with correction for  residual ice (beta = 0.110000) [g/m^3]",
-        'Conc_CDP': "Number Concentration of Droplets Based on the Cloud Droplet Probe [#/cc]",
-        'lwc3': "Liquid Water Content Based on the Cloud Droplet Probe [g/m^3]",
+        'lwc2': "Liquid Water Content based on the Nevzorov Probe measurement "
+                "with correction for  residual ice (beta = 0.110000) [g/m^3]",
+        'Conc_CDP': "Number Concentration of Droplets Based on the Cloud "
+                    "Droplet Probe [#/cc]",
+        'lwc3': "Liquid Water Content Based on the Cloud Droplet Probe "
+                "[g/m^3]",
         'Dmean_CDP': "Cloud Droplet Probe's Mean Droplet Diameter [um]",
         'Dvol_CDP': "Cloud Droplet Probe's Mean Droplet Volume Diameter [um]",
         'Deff_CDP': "Cloud Droplet Probe's Effective Droplet Radius [um]",
-        'Conc_2DC': "Number concentration of droplets based on the 2-DC Probe measurements [#/cm^3]",
-        'Dmean_2DC': "Mean droplet diameter based on the 2-DC Probe measurements [um]",
-        'Dvol_2DC': "Mean droplet volume diameter based on the 2-DC Probe measurements [um]",
-        'Deff_2DC': "Effective droplet radius based on the 2-DC Probe measurements [um]",
-        'mso_frequency': "The current Sensor (MSO) frequency from the Icing Detector [Hz]",
+        'Conc_2DC': "Number concentration of droplets based on the 2-DC "
+                    "Probe measurements [#/cm^3]",
+        'Dmean_2DC': "Mean droplet diameter based on the 2-DC Probe "
+                     "measurements [um]",
+        'Dvol_2DC': "Mean droplet volume diameter based on the 2-DC "
+                    "Probe measurements [um]",
+        'Deff_2DC': "Effective droplet radius based on the 2-DC "
+                    "Probe measurements [um]",
+        'mso_frequency': "The current Sensor (MSO) frequency from the "
+                         "Icing Detector [Hz]",
         'Conc_CPC': "Total Concentration from CPC [#/cm^3]",
-        'yymmdd': "Date Stamp based on data file name (Example: 941119 is 19 November 1994) [stamp]",
+        'yymmdd': "Date Stamp based on data file name "
+                  "(Example: 941119 is 19 November 1994) [stamp]",
 
     }
     return name_map

@@ -3,23 +3,23 @@ import numpy as np
 
 
 class ShearCalcs:
-    
+
     def __init__(self):
+        '''
+        A class for shear calculations.
+        All calculations can be found in Lucas et al. (2000);
+        Journal of Atmospheric Sciences.
+        '''
         self.u_6km = []
         self.v_6km = []
-    
 
-    '''A class for shear calculations.
-    All calculations can be found in Lucas et al. (2000); Journal of
-    Atmospheric Sciences.
-    '''
     def _VertShear_Sfc_to_6km(self, Height, U, V):
         '''
         Calculate vertical shear [s^-1] using the
         Weismann and Klemp (1982, MWR) methodology.
         This module calculates from the surface to 3 km AGL.
 
-        Parameters::
+        Parameters
         ----------
         Height : float
             Altitude of observations [m]
@@ -43,7 +43,6 @@ class ShearCalcs:
         Vsfc = V[sfcindex]
 
         shear = np.sqrt(((U6km - Usfc)**2 + (V6km - Vsfc)**2)/(index6km))
-
         return shear
 
     def _VertShear_Sfc_to_3km(self, Height, U, V):
@@ -52,7 +51,7 @@ class ShearCalcs:
         Weismann and Klemp (1982, MWR) methodology.
         This module calculates from the surface to 1 km AGL.
 
-        Parameters::
+        Parameters
         ----------
         Height : float
             Altitude of observations [m]
@@ -77,7 +76,6 @@ class ShearCalcs:
         Vsfc = V[sfcindex]
 
         shear = np.sqrt(((U3km - Usfc)**2 + (V3km - Vsfc)**2)/(index3km))
-
         return shear
 
     def _VertShear_Sfc_to_1km(self, Height, U, V):
@@ -109,7 +107,6 @@ class ShearCalcs:
         '''
 
         shear = np.sqrt(((U1km - Usfc)**2 + (V1km - Vsfc)**2)/(index1km))
-
         return shear
 
     def _bulkshear_sfc_1km(self, Height, U, V):
@@ -130,7 +127,6 @@ class ShearCalcs:
         bulk_shear = np.sqrt((U1km-USFC)**2 + (V1km-VSFC)**2)
 
         print(np.sqrt((U1km)**2 + (V1km)**2))
-
         return bulk_shear
 
     def _bulkshear_sfc_3km(self, Height, U, V):
@@ -149,7 +145,6 @@ class ShearCalcs:
         VSFC = V[sfcindex]
 
         bulk_shear = np.sqrt((U3km - USFC)**2 + (V3km - VSFC)**2)
-
         return bulk_shear
 
     def _bulkshear_sfc_6km(self, Height, U, V):
@@ -170,5 +165,4 @@ class ShearCalcs:
         print(np.sqrt((U6km)**2 + (V6km)**2))
 
         bulk_shear = np.sqrt((U6km - USFC)**2+(V6km - VSFC)**2)
-
         return bulk_shear
