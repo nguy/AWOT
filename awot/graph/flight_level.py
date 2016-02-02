@@ -358,8 +358,8 @@ class FlightLevel(object):
             cmap='gist_ncar', clabel='dBZ',
             color_bar=True, cb_orient='vertical', cb_pad=.05, cb_tick_int=2,
             cb_fontsize=None, cb_ticklabel_size=None,
-            x_axis_array='distance', dForm='%H:%M', tz=None,
-            date_MinTicker='minute', plot_km=False,
+            x_axis_array='distance', date_format='%H:%M', tz=None,
+            date_minor_string='minute', plot_km=False,
             ax=None, fig=None):
         '''
         Plot a cross-section along a flight path segment.
@@ -420,11 +420,11 @@ class FlightLevel(object):
             higher number "thins" labels.
         x_axis_array: str
             X-axis array to plot against either 'distance' [default] or 'time'.
-        dForm : str
+        date_format : str
             Format of the time string for x-axis labels.
         tz : str
             Time zone info to use when creating axis labels (see datetime).
-        date_MinTicker : str
+        date_minor_string : str
             Sting to set minor ticks of date axis,
             'second','minute','hour','day' supported.
         plot_km : boolean
@@ -517,16 +517,16 @@ class FlightLevel(object):
         elif x_axis_array == 'time':
             ax.xaxis_date()
             # Set the date format
-            date_Fmt = DateFormatter(dForm, tz=tz)
+            date_Fmt = DateFormatter(date_format, tz=tz)
             # Set the x-axis date format and ticks
             ax.xaxis.set_major_formatter(date_Fmt)
-            if date_MinTicker == 'second':
+            if date_minor_string == 'second':
                 ax.xaxis.set_minor_locator(SecondLocator())
-            elif date_MinTicker == 'minute':
+            elif date_minor_string == 'minute':
                 ax.xaxis.set_minor_locator(MinuteLocator())
-            elif date_MinTicker == 'hour':
+            elif date_minor_string == 'hour':
                 ax.xaxis.set_minor_locator(HourLocator())
-            elif date_MinTicker == 'day':
+            elif date_minor_string == 'day':
                 ax.xaxis.set_minor_locator(DayLocator())
 
         # Add title
@@ -863,9 +863,9 @@ class FlightLevel(object):
 #########################
 
     def plot_timeseries(self, field, color='k', marker='o', msize=1.5, lw=2,
-                        dForm='%H:%M', tz=None, xdate=True,
-                        date_MinTicker='minute',
-                        other_MajTicks=None, other_MinTicks=None,
+                        date_format='%H:%M', tz=None, xdate=True,
+                        date_minor_string='minute',
+                        other_major_ticks=None, other_minor_ticks=None,
                         other_min=None, other_max=None,
                         start_time=None, end_time=None,
                         title=None, xlab=' ', xlabFontSize=16, xpad=7,
@@ -885,18 +885,18 @@ class FlightLevel(object):
             Marker size.
         lw : float
             Linewidth to use with line.
-        dForm : str
+        date_format : str
             Format of the time string for x-axis labels.
         tz : str
             Time zone info to use when creating axis labels (see datetime).
         xdate : bool
             True to use X-axis as date axis, false implies Y-axis is date axis.
-        date_MinTicker : str
+        date_minor_string : str
             Sting to set minor ticks of date axis,
             'second','minute','hour','day' supported.
-        other_MajTicks : float
+        other_major_ticks : float
             Values for major tickmark spacing, non-date axis.
-        other_MinTicks : float
+        other_minor_ticks : float
             Values for minor tickmark spacing, non-date axis.
         other_min : float
             Minimum value for non-date axis.
@@ -934,8 +934,10 @@ class FlightLevel(object):
         # Plot the time series
         ts = common.plot_date_ts(
             tSub, VarSub, color=color, marker=marker, msize=msize, lw=lw,
-            dForm=dForm, tz=tz, xdate=xdate, date_MinTicker=date_MinTicker,
-            other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
+            date_format=date_format, tz=tz, xdate=xdate,
+            date_minor_string=date_minor_string,
+            other_major_ticks=other_major_ticks,
+            other_minor_ticks=other_minor_ticks,
             other_min=other_min, other_max=other_max,
             title=title, xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
             ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad, ax=ax)
@@ -986,9 +988,10 @@ class FlightLevel(object):
     def contour_timeseries(
                 self, field, ptype='pcolormesh', clevs=25, vmin=15.,
                 vmax=60., cmap=None, color_bar=True, cb_orient='vertical',
-                cb_pad=.05, cb_tick_int=2, dForm='%H:%M', tz=None, xdate=True,
-                date_MinTicker='minute', other_MajTicks=None,
-                other_MinTicks=None, other_min=None, other_max=None,
+                cb_pad=.05, cb_tick_int=2, date_format='%H:%M',
+                tz=None, xdate=True, date_minor_string='minute',
+                other_major_ticks=None, other_minor_ticks=None,
+                other_min=None, other_max=None,
                 start_time=None, end_time=None,
                 title=None, xlab=' ', xlabFontSize=16, xpad=7,
                 ylab=' ', ylabFontSize=16, ypad=7, ax=None):
@@ -1020,18 +1023,18 @@ class FlightLevel(object):
         cb_tick_int : int
             Interval to use for colorbar tick labels,
             higher number "thins" labels.
-        dForm : str
+        date_format : str
             Format of the time string for x-axis labels.
         tz : str
             Time zone info to use when creating axis labels (see datetime).
         xdate : bool
             True to use X-axis as date axis, false implies Y-axis is date axis.
-        date_MinTicker : str
+        date_minor_string : str
             Sting to set minor ticks of date axis,
             'second','minute','hour','day' supported.
-        other_MajTicks : float
+        other_major_ticks : float
             Values for major tickmark spacing, non-date axis.
-        other_MinTicks : float
+        other_minor_ticks : float
             Values for minor tickmark spacing, non-date axis.
         other_min : float
             Minimum value for non-date axis.
@@ -1073,8 +1076,10 @@ class FlightLevel(object):
         # Plot the time series
         ts = common.image_2d_date(
             tSub2D, Ht2D, VarSub, vmin=vmin, vmax=vmax,
-            dForm=dForm, tz=tz, xdate=xdate, date_MinTicker=date_MinTicker,
-            other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
+            date_format=date_format, tz=tz, xdate=xdate,
+            date_minor_string=date_minor_string,
+            other_major_ticks=other_major_ticks,
+            other_minor_ticks=other_minor_ticks,
             other_min=other_min, other_max=other_max, title=title,
             xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
             ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad, ax=ax)

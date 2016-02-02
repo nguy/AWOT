@@ -24,7 +24,8 @@ from datetime import datetime
 
 def create_basemap(corners=None, proj=None, resolution='l',
                    area_thresh=None, lon_0=None, lat_0=None,
-                   meridians=True, parallels=True, dLon=2., dLat=2.,
+                   meridians=True, parallels=True,
+                   lon_spacing=2., lat_spacing=2.,
                    coastlines=True, countries=True, states=False,
                    counties=False,
                    rivers=False, etopo=False, ax=None):
@@ -47,10 +48,10 @@ def create_basemap(corners=None, proj=None, resolution='l',
         Flag to turn on meridian (lonigitude) line plotting.
     parallels : bool
         Flag to turn on parallels (latitude) line plotting.
-    dLon : float
-        Spacing for meridians.
-    dLat : float
-        Spacing for parallels.
+    lon_spacing : float
+        Spacing for meridians, i.e. longitude [degrees].
+    lat_spacing : float
+        Spacing for parallels, i.e. latitude [degrees].
     coastlines : bool
         Flag to turn on basemap coastline plotting.
     countries : bool
@@ -86,10 +87,10 @@ def create_basemap(corners=None, proj=None, resolution='l',
     # Check the customizations for the basemap
     if meridians:
         bm.drawmeridians(np.arange(corners[0], corners[
-                         2], dLon), labels=[1, 0, 0, 1])
+                         2], lon_spacing), labels=[1, 0, 0, 1])
     if parallels:
         bm.drawparallels(np.arange(corners[1], corners[
-                         3], dLat), labels=[1, 0, 0, 1])
+                         3], lat_spacing), labels=[1, 0, 0, 1])
     if countries:
         bm.drawcountries()
     if coastlines:
@@ -205,9 +206,9 @@ def plot_fill_surface(xarr, surface, color=None, ymin=None, ax=None):
 
 
 def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
-                 dForm='%H:%M', tz=None, xdate=True,
-                 date_MinTicker='minute',
-                 other_MajTicks=None, other_MinTicks=None,
+                 date_format='%H:%M', tz=None, xdate=True,
+                 date_minor_string='minute',
+                 other_major_ticks=None, other_minor_ticks=None,
                  other_min=None, other_max=None,
                  title=None, titleFontSize=None,
                  xlab=None, xlabFontSize=None, xpad=None,
@@ -229,7 +230,7 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
     msize : float
         Marker size.
 
-    dForm : str
+    date_format : str
         Format of the time string for x-axis labels.
     tz : str
         Time zone info to use when creating axis labels (see datetime).
@@ -251,12 +252,12 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
         Font size to use for X-axis label.
     ylabFontSize : int
         Font size to use for Y-axis label.
-    date_MinTicker : str
+    date_minor_string : str
         Sting to set minor ticks of date axis,
         'second','minute','hour','day' supported.
-    other_MajTicks : float
+    other_major_ticks : float
         Values for major tickmark spacing, non-date axis.
-    other_MinTicks : float
+    other_minor_ticks : float
         Values for minor tickmark spacing, non-date axis.
     other_min : float
         Minimum value for non-date axis.
@@ -274,9 +275,10 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
         ydate = True
 
     # Set up the axes
-    _set_ts_axes(ax, dForm=dForm, tz=tz, xdate=xdate,
-                 date_MinTicker=date_MinTicker,
-                 other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
+    _set_ts_axes(ax, date_format=date_format, tz=tz, xdate=xdate,
+                 date_minor_string=date_minor_string,
+                 other_major_ticks=other_major_ticks,
+                 other_minor_ticks=other_minor_ticks,
                  other_min=other_min, other_max=other_max,
                  title=title, titleFontSize=titleFontSize,
                  xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
@@ -292,9 +294,9 @@ def image_2d_date(Time, AxVar, PlotVar,
                   plot_log10_var=False,
                   vmin=None, vmax=None, clevs=25,
                   cmap=None, norm=None,
-                  dForm='%H:%M', tz=None, xdate=True,
-                  date_MinTicker='minute',
-                  other_MajTicks=None, other_MinTicks=None,
+                  date_format='%H:%M', tz=None, xdate=True,
+                  date_minor_string='minute',
+                  other_major_ticks=None, other_minor_ticks=None,
                   other_min=None, other_max=None,
                   title=None, titleFontSize=None,
                   xlab=None, xlabFontSize=None, xpad=None,
@@ -325,7 +327,7 @@ def image_2d_date(Time, AxVar, PlotVar,
         Matplotlib color map to use.
     norm : Matplotlib.colors.Normalize instance
         Matplotlib normaliztion instance used to scale luminance data.
-    dForm : str
+    date_format : str
         Format of the time string for x-axis labels.
     tz : str
         Time zone info to use when creating axis labels (see datetime).
@@ -347,12 +349,12 @@ def image_2d_date(Time, AxVar, PlotVar,
         Font size to use for X-axis label.
     ylabFontSize : int
         Font size to use for Y-axis label.
-    date_MinTicker : str
+    date_minor_string : str
         Sting to set minor ticks of date axis,
         'second','minute','hour','day' supported.
-    other_MajTicks : float
+    other_major_ticks : float
         Values for major tickmark spacing, non-date axis.
-    other_MinTicks : float
+    other_minor_ticks : float
         Values for minor tickmark spacing, non-date axis.
     other_min : float
         Minimum value for non-date axis.
@@ -395,9 +397,10 @@ def image_2d_date(Time, AxVar, PlotVar,
         YVar = Time
 
     # Set up the axes
-    _set_ts_axes(ax, dForm=dForm, tz=tz, xdate=xdate,
-                 date_MinTicker=date_MinTicker,
-                 other_MajTicks=other_MajTicks, other_MinTicks=other_MinTicks,
+    _set_ts_axes(ax, date_format=date_format, tz=tz, xdate=xdate,
+                 date_minor_string=date_minor_string,
+                 other_major_ticks=other_major_ticks,
+                 other_minor_ticks=other_minor_ticks,
                  other_min=other_min, other_max=other_max,
                  title=title, titleFontSize=titleFontSize,
                  xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
@@ -510,9 +513,9 @@ def _set_axes(ax, x_min=None, x_max=None,
         ax.set_title(title, fontsize=titleFontSize)
 
 
-def _set_ts_axes(ax, dForm='%H:%M', tz=None, xdate=True,
-                 date_MinTicker='minute',
-                 other_MajTicks=None, other_MinTicks=None,
+def _set_ts_axes(ax, date_format='%H:%M', tz=None, xdate=True,
+                 date_minor_string='minute',
+                 other_major_ticks=None, other_minor_ticks=None,
                  other_min=None, other_max=None,
                  title=None, titleFontSize=None,
                  xlab=None, xlabFontSize=None, xpad=None,
@@ -524,7 +527,7 @@ def _set_ts_axes(ax, dForm='%H:%M', tz=None, xdate=True,
     ----------
     ax : Matplotlib axis instance
         Axis to use.
-    dForm : str
+    date_format : str
         Format of the time string for x-axis labels.
     tz : str
         Time zone info to use when creating axis labels (see datetime).
@@ -546,12 +549,12 @@ def _set_ts_axes(ax, dForm='%H:%M', tz=None, xdate=True,
         Font size to use for X-axis label.
     ylabFontSize : int
         Font size to use for Y-axis label.
-    date_MinTicker : str
+    date_minor_string : str
         Sting to set minor ticks of date axis,
         'second','minute','hour','day' supported.
-    other_MajTicks : float
+    other_major_ticks : float
         Values for major tickmark spacing, non-date axis.
-    other_MinTicks : float
+    other_minor_ticks : float
         Values for minor tickmark spacing, non-date axis.
     other_min : float
         Minimum value for non-date axis.
@@ -559,30 +562,30 @@ def _set_ts_axes(ax, dForm='%H:%M', tz=None, xdate=True,
         Maximum value for non-date axis.
     """
     # Set the date format
-    date_Fmt = DateFormatter(dForm, tz=tz)
+    date_Fmt = DateFormatter(date_format, tz=tz)
 
     # Check which axis to set for date axis and set tick parameters
     if xdate:
         # Set the x-axis date format and ticks
         ax.xaxis.set_major_formatter(date_Fmt)
-        if date_MinTicker == 'second':
+        if date_minor_string == 'second':
             ax.xaxis.set_minor_locator(SecondLocator())
-        elif date_MinTicker == 'minute':
+        elif date_minor_string == 'minute':
             ax.xaxis.set_minor_locator(MinuteLocator())
-        elif date_MinTicker == 'hour':
+        elif date_minor_string == 'hour':
             ax.xaxis.set_minor_locator(HourLocator())
-        elif date_MinTicker == 'day':
+        elif date_minor_string == 'day':
             ax.xaxis.set_minor_locator(DayLocator())
 
         # Set the major and minor y-axis ticks/tickmarks
         try:
-            other_MajTicks
-            ax.yaxis.set_major_locator(mtic.MultipleLocator(other_MajTicks))
+            other_major_ticks
+            ax.yaxis.set_major_locator(mtic.MultipleLocator(other_major_ticks))
         except:
             pass
         try:
-            other_MinTicks
-            ax.yaxis.set_minor_locator(mtic.MultipleLocator(other_MinTicks))
+            other_minor_ticks
+            ax.yaxis.set_minor_locator(mtic.MultipleLocator(other_minor_ticks))
         except:
             pass
 
@@ -594,24 +597,24 @@ def _set_ts_axes(ax, dForm='%H:%M', tz=None, xdate=True,
     else:
         # Set the y-axis date format and ticks
         ax.yaxis.set_major_formatter(date_Fmt)
-        if date_MinTicker == 'second':
+        if date_minor_string == 'second':
             ax.yaxis.set_minor_locator(SecondLocator())
-        elif date_MinTicker == 'minute':
+        elif date_minor_string == 'minute':
             ax.yaxis.set_minor_locator(MinuteLocator())
-        elif date_MinTicker == 'hour':
+        elif date_minor_string == 'hour':
             ax.yaxis.set_minor_locator(HourLocator())
-        elif date_MinTicker == 'day':
+        elif date_minor_string == 'day':
             ax.yaxis.set_minor_locator(DayLocator())
 
         # Set the major and minor x-axis ticks/tickmarks
         try:
-            other_MajTicks
-            ax.xaxis.set_major_locator(mtic.MultipleLocator(other_MajTicks))
+            other_major_ticks
+            ax.xaxis.set_major_locator(mtic.MultipleLocator(other_major_ticks))
         except:
             pass
         try:
-            other_MinTicks
-            ax.xaxis.set_minor_locator(mtic.MultipleLocator(other_MinTicks))
+            other_minor_ticks
+            ax.xaxis.set_minor_locator(mtic.MultipleLocator(other_minor_ticks))
         except:
             pass
 

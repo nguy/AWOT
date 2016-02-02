@@ -267,8 +267,8 @@ class RadarVerticalPlot(object):
                           plot_log10_var=False,
                           cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
                           cmap='gist_ncar', discrete_cmap_levels=None,
-                          dForm='%H:%M', tz=None, xdate=True,
-                          date_MinTicker='minute',
+                          date_format='%H:%M', tz=None, xdate=True,
+                          date_minor_string='minute',
                           height_MajTicks=None, height_MinTicks=None,
                           height_min=None, height_max=None,
                           fill_surface=False, fill_min=None, fill_color=None,
@@ -313,13 +313,13 @@ class RadarVerticalPlot(object):
             A list of levels to be used for display. If chosen discrete
             color will be used in the colorbar instead of a linear luminance
             mapping.
-        dForm : str
+        date_format : str
             Format of the time string for x-axis labels.
         tz : str
             Time zone info to use when creating axis labels (see datetime).
         xdate : bool
             True to use X-axis as date axis, false implies Y-axis is date axis.
-        date_MinTicker : str
+        date_minor_string : str
             Sting to set minor ticks of date axis,
             'second','minute','hour','day' supported.
         height_MajTicks : float
@@ -425,10 +425,10 @@ class RadarVerticalPlot(object):
         ts = common.image_2d_date(tSub2D, Ht2D, Data.T,
                                   vmin=vmin, vmax=vmax, clevs=clevs,
                                   cmap=cmap, norm=norm,
-                                  dForm=dForm, tz=tz, xdate=xdate,
-                                  date_MinTicker=date_MinTicker,
-                                  other_MajTicks=height_MajTicks,
-                                  other_MinTicks=height_MinTicks,
+                                  date_format=date_format, tz=tz, xdate=xdate,
+                                  date_minor_string=date_minor_string,
+                                  other_major_ticks=height_MajTicks,
+                                  other_minor_ticks=height_MinTicks,
                                   other_min=height_min,
                                   other_max=height_max,
                                   title=title,
@@ -584,8 +584,8 @@ class MicrophysicalVerticalPlot(object):
                           cminmax=(0., 60.), clevs=25,
                           vmin=None, vmax=None,
                           cmap='gist_ncar', discrete_cmap_levels=None,
-                          dForm='%H:%M', tz=None, xdate=True,
-                          date_MinTicker='minute',
+                          date_format='%H:%M', tz=None, xdate=True,
+                          date_minor_string='minute',
                           height_MajTicks=None, height_MinTicks=None,
                           height_min=None, height_max=None,
                           start_time=None, end_time=None,
@@ -628,13 +628,13 @@ class MicrophysicalVerticalPlot(object):
             A list of levels to be used for display. If chosen discrete
             color will be used in the colorbar instead of a linear luminance
             mapping.
-        dForm : str
+        date_format : str
             Format of the time string for x-axis labels.
         tz : str
             Time zone info to use when creating axis labels (see datetime).
         xdate : bool
             True to use X-axis as date axis, False implies Y-axis is date axis.
-        date_MinTicker : str
+        date_minor_string : str
             Sting to set minor ticks of date axis,
             'second','minute','hour','day' supported.
         height_MajTicks : float
@@ -731,10 +731,10 @@ class MicrophysicalVerticalPlot(object):
         # Plot the time series
         ts = common.image_2d_date(tSub2D, Ht2D, Data,
                                   vmin=vmin, vmax=vmax, clevs=clevs,
-                                  dForm=dForm, tz=tz, xdate=xdate,
-                                  date_MinTicker=date_MinTicker,
-                                  other_MajTicks=height_MajTicks,
-                                  other_MinTicks=height_MinTicks,
+                                  date_format=date_format, tz=tz, xdate=xdate,
+                                  date_minor_string=date_minor_string,
+                                  other_major_ticks=height_MajTicks,
+                                  other_minor_ticks=height_MinTicks,
                                   other_min=height_min, other_max=height_max,
                                   title=title,
                                   xlab=xlab, xlabFontSize=xlabFontSize,
