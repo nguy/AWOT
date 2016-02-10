@@ -44,6 +44,10 @@ def create_basemap(corners=None, proj=None, resolution='l',
         Map resolution, 'l' or low res is default.
     area_thresh : float
         Minimum area threshold for basemap plot instance.
+    lon_0 : float
+        Longitudinal center of desire map [degrees].
+    lat_0 : float
+        Latitudinal center of desire map [degrees].
     meridians : bool
         Flag to turn on meridian (lonigitude) line plotting.
     parallels : bool

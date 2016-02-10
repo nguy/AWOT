@@ -70,10 +70,10 @@ def add_dict_to_awot(awot, keyname, newdict=None, data=None, units=None,
     awot[keyname] = newdict
 
     # Mask any invalid entries
-    awot[keyname]['data'] = np.ma.masked_invalid(awot['fields']['data'])
+    awot[keyname]['data'] = np.ma.masked_invalid(awot[keyname]['data'])
     if mask_value is not None:
         awot[keyname]['data'] = np.masked_equal(
-            awot['fields']['data'], mask_value)
+            awot[keyname]['data'], mask_value)
     return
 
 
