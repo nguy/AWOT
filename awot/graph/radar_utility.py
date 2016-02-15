@@ -260,6 +260,8 @@ class RadarUtilityPlot(object):
                   quantiles=None,
                   qcolor='k', qlabels_on=True,
                   qlabel_color=None, qlabel_size=None,
+                  qmask_above_height=None, qmask_below_height=None,
+                  qmask_between_height=None,
                   ax=None, fig=None):
         """
         Create a frequency by altitude distribution plot of two variables.
@@ -346,6 +348,22 @@ class RadarUtilityPlot(object):
         cb_tick_int : int
             Interval to use for colorbar tick labels,
             higher number "thins" labels.
+        quantiles : list
+            A list of percentage values for quantile calculations.
+        qcolor : str
+            Color to use for quantile plot lines.
+        qlabels_on : boolean
+            True to print labels of quantiles on plot. False for no labels.
+        qlabel_color : str
+            Color of quantile labels if activated. Default black.
+        qlabel_size : int
+            Size of the quantile labels.
+        qmask_above_height : float
+            Mask quantile data above this height.
+        qmask_below_height : float
+            Mask quantile data below this height.
+        qmask_between_height : tuple, float
+            Mask quantile data between this height.
         ax : Matplotlib axis instance
             Axis to plot. None will use the current axis.
         fig : Matplotlib figure instance
@@ -424,6 +442,9 @@ class RadarUtilityPlot(object):
                                        qcolor=qcolor, qlabels_on=qlabels_on,
                                        qlabel_color=qlabel_color,
                                        qlabel_size=qlabel_size,
+                                       qmask_above_height=qmask_above_height,
+                                       qmask_below_height=qmask_below_height,
+                                       qmask_between_height=qmask_between_height,
                                        setup_axes=False, ax=ax)
 
         del(CFAD, norm)
@@ -433,8 +454,8 @@ class RadarUtilityPlot(object):
                        start_time=None, end_time=None,
                        qcolor='k', qlabels_on=True,
                        qlabel_color=None, qlabel_size=None,
-                       mask_above_height=None, mask_below_height=None,
-                       mask_between_height=None,
+                       qmask_above_height=None, qmask_below_height=None,
+                       qmask_between_height=None,
                        x_min=None, x_max=None,
                        y_min=None, y_max=None,
                        xlab=None, xlabFontSize=None, xpad=None,
@@ -451,7 +472,7 @@ class RadarUtilityPlot(object):
         Parameters
         ----------
         field : str
-            Name of the field to use in CFAD calculation.
+            Name of the field to use in quantile calculation.
         quantiles : list
             A list of percentage values for quantile calculations.
         height_axis : int
@@ -470,6 +491,12 @@ class RadarUtilityPlot(object):
             Color of quantile labels if activated. Default black.
         qlabel_size : int
             Size of the quantile labels.
+        qmask_above_height : float
+            Mask quantile data above this height.
+        qmask_below_height : float
+            Mask quantile data below this height.
+        qmask_between_height : 2-tuple, float
+            Mask quantile data between this height.
         x_min : float
             Minimum value for X-axis.
         x_max : float
@@ -520,23 +547,11 @@ class RadarUtilityPlot(object):
         else:
             ht = self.heightfield['data'].copy()
 
-        # Apply mask to altitudes if indicated
-        # XXX THESE ARE NOT WORKING PROPERLY DON'T KNOW WHY ###
-        if mask_above_height is not None:
-            xarr = np.ma.masked_where(ht > mask_above_height, xarr)
-        if mask_below_height is not None:
-            xarr = np.ma.masked_where(ht < mask_below_height, xarr)
-        if ((mask_between_height is not None) and
-            (np.shape(mask_between_height) != 2)):
-            condc = ((ht < mask_between_height[0]) &
-                     (ht > mask_between_height[1]))
-            xarr = np.ma.masked_where(condc, xarr)
-
         # Check data for good points
         xarr = np.ma.masked_where(~(np.isfinite(xarr)), xarr)
 
         # Calculate the quantile profiles
-        qArr = self.calc_quantiles(xarr, self.height['data'][:], quantiles)
+        qArr = self.calc_quantiles(xarr, ht[:, 0], quantiles)
 
         # Set the axes
         if setup_axes:
@@ -548,17 +563,51 @@ class RadarUtilityPlot(object):
                              ylabFontSize=ylabFontSize)
 
         # Plot the data
-        self.add_quantiles_to_axis(ax, qArr, qcolor, qlabels_on)
+        self.add_quantiles_to_axis(ax, qArr, qcolor, qlabels_on,
+                                   qmask_above_height=qmask_above_height,
+                                   qmask_below_height=qmask_below_height,
+                                   qmask_between_height=qmask_between_height,
+                                   qlabel_size=qlabel_size,
+                                   qlabel_color=qlabel_color)
         return qArr
 
     def add_quantiles_to_axis(self, ax, qArr, qcolor, qlabels_on,
-                              qlabel_size=10, qlabel_color='k'):
+                              qlabel_size=None, qlabel_color=None,
+                              qmask_above_height=None,
+                              qmask_below_height=None,
+                              qmask_between_height=None):
+
+        if qlabel_size is None:
+            qlabel_size = 10
+        if qlabel_color is None:
+            qlabel_color = 'k'
+        profdata = qArr['profiles'][:]
+
+        # Apply mask to altitudes if indicated
+        apply_height_mask = False
+        if qmask_above_height is not None:
+            condc = (qArr['yaxis'][:] > qmask_above_height)
+            apply_height_mask = True
+        if qmask_below_height is not None:
+            condc = (qArr['yaxis'][:] < qmask_below_height)
+            apply_height_mask = True
+        if ((qmask_between_height is not None) and
+            (len(qmask_between_height) >= 2)):
+            condc = ((qArr['yaxis'][:] > qmask_between_height[0]) &
+                     (qArr['yaxis'][:] < qmask_between_height[1]))
+            apply_height_mask = True
+
+        if apply_height_mask:
+            for num in range(len(qArr['quantiles'])):
+                profdata[:, num] = np.ma.masked_where(
+                    condc, profdata[:, num])
+
         for num in range(len(qArr['quantiles'])):
-            p = ax.plot(qArr['profiles'][:, num], qArr['yaxis'][:],
+            p = ax.plot(profdata[:, num], qArr['yaxis'][:],
                         color=qcolor)
             ytextloc = self.heightfield['data'][:, 0].max() * 1.05
             if qlabels_on:
-                ax.text(qArr['profiles'][-1, num], ytextloc,
+                ax.text(profdata[-1, num], ytextloc,
                         str(qArr['quantiles'][num]), color=qlabel_color,
                         size=qlabel_size)
 
@@ -638,7 +687,7 @@ class RadarUtilityPlot(object):
         '''
         # Create array to fill
         nh = xarr.shape[0]
-        qArr = np.empty((nh, len(quantiles)))
+        qArr = np.ma.empty((nh, len(quantiles)))
         for nn in range(nh):
 #             # Sort the good data from low to high values
 #             condition = (xarr.mask[nn, ...] == True)
@@ -701,7 +750,7 @@ class RadarUtilityPlot(object):
             data = np.sort(xarr[nn, ...].ravel())
             mean[nn] = np.ma.mean(data)
             median[nn] = np.ma.median(data)
-            std_dev[nn] = np.ma.median(data)
+            std_dev[nn] = np.ma.std(data)
             min[nn] = np.ma.min(data)
             max[nn] = np.ma.max(data)
             var[nn] = np.ma.var(data)
