@@ -209,6 +209,44 @@ def plot_fill_surface(xarr, surface, color=None, ymin=None, ax=None):
     return
 
 
+def plot_xy(var1, var2, color=None, lw=None, ls=None, marker=None, msize=None,
+            ax=None):
+    """
+    Returns an X-Y plot of variable1 vs. variable2.
+
+    Parameters
+    ----------
+    var1 : array
+        Variable to plot on x-axis.
+    var2 : array
+        Variable to plot on y-axis.
+    color : str
+        Line color.
+    lw : float
+        Linewidth to display
+    ls : str
+        Linestyle to use, can be abbreviation or name.
+    marker : str
+        Marker to display.
+    msize : float
+        Marker size.
+    ax : Matplotlib axis instance
+        Axis to plot. None will use the current axis.
+    """
+    # Parse parameters
+    ax = _parse_ax(ax)
+
+    # Set parameters if none
+    if color is None:
+        color='k'
+    if lw is None:
+        lw=2
+
+    ax.plot(var1, var2, color=color, ls=ls, lw=lw,
+            marker=marker, markersize=msize, markeredgecolor=color)
+    return
+
+
 def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
                  date_format='%H:%M', tz=None, xdate=True,
                  date_minor_string='minute',
@@ -233,7 +271,6 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
         Marker to display.
     msize : float
         Marker size.
-
     date_format : str
         Format of the time string for x-axis labels.
     tz : str
@@ -771,6 +808,11 @@ def _get_start_datetime(time, start_time):
             print(
                 "Format of date string should be e.g. '2014-08-20 12:30:00'")
             return
+
+    # Check to see if date time specified is beyond start
+    if dt_start < time['data'].min():
+        print("WARNING: Specified START time is earlier "
+              "than the earlist time value!!")
     return dt_start
 
 
@@ -790,6 +832,11 @@ def _get_end_datetime(time, end_time):
             print(
                 "Check the format of date string (e.g. '2014-08-20 12:30:00')")
             return
+
+    # Check to see if date time specified is beyond start
+    if dt_end > time['data'].max():
+        print("WARNING: Subset END time is later "
+              "than the latest time value!!")
     return dt_end
 
 

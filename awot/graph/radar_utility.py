@@ -243,7 +243,7 @@ class RadarUtilityPlot(object):
 
     def plot_cfad(self, field, height_axis=1,
                   xbinsminmax=None, nbinsx=50,
-                  points_thresh_fraction=0.1,
+                  points_thresh_fraction=None,
                   start_time=None, end_time=None,
                   vmin=None, vmax=None, cmap=None,
                   discrete_cmap_levels=None,
@@ -258,7 +258,7 @@ class RadarUtilityPlot(object):
                   cb_orient=None, cb_pad=None,
                   cb_levs=None, cb_tick_int=None,
                   quantiles=None,
-                  qcolor='k', qlabels_on=True,
+                  qcolor='k', qlabels_on=False,
                   qlabel_color=None, qlabel_size=None,
                   qmask_above_height=None, qmask_below_height=None,
                   qmask_between_height=None,
@@ -452,7 +452,7 @@ class RadarUtilityPlot(object):
 
     def plot_quantiles(self, field, quantiles=None, height_axis=1,
                        start_time=None, end_time=None,
-                       qcolor='k', qlabels_on=True,
+                       qcolor='k', qlabels_on=False,
                        qlabel_color=None, qlabel_size=None,
                        qmask_above_height=None, qmask_below_height=None,
                        qmask_between_height=None,
@@ -464,10 +464,7 @@ class RadarUtilityPlot(object):
                        setup_axes=True,
                        ax=None, fig=None):
         """
-        Create a frequency by altitude distribution plot of two variables.
-        This is the traditional method of calculating a frequency distribution
-        at each height of input array by iterating through the height array
-        and input data array.
+        Create a plot of vertical quantile profiles for given variable.
 
         Parameters
         ----------
@@ -551,7 +548,9 @@ class RadarUtilityPlot(object):
         xarr = np.ma.masked_where(~(np.isfinite(xarr)), xarr)
 
         # Calculate the quantile profiles
-        qArr = self.calc_quantiles(xarr, ht[:, 0], quantiles)
+##        ht0 = ht.ravel()[np.arange(0, ht.shape[0])]
+##        qArr = self.calc_quantiles(xarr, ht0, quantiles)
+        qArr = self.calc_quantiles(xarr, self.height['data'][:], quantiles)
 
         # Set the axes
         if setup_axes:
@@ -569,6 +568,120 @@ class RadarUtilityPlot(object):
                                    qmask_between_height=qmask_between_height,
                                    qlabel_size=qlabel_size,
                                    qlabel_color=qlabel_color)
+        return qArr
+
+    def fill_between_quantiles(self, field, quantiles=None, height_axis=1,
+                               start_time=None, end_time=None,
+                               qcolor='k', qfillcolor='0.75',
+                               qmask_above_height=None, qmask_below_height=None,
+                               qmask_between_height=None,
+                               x_min=None, x_max=None,
+                               y_min=None, y_max=None,
+                               xlab=None, xlabFontSize=None, xpad=None,
+                               ylab=None, ylabFontSize=None, ypad=None,
+                               title=None, titleFontSize=None,
+                               setup_axes=True,
+                               ax=None, fig=None):
+        """
+        Create a 2-quantile plot with area filled between.
+
+        Parameters
+        ----------
+        field : str
+            Name of the field to use in quantile calculation.
+        quantiles : list
+            A list of percentage values for quantile calculations.
+        height_axis : int
+            The dimension to perform quantile calculation over (non-height).
+        start_time : str
+            UTC time to use as start time for subsetting in datetime format.
+            (e.g. 2014-08-20 12:30:00)
+        end_time : str
+            UTC time to use as an end time for subsetting in datetime format.
+            (e.g. 2014-08-20 16:30:00)
+        qcolor : str
+            Color to use for quantile line plots.
+        qfillcolor : str
+            Color to use for quantile line file.
+        qmask_above_height : float
+            Mask quantile data above this height.
+        qmask_below_height : float
+            Mask quantile data below this height.
+        qmask_between_height : tuple, float
+            Mask quantile data between this height.
+        x_min : float
+            Minimum value for X-axis.
+        x_max : float
+            Maximum value for X-axis.
+        y_min : float
+            Minimum value for Y-axis.
+        y_max : float
+            Maximum value for Y-axis.
+        title : str
+            Plot title.
+        titleFontSize : int
+            Font size to use for Title label.
+        xlab : str
+            X-axis label.
+        ylab : str
+            Y-axis label.
+        xpad : int
+            Padding for X-axis label.
+        ypad : int
+            Padding for Y-axis label.
+        xlabFontSize : int
+            Font size to use for X-axis label.
+        ylabFontSize : int
+            Font size to use for Y-axis label.
+        setup_axes : bool
+            If True, the axes will be set up using either keyword information
+            or attempted to determine automatically.
+            If False, existing axes will be used, either passed by keyword ax
+            or current working axis.
+        ax : Matplotlib axis instance
+            Axis to plot. None will use the current axis.
+        fig : Matplotlib figure instance
+            Figure on which to add the plot. None will use the current figure.
+        """
+        # parse parameters
+        ax = common._parse_ax(ax)
+        # Snag the data from requested field
+        xarr = self._get_fields_variable_dict_data_time_subset(
+            field, start_time, end_time)
+
+        if quantiles is None:
+            quantiles = [10, 90]
+        else:
+            quantiles = [quantiles[0], quantiles[-1]]
+
+        # Reshape the array so that height axis is first dimension
+        if height_axis != 0:
+            ht = np.rollaxis(self.heightfield['data'], height_axis)
+            xarr = np.rollaxis(xarr, height_axis)
+        else:
+            ht = self.heightfield['data'].copy()
+
+        # Check data for good points
+        xarr = np.ma.masked_where(~(np.isfinite(xarr)), xarr)
+
+        # Calculate the quantile profiles
+##        qArr = self.calc_quantiles(xarr, ht[:, 0], quantiles)
+        qArr = self.calc_quantiles(xarr, self.height['data'][:], quantiles)
+
+        # Set the axes
+        if setup_axes:
+            common._set_axes(ax, x_min=x_min, x_max=x_max,
+                             y_min=y_min, y_max=y_max,
+                             title=title, titleFontSize=titleFontSize,
+                             xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
+                             xlabFontSize=xlabFontSize,
+                             ylabFontSize=ylabFontSize)
+
+        # Fill the area between quantiles
+        l0 = ax.plot(qArr['profiles'][:, 0], qArr['yaxis'][:], color=qcolor)
+        l1 = ax.plot(qArr['profiles'][:, 1], qArr['yaxis'][:], color=qcolor)
+        ax.fill_betweenx(qArr['yaxis'][:], qArr['profiles'][:, 0],
+                         qArr['profiles'][:, 1], facecolor=qfillcolor)
         return qArr
 
     def add_quantiles_to_axis(self, ax, qArr, qcolor, qlabels_on,
@@ -605,11 +718,111 @@ class RadarUtilityPlot(object):
         for num in range(len(qArr['quantiles'])):
             p = ax.plot(profdata[:, num], qArr['yaxis'][:],
                         color=qcolor)
-            ytextloc = self.heightfield['data'][:, 0].max() * 1.05
+#            ytextloc = self.heightfield['data'][:, 0].max() * 1.05
+            ytextloc = self.height['data'].max()# * .95
             if qlabels_on:
-                ax.text(profdata[-1, num], ytextloc,
+                ax.text(np.sort(profdata)[-1, num], ytextloc,
                         str(qArr['quantiles'][num]), color=qlabel_color,
                         size=qlabel_size)
+
+    def plot_vp(self, vp_dict, field, height_axis=1,
+                color=None, lw=None, ls=None,
+                marker=None, msize=None,
+                mask_above_height=None, mask_below_height=None,
+                mask_between_height=None,
+                x_min=None, x_max=None, y_min=None, y_max=None,
+                xlab=None, xlabFontSize=None, xpad=None,
+                ylab=None, ylabFontSize=None, ypad=None,
+                title=None, titleFontSize=None, ax=None):
+
+        """
+        Returns an X-Y plot of variable1 vs. variable2.
+
+        Parameters
+        ----------
+        vp_dict : dictionary
+            Vertical profile dictionary produced using calc_vertical_profile.
+        field : str
+            Name of the field to use in quantile calculation.
+        color : str
+            Line color.
+        lw : float
+            Linewidth to display
+        ls : str
+            Linestyle to use, can be abbreviation or name.
+        marker : str
+            Marker to display.
+        msize : float
+            Marker size.
+        mask_above_height : float
+            Mask quantile data above this height.
+        mask_below_height : float
+            Mask quantile data below this height.
+        mask_between_height : tuple, float
+            Mask quantile data between this height.
+        x_min : float
+            Minimum value for X-axis.
+        x_max : float
+            Maximum value for X-axis.
+        y_min : float
+            Minimum value for Y-axis.
+        y_max : float
+            Maximum value for Y-axis.
+        title : str
+            Plot title.
+        titleFontSize : int
+            Font size to use for Title label.
+        xlab : str
+            X-axis label.
+        ylab : str
+            Y-axis label.
+        xpad : int
+            Padding for X-axis label.
+        ypad : int
+            Padding for Y-axis label.
+        xlabFontSize : int
+            Font size to use for X-axis label.
+        ylabFontSize : int
+            Font size to use for Y-axis label.
+        ax : Matplotlib axis instance
+            Axis to plot. None will use the current axis.
+        """
+        # parse parameters
+        ax = common._parse_ax(ax)
+
+        # Get the data field
+        data = vp_dict[field][:]
+        yarr = vp_dict['yaxis'][:]
+
+        # Apply mask to altitudes if indicated
+        apply_height_mask = False
+        if mask_above_height is not None:
+            condc = (yarr > mask_above_height)
+            apply_height_mask = True
+        if mask_below_height is not None:
+            condc = (yarr < mask_below_height)
+            apply_height_mask = True
+        if ((mask_between_height is not None) and
+            (len(mask_between_height) >= 2)):
+            condc = ((yarr > mask_between_height[0]) &
+                     (yarr < mask_between_height[1]))
+            apply_height_mask = True
+
+        if apply_height_mask:
+            data = np.ma.masked_where(condc, data)
+
+        common._set_axes(ax, x_min=x_min, x_max=x_max,
+                         y_min=y_min, y_max=y_max,
+                         title=title, titleFontSize=titleFontSize,
+                         xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
+                         xlabFontSize=xlabFontSize,
+                         ylabFontSize=ylabFontSize)
+
+        if ls is None:
+            ls='-'
+        common.plot_xy(data, yarr, color=color, lw=lw, ls=ls, marker=marker,
+                       msize=msize, ax=ax)
+        return
 
 ###########################
 #   Calculation methods   #
@@ -630,15 +843,18 @@ class RadarUtilityPlot(object):
             An array of floating point values corresponding to height.
         points_thresh_fraction : float
             The fraction of points that must be present for the
-            CFAD to be calculated. Following Yuter and Houzed 1995,
+            CFAD to be calculated. Following Yuter and Houze 1995,
             the default values is 0.1 (10%) of potential data coverage
             is required. This threshold removes anomolous results when
             a small number of points is present.
         '''
         # Create CFAD array to fill
         nh = xarr.shape[0]
-        bin_pts = np.empty((nh, len(binsx)-1))
-        bin_perc = np.empty((nh, len(binsx)-1))
+        bin_pts = np.ma.empty((nh, len(binsx)-1))
+        bin_perc = np.ma.empty((nh, len(binsx)-1))
+
+        if points_thresh_fraction is None:
+            points_thresh_fraction= 0.1
 
         for nn in range(nh):
             # Check data for good points
@@ -705,6 +921,7 @@ class RadarUtilityPlot(object):
         return quant_dict
 
     def calc_vertical_profile(self, field, height_axis=1,
+                              points_thresh_fraction=0.5,
                               start_time=None, end_time=None,):
         '''
         Calculate vertical profile statistics.
@@ -735,26 +952,40 @@ class RadarUtilityPlot(object):
         else:
             ht = self.heightfield['data'].copy()
 
+
         # Create arrays to fill
         nh = xarr.shape[0]
-        mean = np.empty((nh))
-        median = np.empty((nh))
-        std_dev = np.empty((nh))
-        min = np.empty((nh))
-        max = np.empty((nh))
-        var = np.empty((nh))
-        skew = np.empty((nh))
+        mean = np.ma.empty((nh))
+        median = np.ma.empty((nh))
+        std_dev = np.ma.empty((nh))
+        min = np.ma.empty((nh))
+        max = np.ma.empty((nh))
+        var = np.ma.empty((nh))
+        skew = np.ma.empty((nh))
 
         for nn in range(nh):
+            # Check data for good points
+            condition = np.isfinite(xarr[nn, ...].ravel())
             # Sort the good data from low to high values
-            data = np.sort(xarr[nn, ...].ravel())
-            mean[nn] = np.ma.mean(data)
-            median[nn] = np.ma.median(data)
-            std_dev[nn] = np.ma.std(data)
-            min[nn] = np.ma.min(data)
-            max[nn] = np.ma.max(data)
-            var[nn] = np.ma.var(data)
-            skew[nn] = mstats.skew(data)
+            data = np.sort(xarr[nn, ...].ravel())[condition]
+            # Calculate the fraction of points out of possible total
+            ptsfrac = float(len(data))/float(len(xarr[nn, ...].ravel()))
+            if ptsfrac > points_thresh_fraction:
+                mean[nn] = np.ma.mean(data)
+                median[nn] = np.ma.median(data)
+                std_dev[nn] = np.ma.std(data)
+                min[nn] = np.ma.min(data)
+                max[nn] = np.ma.max(data)
+                var[nn] = np.ma.var(data)
+                skew[nn] = mstats.skew(data)
+            else:
+                mean[nn] = np.nan
+                median[nn] = np.nan
+                std_dev[nn] = np.nan
+                min[nn] = np.nan
+                max[nn] = np.nan
+                var[nn] = np.nan
+                skew[nn] = np.nan
 
         vp_dict = {'field': field,
                    'vp_mean': mean,
@@ -789,6 +1020,8 @@ class RadarUtilityPlot(object):
                            (self.time['data'] <= dt_end)]
         else:
             datasub = data
+        if ~np.any(np.isfinite(datasub)):
+            print("WARNING: No data found in time subset!")
         return datasub
 
     def _get_variable_dict_data_time_subset(self, field, start_time, end_time):
