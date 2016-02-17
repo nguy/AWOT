@@ -460,7 +460,7 @@ class RadarVerticalPlot(object):
                            cmap='gist_ncar', discrete_cmap_levels=None,
                            track_min=None, track_max=None,
                            height_min=None, height_max=None,
-#                           fill_surface=False, fill_min=None, fill_color=None,
+                           fill_surface=False, fill_min=None, fill_color=None,
                            color_bar=True, cb_orient='vertical',
                            cb_pad=.05, cb_tick_int=2,
                            cb_label=None,
@@ -563,6 +563,10 @@ class RadarVerticalPlot(object):
             track = self.radar[track_key]
         trackd = track['data'][:]
 
+        if plot_track_km:
+            if track['units'] != 'km':
+                trackd = trackd / 1000.
+
         if plot_log10_var:
             Data = np.log10(Data)
             if cb_label is not None:
@@ -590,9 +594,6 @@ class RadarVerticalPlot(object):
 
         if plot_height_km:
             Ht2D = Ht2D / 1000.
-        if plot_track_km:
-            if track['units'] != 'km':
-                track2D = track2D / 1000.
 
         # Get the colormap and calculate data spaced by number of levels
         norm = None
@@ -626,14 +627,13 @@ class RadarVerticalPlot(object):
                              cb_fontsize=cb_fontsize,
                              cb_ticklabel_size=cb_ticklabel_size,
                             ax=ax, fig=fig)
-#        if fill_surface:
-#            if self.surface is not None:
-#                sfc = self._get_variable_subset(self.surface['data'][:],
-#                                                start_time, end_time)
-#                ft = common.plot_fill_surface(tsub, sfc, ymin=fill_min,
-#                                              color=fill_color, ax=ax)
-#            else:
-#                print("No surface height information, cannot fill...")
+        if fill_surface:
+            if self.surface is not None:
+                sfc = self.surface['data'][:]
+                ft = common.plot_fill_surface(trackd, sfc, ymin=fill_min,
+                                              color=fill_color, ax=ax)
+            else:
+                print("No surface height information, cannot fill...")
         return
 
 ###################
