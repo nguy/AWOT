@@ -9,8 +9,8 @@ Probe Subpackage (:mod:'awot.graph)
 
 from .flight_level import FlightLevel
 from .radar_horizontal import RadarHorizontalPlot
-from .radar_vertical import (
-    RadarVerticalPlot, MicrophysicalVerticalPlot)
+from .radar_vertical import RadarVerticalPlot
+from .microphysical_vertical import MicrophysicalVerticalPlot
 from .radar_sweep import RadarSweepPlot
 from .radar_utility import RadarUtilityPlot
 # from .radar_swath import RadarSwathPlot

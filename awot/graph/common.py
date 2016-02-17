@@ -247,7 +247,113 @@ def plot_xy(var1, var2, color=None, lw=None, ls=None, marker=None, msize=None,
     return
 
 
-def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
+def image_2d(xvar, yvar, data_var,
+             plot_log10_var=False, vmin=None, vmax=None, clevs=25,
+             cmap=None, norm=None,
+             x_major_ticks=None, x_minor_ticks=None,
+             x_min=None, x_max=None, y_min=None, y_max=None,
+             title=None, titleFontSize=None,
+             xlab=None, xlabFontSize=None, xpad=None,
+             ylab=None, ylabFontSize=None, ypad=None,
+             color_bar=True, cb_orient=None,
+             cb_fontsize=None, cb_ticklabel_size=None,
+             cb_pad=None, cb_tick_int=None, cb_label=None,
+             ax=None, fig=None):
+    """
+    Returns a time series plot, with time on X-axis and variable on Y-axis.
+
+    Parameters
+    ----------
+    xvar : float
+        Array for x-axis (2D same as data_var).
+    ax_var : float
+        Array for y-axis (2D same as data_var).
+    data_var : float
+        Data variable.
+    vmin : float
+        Minimum contour value to display.
+    vmax : float
+        Maximum contour value to display.
+    clevs : int
+        Number of levels to use in colorbar tick calculation.
+    cmap : str
+        Matplotlib color map to use.
+    norm : Matplotlib.colors.Normalize instance
+        Matplotlib normaliztion instance used to scale luminance data.
+    title : str
+        Plot title.
+    titleFontSize : int
+        Font size to use for Title label.
+    xlab : str
+        X-axis label.
+    ylab : str
+        Y-axis label.
+    xpad : int
+        Padding for X-axis label.
+    ypad : int
+        Padding for Y-axis label.
+    xlabFontSize : int
+        Font size to use for X-axis label.
+    ylabFontSize : int
+        Font size to use for Y-axis label.
+    x_major_ticks : float
+        Values for major tickmark spacing, non-date axis.
+    x_minor_ticks : float
+        Values for minor tickmark spacing, non-date axis.
+    x_min : float
+        Minimum value for x-axis.
+    x_max : float
+        Maximum value for x-axis.
+    x_min : float
+        Minimum value for y-axis.
+    x_max : float
+        Maximum value for y-axis.
+    color_bar : bool
+        True to add colorbar, False does not.
+    cb_pad : str
+        Pad to move colorbar, in the form "5%",
+        pos is to right for righthand location.
+    cb_orient : str
+        Colorbar orientation, either 'vertical' or 'horizontal'.
+    cb_fontsize : int
+        Font size of the colorbar label.
+    cb_ticklabel_size : int
+        Font size of colorbar tick labels.
+    cb_tick_int : int
+        Interval to use for colorbar tick labels, higher number "thins" labels.
+    cb_label : str
+        String to use as colorbar label.
+    ax : Matplotlib axis instance
+        Axis to plot. None will use the current axis.
+    fig : Matplotlib figure instance
+        Figure on which to add the plot. None will use the current figure.
+    """
+    # parse parameters
+    ax = _parse_ax(ax)
+    # If no cmap is specified, grab current
+    if cmap is None:
+        cmap = cm.get_cmap()
+
+    # Set up the axes
+    _set_axes(ax, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
+              title=title, titleFontSize=titleFontSize,
+              xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
+              xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
+
+    # Create the plot
+    p = ax.pcolormesh(xvar, yvar, data_var,
+                      vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
+
+    # Add Colorbar
+    if color_bar:
+        cb = add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
+                          label=cb_label, fontsize=cb_fontsize,
+                          ticklabel_size=cb_ticklabel_size,
+                          clevs=clevs, tick_interval=cb_tick_int)
+    return
+
+
+def plot_date_ts(time, Var, color='k', marker='o', msize=1.5, lw=2,
                  date_format='%H:%M', tz=None, xdate=True,
                  date_minor_string='minute',
                  other_major_ticks=None, other_minor_ticks=None,
@@ -261,7 +367,7 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
 
     Parameters
     ----------
-    Time : float
+    time : float
         Time array to plot on x-axis.
     Var : float
         Variable to plot as time series.
@@ -325,13 +431,13 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
                  xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
                  ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad)
     # Create the plot
-    ax.plot_date(Time, Var, tz=tz, xdate=xdate, ydate=ydate,
+    ax.plot_date(time, Var, tz=tz, xdate=xdate, ydate=ydate,
                  mfc=color, mec=color, marker=marker,
                  markersize=msize, lw=lw)
     return
 
 
-def image_2d_date(Time, AxVar, PlotVar,
+def image_2d_date(time, ax_var, data_var,
                   plot_log10_var=False,
                   vmin=None, vmax=None, clevs=25,
                   cmap=None, norm=None,
@@ -352,11 +458,11 @@ def image_2d_date(Time, AxVar, PlotVar,
 
     Parameters
     ----------
-    Time : float
-        Time array (2D same as PlotVar) to plot on x-axis.
-    AxVar : float
-        Variable (2D same as PlotVar) to use as other axis variable for plot.
-    PlotVar : float
+    time : float
+        time array (2D same as data_var) to plot on x-axis.
+    ax_var : float
+        Variable (2D same as data_var) to use as other axis variable for plot.
+    data_var : float
         Variable to plot as time series.
     vmin : float
         Minimum contour value to display.
@@ -430,12 +536,12 @@ def image_2d_date(Time, AxVar, PlotVar,
     # Set the axes variables depending on which is time axis
     if xdate:
         ydate = False
-        XVar = Time
-        YVar = AxVar
+        xvar = time
+        yvar = ax_var
     else:
         ydate = True
-        XVar = AxVar
-        YVar = Time
+        xvar = ax_var
+        yvar = time
 
     # Set up the axes
     _set_ts_axes(ax, date_format=date_format, tz=tz, xdate=xdate,
@@ -448,7 +554,7 @@ def image_2d_date(Time, AxVar, PlotVar,
                  ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad)
 
     # Create the plot
-    p = ax.pcolormesh(XVar, YVar, PlotVar,
+    p = ax.pcolormesh(xvar, yvar, data_var,
                       vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
 
     # Add Colorbar

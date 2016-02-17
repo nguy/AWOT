@@ -858,6 +858,154 @@ class FlightLevel(object):
             ax.text(xpos_text, ypos_text, label_text,
                     fontsize=size, color=color)
 
+    def plot_trackseries(self, field, track_key=None, plot_km=False,
+                         color=None, lw=None, ls=None,
+                         marker=None, msize=None,
+                         x_min=None, x_max=None,
+                         y_min=None, y_max=None,
+                         title=None, titleFontSize=None,
+                         xlab=None, xlabFontSize=None, xpad=None,
+                         ylab=None, ylabFontSize=None, ypad=None, ax=None):
+        """
+        Wrapper function to produce a track series plot of variable indicated.
+
+        Parameters
+        ----------
+        field : str
+            Variable key name to plot as time series.
+        track_key : str
+            Key name of track distance variable.
+        plot_km : bool
+            True plots track distance in km, False retains meters.
+        color : str
+            Color of marker.
+        lw : float
+            Linewidth to use with line.
+        ls : str
+            Linestyle to use, can be abbreviation or name.
+        marker : str
+            Marker to display.
+        msize : float
+            Marker size.
+        x_min : float
+            Minimum value for X-axis.
+        x_max : float
+            Maximum value for X-axis.
+        y_min : float
+            Minimum value for Y-axis.
+        y_max : float
+            Maximum value for Y-axis.
+        title : str
+            Plot title.
+        titleFontSize : int
+            Font size to use for Title label.
+        xlab : str
+            X-axis label.
+        ylab : str
+            Y-axis label.
+        xpad : int
+            Padding for X-axis label.
+        ypad : int
+            Padding for Y-axis label.
+        xlabFontSize : int
+            Font size to use for X-axis label.
+        ylabFontSize : int
+            Font size to use for Y-axis label.
+        ax : Matplotlib axis instance
+            Axis to plot. None will use the current axis.
+        """
+        # parse parameters
+        ax = common._parse_ax(ax)
+
+        # Check to see if field exists
+        common._check_field(self.flight_data, field)
+
+        if track_key is None:
+            try:
+                track = self.flight_data['track_distance_air']
+            except:
+                import warnings
+                warnings.warn('Did not find suitable track distance variable')
+        else:
+            track = self.flight_data[track_key]
+
+        if plot_km:
+            if track['units'] == 'meters':
+                trackd = track['data'][:] / 1000.
+                xlab = 'km'
+        else:
+            trackd = track['data'][:]
+            xlab = 'meters'
+
+        # Get the data
+        var, data = self._get_var_dict(field)
+
+        # Plot the time series
+        common._set_axes(ax, x_min=x_min, x_max=x_max,
+                         y_min=y_min, y_max=y_max,
+                         title=title, titleFontSize=titleFontSize,
+                         xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
+                         xlabFontSize=xlabFontSize,
+                         ylabFontSize=ylabFontSize)
+
+        p = common.plot_xy(trackd, data,
+                           color=color, lw=lw, ls=ls,
+                           marker=marker, msize=msize, ax=ax)
+        return
+
+    def overplot_trackseries(self, field, track_key=None,
+                             color=None, lw=None, ls=None,
+                             marker=None, msize=None, ax=None,):
+        """
+        Overplot data onto an already established track series.
+
+        Parameters
+        ----------
+        field : str
+            Key name of variable of interest.
+        track_key : str
+            Key name of track distance variable.
+        color : str
+            Color of marker.
+        marker : str
+            Marker to display.
+        msize : float
+            Marker size.
+        lw : float
+            Linewidth to use with line.
+        ax : Axes instance
+            Axis on which to plot.
+        start_time : string
+            UTC time to use as start time for subsetting in datetime format.
+            (e.g. 2014-08-20 12:30:00)
+        end_time : string
+            UTC time to use as an end time for subsetting in datetime format.
+            (e.g. 2014-08-20 16:30:00)
+        """
+        # parse parameters
+        ax = common._parse_ax(ax)
+
+        # Check to see if field exists
+        common._check_field(self.flight_data, field)
+
+        if track_key is None:
+            try:
+                track = self.flight_data['track_distance_air']
+            except:
+                ValueError('Did not find suitable track distance variable')
+        else:
+            track = self.flight_data[track_key]
+        trackd = track['data'][:]
+
+        # Get the data
+        var, data = self._get_var_dict(field)
+
+        # Create the plot
+        p = common.plot_xy(trackd, data,
+                           color=color, lw=lw, ls=ls,
+                           marker=marker, msize=msize, ax=ax)
+        return
+
 #########################
 #  Time Series methods  #
 #########################
@@ -875,8 +1023,8 @@ class FlightLevel(object):
 
         Parameters
         ----------
-        field : float
-            Variable to plot as time series.
+        field : str
+            Variable key name to plot as time series.
         color : str
             Color of marker.
         marker : str
@@ -941,6 +1089,7 @@ class FlightLevel(object):
             other_min=other_min, other_max=other_max,
             title=title, xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
             ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad, ax=ax)
+        return
 
     def overplot_timeseries(self, field, color='k', marker='o',
                             msize=1.5, lw=2, ax=None,
@@ -950,8 +1099,8 @@ class FlightLevel(object):
 
         Parameters
         ----------
-        field : float
-            Variable to plot as time series.
+        field : str
+            Variable key name to plot as time series.
         color : str
             Color of marker.
         marker : str
@@ -982,7 +1131,6 @@ class FlightLevel(object):
         # Create the plot
         ax.plot_date(tSub, VarSub, mfc=color, mec=color, marker=marker,
                      markersize=msize, lw=lw)
-
         return
 
     def contour_timeseries(
@@ -1341,7 +1489,7 @@ class FlightLevel(object):
         return tsub
 
     def _get_lat_index(self, value, radar):
-        '''Calculate the exact index position within latitude array'''
+        ''' Calculate the exact index position within latitude array. '''
         # Find the spacing
         dp = radar['latitude']['data'][1] - radar['latitude']['data'][0]
 
@@ -1350,7 +1498,7 @@ class FlightLevel(object):
         return pos
 
     def _get_lon_index(self, value, radar):
-        '''Calculate the exact index position within longitude array'''
+        ''' Calculate the exact index position within longitude array. '''
         # Find the spacing
         dp = radar['longitude']['data'][1] - radar['longitude']['data'][0]
 
@@ -1359,9 +1507,14 @@ class FlightLevel(object):
         return pos
 
     def _get_radar_variable_dict_data(self, radar, field):
-        '''Get the variable from the fields dictionary'''
+        ''' Get the variable from the fields dictionary. '''
         Var, data = radar['fields'][field], radar['fields'][field]['data'][:]
         return Var, data
+
+    def _get_var_dict(self, field):
+        ''' Get the variable from the flight dictionary. '''
+        var, data = self.flight_data[field], self.flight_data[field]['data'][:]
+        return var, data
 
 ##################
 #  Save methods  #
