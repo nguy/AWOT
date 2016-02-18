@@ -460,6 +460,9 @@ class RadarVerticalPlot(object):
                            cmap='gist_ncar', discrete_cmap_levels=None,
                            track_min=None, track_max=None,
                            height_min=None, height_max=None,
+                           start_time=None, end_time=None,
+                           track_MajTicks=None, track_MinTicks=None,
+                           height_MajTicks=None, height_MinTicks=None,
                            fill_surface=False, fill_min=None, fill_color=None,
                            color_bar=True, cb_orient='vertical',
                            cb_pad=.05, cb_tick_int=2,
@@ -501,14 +504,24 @@ class RadarVerticalPlot(object):
             A list of levels to be used for display. If chosen discrete
             color will be used in the colorbar instead of a linear luminance
             mapping.
-        height_MajTicks : float
-            Values for major tickmark spacing for height axis.
-        height_MinTicks : float
-            Values for minor tickmark spacing for height axis.
         height_min : float
             Minimum value for height axis.
         height_max : float
             Maximum value for height axis.
+        start_time : str
+            UTC time to use as start time for subsetting in datetime format.
+            (e.g. 2014-08-20 12:30:00)
+        end_time : str
+            UTC time to use as an end time for subsetting in datetime format.
+            (e.g. 2014-08-20 16:30:00)
+        track_MajTicks : float
+            Values for major tickmark spacing on track axis.
+        track_MinTicks : float
+            Values for minor tickmark spacing on track axis.
+        height_MajTicks : float
+            Values for major tickmark spacing on height axis.
+        height_MinTicks : float
+            Values for minor tickmark spacing on height axis.
         track_min : float
             Minimum value for track distance axis.
         track_max : float
@@ -550,7 +563,8 @@ class RadarVerticalPlot(object):
 
         # Return masked or unmasked variable
         # Subsetted if desired
-        Var, Data = self._get_variable_dict_data(field)
+        Var, tsub, Data = self._get_variable_dict_data_time_subset(
+            field, start_time, end_time)
         if mask_procedure is not None:
             Data = common.get_masked_data(Data, mask_procedure, mask_tuple)
 
@@ -561,7 +575,8 @@ class RadarVerticalPlot(object):
                 ValueError('Did not find suitable track distance variable')
         else:
             track = self.radar[track_key]
-        trackd = track['data'][:]
+        trackd = self._get_variable_subset(track['data'][:], start_time,
+                                           end_time)
 
         if plot_track_km:
             if track['units'] != 'km':
@@ -616,6 +631,10 @@ class RadarVerticalPlot(object):
                              cmap=cmap, norm=norm,
                              x_min=track_min, x_max=track_max,
                              y_min=height_min, y_max=height_max,
+                             x_minor_ticks=track_MinTicks,
+                             x_major_ticks=track_MajTicks,
+                             y_minor_ticks=height_MinTicks,
+                             y_major_ticks=height_MajTicks,
                              title=title,
                              xlab=xlab, xlabFontSize=xlabFontSize,
                              xpad=xpad,
@@ -629,7 +648,8 @@ class RadarVerticalPlot(object):
                             ax=ax, fig=fig)
         if fill_surface:
             if self.surface is not None:
-                sfc = self.surface['data'][:]
+                sfc = self._get_variable_subset(self.surface['data'][:],
+                                                start_time, end_time)
                 ft = common.plot_fill_surface(trackd, sfc, ymin=fill_min,
                                               color=fill_color, ax=ax)
             else:

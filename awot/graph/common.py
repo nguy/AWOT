@@ -251,6 +251,7 @@ def image_2d(xvar, yvar, data_var,
              plot_log10_var=False, vmin=None, vmax=None, clevs=25,
              cmap=None, norm=None,
              x_major_ticks=None, x_minor_ticks=None,
+             y_major_ticks=None, y_minor_ticks=None,
              x_min=None, x_max=None, y_min=None, y_max=None,
              title=None, titleFontSize=None,
              xlab=None, xlabFontSize=None, xpad=None,
@@ -297,9 +298,13 @@ def image_2d(xvar, yvar, data_var,
     ylabFontSize : int
         Font size to use for Y-axis label.
     x_major_ticks : float
-        Values for major tickmark spacing, non-date axis.
+        Values for x-axis major tickmark spacing.
     x_minor_ticks : float
-        Values for minor tickmark spacing, non-date axis.
+        Values for x-axis minor tickmark spacing.
+    y_major_ticks : float
+        Values for y-axis major tickmark spacing.
+    y_minor_ticks : float
+        Values for y-axis minor tickmark spacing.
     x_min : float
         Minimum value for x-axis.
     x_max : float
@@ -336,6 +341,8 @@ def image_2d(xvar, yvar, data_var,
 
     # Set up the axes
     _set_axes(ax, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
+              x_major_ticks=x_major_ticks, x_minor_ticks=x_minor_ticks,
+              y_major_ticks=y_major_ticks, y_minor_ticks=y_minor_ticks,
               title=title, titleFontSize=titleFontSize,
               xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
               xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
@@ -590,6 +597,8 @@ def find_nearest_indices(array, values):
 
 def _set_axes(ax, x_min=None, x_max=None,
               y_min=None, y_max=None,
+              x_major_ticks=None, x_minor_ticks=None,
+              y_major_ticks=None, y_minor_ticks=None,
               title=None, titleFontSize=None,
               xlab=None, xlabFontSize=None, xpad=None,
               ylab=None, ylabFontSize=None, ypad=None):
@@ -608,6 +617,14 @@ def _set_axes(ax, x_min=None, x_max=None,
         Minimum value for Y-axis.
     y_max : float
         Maximum value for Y-axis.
+    x_major_ticks : float
+        Values for x-axis major tickmark spacing.
+    x_minor_ticks : float
+        Values for x-axis tickmark spacing.
+    y_major_ticks : float
+        Values for y-axis major tickmark spacing.
+    y_minor_ticks : float
+        Values for y-axis tickmark spacing.
     title : str
         Plot title.
     titleFontSize : int
@@ -635,6 +652,16 @@ def _set_axes(ax, x_min=None, x_max=None,
         ax.set_ylim(bottom=y_min)
     if y_max is not None:
         ax.set_ylim(top=y_max)
+
+    # Set the major and minor y-axis ticks/tickmarks
+    if x_major_ticks is not None:
+            ax.xaxis.set_major_locator(mtic.MultipleLocator(x_major_ticks))
+    if x_minor_ticks is not None:
+            ax.xaxis.set_minor_locator(mtic.MultipleLocator(x_minor_ticks))
+    if y_major_ticks is not None:
+            ax.yaxis.set_major_locator(mtic.MultipleLocator(y_major_ticks))
+    if y_minor_ticks is not None:
+            ax.yaxis.set_minor_locator(mtic.MultipleLocator(y_minor_ticks))
 
     # Turn the tick marks outward
     ax.tick_params(which='both', direction='out')
