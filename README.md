@@ -35,7 +35,7 @@ sudo python setup.py install
 ## Structure
 This package is currently divided as follows:
 
-#io - Input and output of specific data files
+###io - Input and output of specific data files
 Flight Data:
 	 NetCDF files
 	 NASA AMES FFI 1001 format
@@ -47,12 +47,12 @@ Radar:
  	 NOAA P-3 tail Doppler and lower fuselage radar gridded coordinates produced by the windysn program.
 	 LATMOS/SAFIRE Falcon NetCDF files which contain both W-band radar and flight information.
 
-#graph - Produces plots.  Horizontal plots are overlaid on a basemap instance
+###graph - Produces plots.  Horizontal plots are overlaid on a basemap instance
 and vertical plots are regular 2D plots.
 
-#display - Very immature visualization routines.  Work is in progress.
+###display - Very immature visualization routines.  Work is in progress.
 
-#src - Processing software for NOAA P-3 tail radar data.
+###src - Processing software for NOAA P-3 tail radar data.
 
 ## Usage
 See the [examples](https://github.com/nguy/AWOT/tree/master/examples) directory for a number of notebooks.
