@@ -73,8 +73,6 @@ def write_track_kmz(awot, field, lat_name=None, lon_name=None,
     file_name : str
         Desired file name. If None specified, AWOT attemps
         to build using dictionary information.
-    clevs = List with contour levels. Only max and min values are used.
-            (Default = DEFAULT_CLEVS)
     show_legend : bool
         False to suppress the color bar.
     legend_label : str
@@ -142,9 +140,7 @@ def write_track_kmz(awot, field, lat_name=None, lon_name=None,
     print(latrange)
     fig, ax = gearth_fig(np.min(lonrange), np.min(latrange),
                          np.max(lonrange), np.max(latrange))
-    ## NG Convert to track plot
-##    cs = ax.pcolormesh(plon, plat, zdata,
-##                       vmin=np.min(clevs), vmax=np.max(clevs), cmap=cmap)
+
     cs = ax.plot(lond, latd, color=track_color, lw=track_lw)
     ax.set_axis_off()
     fig.savefig('overlay.png', transparent=True, format='png')

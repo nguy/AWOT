@@ -711,12 +711,6 @@ class FlightLevel(object):
                            Uwnd[::barbspacing], Vwnd[::barbspacing],
                            barbcolor=barbcolor, flagcolor=flagcolor,
                            linewidth=lw, **kwargs)
-#        self.basemap.barbs(self.longitude['data'][:][::barbspacing],
-#                           self.latitude[::barbspacing],
-#                           Uwnd[::barbspacing], self.Vwd[::barbspacing],
-#                           latlon=True, barbcolor=barbcolor,
-#                           flagcolor=flagcolor,
-#                           linewidth=lw, **kwargs)
 
     def plot_point(self, lon, lat, symbol='ro', label_text=None,
                    label_offset=(None, None), text_size=None, **kwargs):

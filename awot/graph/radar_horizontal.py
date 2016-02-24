@@ -12,9 +12,11 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 from matplotlib import ticker
 import numpy as np
+import os
 import scipy.ndimage as scim
 
 from . import common
+from .. import util
 from .radar_3d import Radar3DPlot
 from .radar_vertical import RadarVerticalPlot
 
@@ -76,7 +78,8 @@ class RadarHorizontalPlot(object):
                    cmap='gist_ncar',  discrete_cmap_levels=None,
                    title=" ", title_size=20,
                    color_bar=True, clabel='dBZ', cb_pad="5%",
-                   cb_loc='right', cb_tick_int=2, ax=None, fig=None):
+                   cb_loc='right', cb_tick_int=2, ax=None, fig=None,
+                   save_kmz=False, kmz_filepath=None, kmz_filename=None):
         """
         Produce a CAPPI (constant altitude plan position indicator) plot
         using the Tail Doppler Radar data.
@@ -163,8 +166,8 @@ class RadarHorizontalPlot(object):
         print("Closest level: %4.1f" % levelht)
 
         # Convert lats/lons to 2D grid
-        Lon2D, Lat2D = np.meshgrid(self.longitude['data'][
-                                   :], self.latitude['data'][:])
+        Lon2D, Lat2D = np.meshgrid(self.longitude['data'][:],
+                                   self.latitude['data'][:])
         # Convert lats/lons to map projection coordinates
         x, y = self.basemap(Lon2D, Lat2D)
 
@@ -187,7 +190,9 @@ class RadarHorizontalPlot(object):
         cs = self.basemap.pcolormesh(x, y, Data[Zind, :, :],
                                      vmin=vmin, vmax=vmax,
                                      norm=norm, cmap=cmap)
-#    plt.colors.colormap.set_under('white')
+
+        #NG Set a couple of keyword defaults for KMZ option
+        show_legend, legend_label = False, ' '
         # Add Colorbar
         if color_bar:
             cbStr = "%s at %4.1f %s" % (Var['long_name'],
@@ -201,6 +206,27 @@ class RadarHorizontalPlot(object):
             tick_locator = ticker.MaxNLocator(nbins=int(clevs / cb_tick_int))
             cb.locator = tick_locator
             cb.update_ticks()
+            show_legend = True
+            legend_label = cbStr
+
+        # Save the KMZ file if requested
+        if save_kmz:
+            lonrange = (np.min(self.longitude['data'][:]),
+                        np.max(self.longitude['data'][:]))
+            latrange = (np.min(self.latitude['data'][:]),
+                        np.max(self.latitude['data'][:]))
+            times = None
+            if kmz_filepath is None:
+                kmz_filepath = os.getcwd()
+            if kmz_filename is None:
+                kmz_filename = ('awot_' + self.radar['platform'] + '_' +
+                                self.radar['flight_number'] + '_altitude' +
+                                '.kmz')
+            util.write_kmz.write_kmz(fig, ax, cs, lonrange, latrange, times,
+                                     file_path=kmz_filepath,
+                                     file_name=kmz_filename,
+                                     show_legend=show_legend,
+                                     legend_label=legend_label)
 
         # Add title
         ax.set_title(title, fontsize=title_size)
