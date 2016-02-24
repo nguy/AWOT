@@ -111,7 +111,7 @@ class FlightLevel(object):
 #################
 
     def plot_trackmap(
-            self, color_by_altitude=False, track_cmap='spectral',
+            self, color_by_altitude=False, track_cmap=None,
             track_color='k', track_lw=1.5, alpha=1.,
             start_time=None, end_time=None,
             min_altitude=None, max_altitude=None,
@@ -132,8 +132,7 @@ class FlightLevel(object):
         track_cmap : Matplotlib colormap
             If color_by_altitude True, it will use this colormap.
         track_color : str
-            If color_by_altitude False, this color (see matplotlib)
-            is used for track.
+            If color_by_altitude False, this will be the track color.
         track_lw : float or int
             Line width to use for track.
         alpha : float
@@ -217,6 +216,8 @@ class FlightLevel(object):
         show_legend, legend_label = False, ' '
 
         # Plot the track either coloring by altitude or as single color
+        if track_cmap is None:
+            track_cmap = plt.get_cmap()
         if color_by_altitude:
             p = self._colorline(xmask, ymask, z=varmask, cmap=track_cmap,
                                 linewidth=track_lw, alpha=alpha,
@@ -261,7 +262,7 @@ class FlightLevel(object):
 
     def plot_trackmap_variable(
             self, field=None, track_lw=1.5, alpha=1.,
-            start_time=None, end_time=None, track_cmap='jet',
+            start_time=None, end_time=None, track_cmap=None,
             min_value=None, max_value=None,
             add_cb=True, cbloc='right', cbsize='3%', cbpad='10%',
             cblabel='Temperature (C)', addlegend=False, legLoc='lower right',
@@ -364,6 +365,8 @@ class FlightLevel(object):
         show_legend, legend_label = False, ' '
 
         # Plot the track
+        if track_cmap is None:
+            track_cmap = plt.get_cmap()
         p = self._colorline(xmask, ymask, z=varmask, cmap=track_cmap,
                             vmin=min_value, vmax=max_value,
                             linewidth=track_lw, alpha=alpha)
@@ -502,7 +505,6 @@ class FlightLevel(object):
         timeSub = self._get_time_subset(start_time, end_time)
 
         # Return masked or unmasked variable
-#        Var, Data = radar['fields'][field], radar['fields'][field]['data'][:]
         Var, Data = self._get_radar_variable_dict_data(radar, field)
         if mask_procedure is not None:
             Data = get_masked_data(Data, mask_procedure, mask_tuple)
