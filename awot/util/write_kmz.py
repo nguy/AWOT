@@ -179,6 +179,70 @@ def write_track_kmz(awot, field, lat_name=None, lon_name=None,
     _method_printout()
     return
 
+def write_kmz(fig, ax, plot, lonrange, latrange, times,
+              file_path=None, file_name=None,
+              show_legend=True, legend_label=None):
+    """
+    This method plots geolocated AWOT track data as a filled color Google Earth
+    kmz.
+    Will produce overlay.png and, if a legend is created,
+    legend.png as temporary image files in the current working
+    directory.
+
+    Parameters
+    ----------
+    latrange : 2-tuple
+        List with lat range defined.
+    lonrange : 2-tuple
+        List with lon range defined.
+    file_path : str
+        Path to kmz file. Defaults to current working directory.
+    file_name : str
+        Desired file name. If None specified, AWOT attemps
+        to build using dictionary information.
+    show_legend : bool
+        False to suppress the color bar.
+    legend_label : str
+        Label to display in legend. If None, AWOT attempts to build
+        using field dictionary information.
+    """
+    plt.close()  # mpl seems buggy if multiple windows are left open
+    _method_printout()
+    print('Writing AWOT track KMZ file:')
+
+    longname = os.path.join(file_path, file_name)
+
+    print(lonrange)
+    print(latrange)
+    ax.set_axis_off()
+    fig.savefig('overlay.png', transparent=True, format='png')
+
+    # Now we convert to KMZ
+    if show_legend is True:
+        fig = plt.figure(figsize=(1.0, 4.0), facecolor=None, frameon=False)
+        ax = fig.add_axes([0.0, 0.05, 0.2, 0.9])
+        cb = fig.colorbar(plot, cax=ax)
+        cbytick_obj = plt.getp(cb.ax.axes, 'yticklabels')
+        plt.setp(cbytick_obj, color='w', weight='bold')
+        cb.set_label(legend_label, rotation=-90, color='w', labelpad=20,
+                     weight='bold')
+        fig.savefig('legend.png', transparent=True, format='png')
+        make_kml(np.min(lonrange), np.min(latrange), np.max(lonrange),
+                 np.max(latrange), figs=['overlay.png'],
+                 kmzfile=longname, colorbar='legend.png',
+                 times=times)
+        os.remove('overlay.png')
+        os.remove('legend.png')
+    else:
+        make_kml(np.min(lonrange), np.min(latrange), np.max(lonrange),
+                 np.max(latrange), figs=['overlay.png'],
+                 kmzfile=longname, times=times)
+        os.remove('overlay.png')
+
+    print('Google Earth image saved to: %s' % longname)
+    _method_printout()
+    return
+
 ###################
 #   Get methods   #
 ###################
