@@ -169,7 +169,7 @@ def _get_time(ncFile, isRAF, RAFrate=None, timevar=None):
         # Check if it is a high rate file and 2D - yep instances of this
         # out there as well...
         if ((isRAF) & (RAFrate > 1) &
-            (RAFrate not in ncFile.variables[varname].shape)):
+           (RAFrate not in ncFile.variables[varname].shape)):
             Timehirate = np.linspace(
                 TimeSec[0], TimeSec[-1], len(TimeSec) * RAFrate)
             TimeSec = Timehirate
@@ -225,7 +225,8 @@ def _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=None):
             try:
                 mask = dd[var]['data'].mask
             except:
-                dd[var]['data'] = np.ma.masked_array(dd[var]['data'], mask=False)
+                dd[var]['data'] = np.ma.masked_array(dd[var]['data'],
+                                                     mask=False)
         else:
             dd[var] = None
     return dd

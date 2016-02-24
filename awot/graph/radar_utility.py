@@ -548,8 +548,8 @@ class RadarUtilityPlot(object):
         xarr = np.ma.masked_where(~(np.isfinite(xarr)), xarr)
 
         # Calculate the quantile profiles
-##        ht0 = ht.ravel()[np.arange(0, ht.shape[0])]
-##        qArr = self.calc_quantiles(xarr, ht0, quantiles)
+#        ht0 = ht.ravel()[np.arange(0, ht.shape[0])]
+#        qArr = self.calc_quantiles(xarr, ht0, quantiles)
         qArr = self.calc_quantiles(xarr, self.height['data'][:], quantiles)
 
         # Set the axes
@@ -573,7 +573,8 @@ class RadarUtilityPlot(object):
     def fill_between_quantiles(self, field, quantiles=None, height_axis=1,
                                start_time=None, end_time=None,
                                qcolor='k', qfillcolor='0.75',
-                               qmask_above_height=None, qmask_below_height=None,
+                               qmask_above_height=None,
+                               qmask_below_height=None,
                                qmask_between_height=None,
                                x_min=None, x_max=None,
                                y_min=None, y_max=None,
@@ -665,7 +666,7 @@ class RadarUtilityPlot(object):
         xarr = np.ma.masked_where(~(np.isfinite(xarr)), xarr)
 
         # Calculate the quantile profiles
-##        qArr = self.calc_quantiles(xarr, ht[:, 0], quantiles)
+#        qArr = self.calc_quantiles(xarr, ht[:, 0], quantiles)
         qArr = self.calc_quantiles(xarr, self.height['data'][:], quantiles)
 
         # Set the axes
@@ -705,7 +706,7 @@ class RadarUtilityPlot(object):
             condc = (qArr['yaxis'][:] < qmask_below_height)
             apply_height_mask = True
         if ((qmask_between_height is not None) and
-            (len(qmask_between_height) >= 2)):
+           (len(qmask_between_height) >= 2)):
             condc = ((qArr['yaxis'][:] > qmask_between_height[0]) &
                      (qArr['yaxis'][:] < qmask_between_height[1]))
             apply_height_mask = True
@@ -719,7 +720,7 @@ class RadarUtilityPlot(object):
             p = ax.plot(profdata[:, num], qArr['yaxis'][:],
                         color=qcolor)
 #            ytextloc = self.heightfield['data'][:, 0].max() * 1.05
-            ytextloc = self.height['data'].max()# * .95
+            ytextloc = self.height['data'].max()
             if qlabels_on:
                 ax.text(np.sort(profdata)[-1, num], ytextloc,
                         str(qArr['quantiles'][num]), color=qlabel_color,
@@ -803,7 +804,7 @@ class RadarUtilityPlot(object):
             condc = (yarr < mask_below_height)
             apply_height_mask = True
         if ((mask_between_height is not None) and
-            (len(mask_between_height) >= 2)):
+           (len(mask_between_height) >= 2)):
             condc = ((yarr > mask_between_height[0]) &
                      (yarr < mask_between_height[1]))
             apply_height_mask = True
@@ -819,7 +820,7 @@ class RadarUtilityPlot(object):
                          ylabFontSize=ylabFontSize)
 
         if ls is None:
-            ls='-'
+            ls = '-'
         common.plot_xy(data, yarr, color=color, lw=lw, ls=ls, marker=marker,
                        msize=msize, ax=ax)
         return
@@ -854,7 +855,7 @@ class RadarUtilityPlot(object):
         bin_perc = np.ma.empty((nh, len(binsx)-1))
 
         if points_thresh_fraction is None:
-            points_thresh_fraction= 0.1
+            points_thresh_fraction = 0.1
 
         for nn in range(nh):
             # Check data for good points
@@ -951,7 +952,6 @@ class RadarUtilityPlot(object):
             xarr = np.rollaxis(xarr, height_axis)
         else:
             ht = self.heightfield['data'].copy()
-
 
         # Create arrays to fill
         nh = xarr.shape[0]

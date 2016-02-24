@@ -14,11 +14,6 @@ import scipy
 import datetime
 from netCDF4 import date2num
 from ..io.common import convert_to_epoch_dict, _get_epoch_dict
-#import calendar
-#import scipy.spatial
-#import pdb
-#from operator import itemgetter
-#from mpl_toolkits.basemap import Basemap
 
 
 class TrackMatch(object):
@@ -200,7 +195,6 @@ class TrackMatch(object):
                                     data_time['data'],
                                     data_time['units'])
 
-#        self.basemap = basemap
         self.start_time = start_time
         self.end_time = end_time
 
@@ -374,10 +368,11 @@ class TrackMatch(object):
 
         return self.matchdata
 #         tpos1 = sweep_latlon_to_flat_xy(radar, elin)
-#         ts_dz[index] = radar_sweep.fields['reflectivity']['data'][azin, rgin]
-#         ts_edr[index] = radar_sweep.fields['turbulence']['data'][azin, rgin]
-#         ts_vel[index] = radar_sweep.fields['velocity']['data'][azin, rgin]
-#         ts_sw[index] = radar_sweep.fields['spectrum_width']['data'][azin, rgin]
+#         swpfields = radar_sweep.fields
+#         ts_dz[index] = swpfields['reflectivity']['data'][azin, rgin]
+#         ts_edr[index] = swpfields['turbulence']['data'][azin, rgin]
+#         ts_vel[index] = swpfields['velocity']['data'][azin, rgin]
+#         ts_sw[index] = swpfields['spectrum_width']['data'][azin, rgin]
 
 ###################
 #  Calculations   #
@@ -489,16 +484,18 @@ class TrackMatch(object):
         '''Retrieve data fields using calculated indices.'''
         self.data_matchdata = {}
         for field in self.data_fields.keys():
-            self.data_matchdata[field] = self.data_fields[field].copy()
-            self.data_matchdata[field]['data'] = self.data_fields[field]['data'][indlon, indlat]
+            dfield = self.data_fields[field]
+            self.data_matchdata[field] = dfield.copy()
+            self.data_matchdata[field]['data'] = dfield['data'][indlon, indlat]
         return
 
     def _get_matchdata_by_pyart_index(self, radar, indel, indaz, indrng):
         '''Retrieve data fields using calculated Py-ART indices.'''
         self.data_matchdata = {}
         for field in radar.fields.keys():
-            self.data_matchdata[field] = radar.fields[field].copy()
-            self.data_matchdata[field]['data'] = radar.fields[field]['data'][azin, rgin]
+            rfield = radar.fields[field]
+            self.data_matchdata[field] = rfield.copy()
+            self.data_matchdata[field]['data'] = rfield['data'][azin, rgin]
 
 
 class MatchData(object):

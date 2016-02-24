@@ -13,6 +13,7 @@ Improve time series variable plotting?
 
 from __future__ import print_function
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from matplotlib.colors import Normalize
@@ -24,6 +25,7 @@ from datetime import datetime
 import scipy.ndimage as scim
 
 from . import common
+from .. import util
 
 
 class FlightLevel(object):
@@ -115,7 +117,9 @@ class FlightLevel(object):
             min_altitude=None, max_altitude=None,
             add_cb=True, cbloc='right', cbsize='3%', cbpad='10%',
             addlegend=False, legLoc='lower right', legLab=None,
-            addtitle=False, title=None, ax=None, fig=None, **kwargs):
+            addtitle=False, title=None, ax=None, fig=None,
+            save_kmz=False, kmz_filepath=None, kmz_filename=None,
+            **kwargs):
         """
         Create a plot of the aircraft flight track, with optional enhancements.
         Note that the legend only works with single color track at this time.
@@ -140,7 +144,6 @@ class FlightLevel(object):
         end_time : str
             UTC time to use as an end time for subsetting in datetime format.
             (e.g. 2014-08-20 16:30:00)
-
         min_altitude : float
             Minimum altitude to use in mapping color.
         max_altitude : float
@@ -154,7 +157,6 @@ class FlightLevel(object):
         cbpad : str
             Pad between parent axes and colorbar axes
             in same units as size. 'N%'
-
         addlegend : bool
             Defaults to No legend drawn.
         legLoc : str
@@ -163,13 +165,18 @@ class FlightLevel(object):
             Defaults to no title for plot.
         title : str
             See matplotlib axis object documentation.
-
         ax : Matplotlib axis instance
             Axis to plot on.
             None will use the current axis.
         fig : Matplotlib figure instance
             Figure whih to add the colorbar.
             None will use the current figure.
+        save_kmz : bool
+            True to save a KMZ output file. False does not.
+        kmz_filepath : str
+            Output path of optional KMZ file.
+        kmz_filename : str
+            Name of optional KMZ output file.
 
         **kwargs will pass specific arguments to subprograms,
           see Basemap and Matplotlib.
@@ -206,23 +213,42 @@ class FlightLevel(object):
 
         xmask, ymask = self.basemap(lonmask, latmask)
 
+        # Set a couple of keyword defaults for KMZ option
+        show_legend, legend_label = False, ' '
+
         # Plot the track either coloring by altitude or as single color
         if color_by_altitude:
-            lc = self._colorline(xmask, ymask, z=varmask, cmap=track_cmap,
-                                 linewidth=track_lw, alpha=alpha,
-                                 vmin=min_altitude, vmax=max_altitude)
+            p = self._colorline(xmask, ymask, z=varmask, cmap=track_cmap,
+                                linewidth=track_lw, alpha=alpha,
+                                vmin=min_altitude, vmax=max_altitude)
 
-            ax.add_collection(lc)
+            ax.add_collection(p)
 
             if add_cb:
                 cb = self.basemap.colorbar(
-                    lc, location=cbloc, size=cbsize, pad=cbpad)
+                    p, location=cbloc, size=cbsize, pad=cbpad)
                 cb.set_label('Altitude (m)')
-
+                show_legend = True
+                legend_label = 'Altitude (m)'
         else:
             p = ax.plot(xmask, ymask, color=track_color, lw=track_lw,
                         alpha=alpha, label=legLab)
 
+        # Save the KMZ file if requested
+        if save_kmz:
+            lonrange = (np.min(lonmask), np.max(lonmask))
+            latrange = (np.min(latmask), np.max(latmask))
+            times = [dt_start, dt_end]
+            if kmz_filepath is None:
+                kmz_filepath = os.getcwd()
+            if kmz_filename is None:
+                kmz_filename = ('awot_' + self.platform + '_' +
+                                self.flight_number + '_altitude' + '.kmz')
+            util.write_kmz.write_kmz(fig, ax, p, lonrange, latrange, times,
+                                     file_path=kmz_filepath,
+                                     file_name=kmz_filename,
+                                     show_legend=show_legend,
+                                     legend_label=legend_label)
         if addlegend:
             self.basemap.ax.legend(loc=legLoc, fontsize=11, frameon=True,
                                    handlelength=2, handletextpad=1,
@@ -240,7 +266,8 @@ class FlightLevel(object):
             add_cb=True, cbloc='right', cbsize='3%', cbpad='10%',
             cblabel='Temperature (C)', addlegend=False, legLoc='lower right',
             legLab=None, addtitle=False, title=None,
-            ax=None, fig=None, **kwargs):
+            ax=None, fig=None,
+            save_kmz=False, kmz_filepath=None, kmz_filename=None, **kwargs):
         """
         Create a plot of the aircraft flight track, with optional enhancements.
         Note that the legend only works with single color track at this time.
@@ -282,7 +309,12 @@ class FlightLevel(object):
             Defaults to no title for plot.
         title : str
             See matplotlib axis object documentation.
-
+        save_kmz : bool
+            True to save a KMZ output file. False does not.
+        kmz_filepath : str
+            Output path of optional KMZ file.
+        kmz_filename : str
+            Name of optional KMZ output file.
         ax : Matplotlib axis instance
             Axis to plot. None will use the current axis.
         fig : Matplotlib figure instance
@@ -328,18 +360,39 @@ class FlightLevel(object):
         if legLab is None:
             legLab = self.flight_number
 
-        # Plot the track
-        lc = self._colorline(xmask, ymask, z=varmask, cmap=track_cmap,
-                             vmin=min_value, vmax=max_value,
-                             linewidth=track_lw, alpha=alpha)
-        # lc = self._colorline(z=varm, cmap=track_cmap)
+        # Set a couple of keyword defaults for KMZ option
+        show_legend, legend_label = False, ' '
 
-        ax.add_collection(lc)
+        # Plot the track
+        p = self._colorline(xmask, ymask, z=varmask, cmap=track_cmap,
+                            vmin=min_value, vmax=max_value,
+                            linewidth=track_lw, alpha=alpha)
+
+        ax.add_collection(p)
 
         if add_cb:
             cb = self.basemap.colorbar(
-                lc, location=cbloc, size=cbsize, pad=cbpad)
+                p, location=cbloc, size=cbsize, pad=cbpad)
             cb.set_label(cblabel)
+            show_legend = True
+            legend_label = cblabel
+
+        # Save the KMZ file if requested
+        if save_kmz:
+            lonrange = (np.min(lonmask), np.max(lonmask))
+            latrange = (np.min(latmask), np.max(latmask))
+            times = [dt_start, dt_end]
+            if kmz_filepath is None:
+                kmz_filepath = os.getcwd()
+            if kmz_filename is None:
+                kmz_filename = ('awot_' + self.platform + '_' +
+                                self.flight_number + '_' + cblabel +
+                                '_' + '.kmz')
+            util.write_kmz.write_kmz(fig, ax, p, lonrange, latrange, times,
+                                     file_path=kmz_filepath,
+                                     file_name=kmz_filename,
+                                     show_legend=show_legend,
+                                     legend_label=legend_label)
 
         if addlegend:
             self.basemap.ax.legend(
@@ -479,10 +532,10 @@ class FlightLevel(object):
                 xsDist[ii] = 0.
             else:
                 Xdist[ii] = np.absolute(
-                    (np.pi * common._get_earth_radius() / 180.) *
+                    (np.pi * common.EARTH_RADIUS / 180.) *
                     (lonSub[ii] - lonSub[ii - 1]))
                 Ydist[ii] = np.absolute(
-                    (np.pi * common._get_earth_radius() / 180.) *
+                    (np.pi * common.EARTH_RADIUS / 180.) *
                     (latSub[ii] - latSub[ii - 1]))
                 xsDist[ii] = (np.sqrt(Xdist[ii]**2 + Ydist[ii]**2)
                               ) + xsDist[ii - 1]
@@ -658,12 +711,6 @@ class FlightLevel(object):
                            Uwnd[::barbspacing], Vwnd[::barbspacing],
                            barbcolor=barbcolor, flagcolor=flagcolor,
                            linewidth=lw, **kwargs)
-#        self.basemap.barbs(self.longitude['data'][:][::barbspacing],
-#                           self.latitude[::barbspacing],
-#                           Uwnd[::barbspacing], self.Vwd[::barbspacing],
-#                           latlon=True, barbcolor=barbcolor,
-#                           flagcolor=flagcolor,
-#                           linewidth=lw, **kwargs)
 
     def plot_point(self, lon, lat, symbol='ro', label_text=None,
                    label_offset=(None, None), text_size=None, **kwargs):
@@ -1375,8 +1422,8 @@ class FlightLevel(object):
                 dt = datetime(tInt[0], tInt[1], tInt[2], tInt[3],
                               tInt[4], tInt[5], tInt[6])
             except:
-                print("Check the format of date string",
-                      "(e.g. '2014-08-20 12:30:00')")
+                import warnings
+                warnings.warn(common.DATE_STRING_FORMAT)
                 return
 
         return dt
@@ -1398,8 +1445,8 @@ class FlightLevel(object):
                     startInt[0], startInt[1], startInt[2], startInt[3],
                     startInt[4], startInt[5], startInt[6])
             except:
-                print("Check the format of date string",
-                      "(e.g. '2014-08-20 12:30:00')")
+                import warnings
+                warnings.warn(common.DATE_STRING_FORMAT)
                 return
 
         return dt_start
@@ -1419,8 +1466,8 @@ class FlightLevel(object):
                 dt_end = datetime(endInt[0], endInt[1], endInt[2], endInt[3],
                                   endInt[4], endInt[5], endInt[6])
             except:
-                print("Check the format of date string",
-                      "(e.g. '2014-08-20 12:30:00')")
+                import warnings
+                warnings.warn(common.DATE_STRING_FORMAT)
                 return
 
         return dt_end
@@ -1515,18 +1562,3 @@ class FlightLevel(object):
         ''' Get the variable from the flight dictionary. '''
         var, data = self.flight_data[field], self.flight_data[field]['data'][:]
         return var, data
-
-##################
-#  Save methods  #
-##################
-    def save_figure(self, figName='awot_plot', figType="png"):
-        '''Save the current plot.
-
-        Parameters
-        ------------
-        figName : str
-            Figure name
-        figType : str
-            Figure format, default to .png
-        '''
-        plt.savefig(figName+'.'+figType, format=figType)

@@ -17,6 +17,14 @@ from matplotlib import ticker as mtic
 import matplotlib.cm as cm
 from datetime import datetime
 
+
+########################
+#   Global Variables   #
+########################
+DATE_STRING_FORMAT = ("Date string format: YYYY-MM-DDTHH:MM:SS, "
+                      "(e.g. '2014-08-20T12:30:00')")
+EARTH_RADIUS = 6371.
+
 ###################
 #   Map modules   #
 ###################
@@ -238,9 +246,9 @@ def plot_xy(var1, var2, color=None, lw=None, ls=None, marker=None, msize=None,
 
     # Set parameters if none
     if color is None:
-        color='k'
+        color = 'k'
     if lw is None:
-        lw=2
+        lw = 2
 
     ax.plot(var1, var2, color=color, ls=ls, lw=lw,
             marker=marker, markersize=msize, markeredgecolor=color)
@@ -888,6 +896,25 @@ def create_polar_fig_ax(nrows=1, ncols=1, figsize=(5, 5)):
                            fig_kw=dict(figsize=figsize))
     return fig, ax
 
+##################
+#  Save methods  #
+##################
+
+
+def save_figure(name='awot_plot', type="png", dpi=300):
+    '''Save the current plot.
+
+    Parameters
+    ------------
+    name : str
+        Figure name.
+    type : str
+        Figure format, default to .png file type.
+    dpi : int
+        Resolution in dots per inch.
+    '''
+    plt.savefig(name+'.'+type, format=figType, dpi=dpi)
+
 #################
 #  Get methods  #
 #################
@@ -938,14 +965,16 @@ def _get_start_datetime(time, start_time):
                 startInt[0], startInt[1], startInt[2], startInt[3],
                 startInt[4], startInt[5], startInt[6])
         except:
-            print(
-                "Format of date string should be e.g. '2014-08-20 12:30:00'")
+            import warnings
+            warnings.warn(common.DATE_STRING_FORMAT)
             return
 
     # Check to see if date time specified is beyond start
     if dt_start < time['data'].min():
-        print("WARNING: Specified START time is earlier "
-              "than the earlist time value!!")
+        import warnings
+        warnings.warn("WARNING: Specified START time occurs before the first "
+                      "time instance. Using start of time array instead.")
+        dt_start = time['data'].min()
     return dt_start
 
 
@@ -962,31 +991,29 @@ def _get_end_datetime(time, end_time):
             dt_end = datetime(endInt[0], endInt[1], endInt[2], endInt[3],
                               endInt[4], endInt[5], endInt[6])
         except:
-            print(
-                "Check the format of date string (e.g. '2014-08-20 12:30:00')")
+            import warnings
+            warnings.warn(common.DATE_STRING_FORMAT)
             return
 
     # Check to see if date time specified is beyond start
     if dt_end > time['data'].max():
-        print("WARNING: Subset END time is later "
-              "than the latest time value!!")
+        import warnings
+        warnings.warn("WARNING: Specified END time occurs after the last "
+                      "time instance. Using end of time array instead.")
+        dt_end = time['data'].max()
     return dt_end
 
 
 def _get_variable_dict(dict, field):
-    '''Get the variable from the fields dictionary.'''
+    ''' Return variable dictionary of specfied field. '''
     Var = dict[field]
     return Var
 
 
 def _get_variable_dict_data(dict, field):
-    '''Get the variable from the fields dictionary.'''
+    ''' Return variable dictionary and data of specfied field. '''
     Var, data = dict[field], dict[field]['data'][:]
     return Var, data
-
-
-def _get_earth_radius():
-    return 6371.
 
 ########################
 #   Parsing Methods    #
@@ -994,7 +1021,7 @@ def _get_earth_radius():
 
 
 def _parse_ax_fig(ax, fig):
-    """Parse and return ax and fig parameters."""
+    """ Parse and return ax and fig parameters. """
     if ax is None:
         ax = plt.gca()
     if fig is None:
@@ -1003,14 +1030,14 @@ def _parse_ax_fig(ax, fig):
 
 
 def _parse_ax(ax):
-    """Parse and return ax parameters."""
+    """ Parse and return ax parameters. """
     if ax is None:
         ax = plt.gca()
     return ax
 
 
 def _parse_fig(fig):
-    """Parse and return fig parameters."""
+    """ Parse and return fig parameters. """
     if fig is None:
         fig = plt.gcf()
     return fig

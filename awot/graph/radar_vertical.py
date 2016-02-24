@@ -204,9 +204,9 @@ class RadarVerticalPlot(object):
 
         # Calculate the distance array along the cross-section
         Xdist = np.absolute(
-            (np.pi * common._get_earth_radius() / 180.) * (xslon - xslon[0]))
+            (np.pi * common.EARTH_RADIUS / 180.) * (xslon - xslon[0]))
         Ydist = np.absolute(
-            (np.pi * common._get_earth_radius() / 180.) * (xslat - xslat[0]))
+            (np.pi * common.EARTH_RADIUS / 180.) * (xslat - xslat[0]))
         xsDist = np.sqrt(Xdist**2 + Ydist**2)
 
         # Define the angle of the cross-secton
@@ -645,7 +645,7 @@ class RadarVerticalPlot(object):
                              cb_label=cb_label,
                              cb_fontsize=cb_fontsize,
                              cb_ticklabel_size=cb_ticklabel_size,
-                            ax=ax, fig=fig)
+                             ax=ax, fig=fig)
         if fill_surface:
             if self.surface is not None:
                 sfc = self._get_variable_subset(self.surface['data'][:],

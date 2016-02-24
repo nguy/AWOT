@@ -121,9 +121,7 @@ def calc_ground_distance(awot, method='great circle',
         d = great_circle(lat, lon, radius=radius)
     else:
         d = vincentry(lat, lon, ellipsoid_key=ellipsoid_key,
-                             iterations=iterations)
-    # Mask any invalid entries
-##    distance = np.ma.masked_invalid(distance)
+                      iterations=iterations)
 
     # Sum the distance over track
     dcum = np.cumsum(d)
@@ -146,9 +144,9 @@ def calc_ground_distance(awot, method='great circle',
     return newdict
 
 
-def calc_air_distance(awot, airspeed_key=None, time_key=None, add_to_dict=False,
-                      keyname=None, units=None, longname=None,
-                      stdname=None):
+def calc_air_distance(awot, airspeed_key=None, time_key=None,
+                      add_to_dict=False, keyname=None,
+                      units=None, longname=None, stdname=None):
     '''
     Calculate the distance travelled in the air by multiplying air speed
     by time elapsed.
@@ -355,14 +353,14 @@ def vincentry(latitude, longitude, ellipsoid_key=None, iterations=None):
                     cos2_sig_m = cos_sig - 2 * (sin_red1[nn] *
                                                 sin_red2[nn] / cos_sq_alpha)
                 else:
-                    cos2_sig_m = 0.0 # Equatorial line
+                    cos2_sig_m = 0.0  # Equatorial line
 
                 C = f / 16. * cos_sq_alpha * (4 + f * (4 - 3 * cos_sq_alpha))
 
                 lam_prime = lam_lon[nn]
                 lam_lon[nn] = (delta_lon[nn] + (1 - C) * f * sin_alpha *
-                           (sig + C * sin_sig * (cos2_sig_m + C * cos_sig *
-                            (-1 + 2 * cos2_sig_m ** 2))))
+                               (sig + C * sin_sig * (cos2_sig_m + C *
+                                cos_sig * (-1 + 2 * cos2_sig_m ** 2))))
 
             if i > iterations:
                 raise ValueError("Vincenty formula failed to converge!")
