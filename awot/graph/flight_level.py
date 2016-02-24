@@ -479,10 +479,10 @@ class FlightLevel(object):
                 xsDist[ii] = 0.
             else:
                 Xdist[ii] = np.absolute(
-                    (np.pi * common._get_earth_radius() / 180.) *
+                    (np.pi * common.EARTH_RADIUS / 180.) *
                     (lonSub[ii] - lonSub[ii - 1]))
                 Ydist[ii] = np.absolute(
-                    (np.pi * common._get_earth_radius() / 180.) *
+                    (np.pi * common.EARTH_RADIUS / 180.) *
                     (latSub[ii] - latSub[ii - 1]))
                 xsDist[ii] = (np.sqrt(Xdist[ii]**2 + Ydist[ii]**2)
                               ) + xsDist[ii - 1]
@@ -1375,8 +1375,8 @@ class FlightLevel(object):
                 dt = datetime(tInt[0], tInt[1], tInt[2], tInt[3],
                               tInt[4], tInt[5], tInt[6])
             except:
-                print("Check the format of date string",
-                      "(e.g. '2014-08-20 12:30:00')")
+                import warnings
+                warnings.warn(common.DATE_STRING_FORMAT)
                 return
 
         return dt
@@ -1398,8 +1398,8 @@ class FlightLevel(object):
                     startInt[0], startInt[1], startInt[2], startInt[3],
                     startInt[4], startInt[5], startInt[6])
             except:
-                print("Check the format of date string",
-                      "(e.g. '2014-08-20 12:30:00')")
+                import warnings
+                warnings.warn(common.DATE_STRING_FORMAT)
                 return
 
         return dt_start
@@ -1419,8 +1419,8 @@ class FlightLevel(object):
                 dt_end = datetime(endInt[0], endInt[1], endInt[2], endInt[3],
                                   endInt[4], endInt[5], endInt[6])
             except:
-                print("Check the format of date string",
-                      "(e.g. '2014-08-20 12:30:00')")
+                import warnings
+                warnings.warn(common.DATE_STRING_FORMAT)
                 return
 
         return dt_end
@@ -1515,18 +1515,3 @@ class FlightLevel(object):
         ''' Get the variable from the flight dictionary. '''
         var, data = self.flight_data[field], self.flight_data[field]['data'][:]
         return var, data
-
-##################
-#  Save methods  #
-##################
-    def save_figure(self, figName='awot_plot', figType="png"):
-        '''Save the current plot.
-
-        Parameters
-        ------------
-        figName : str
-            Figure name
-        figType : str
-            Figure format, default to .png
-        '''
-        plt.savefig(figName+'.'+figType, format=figType)

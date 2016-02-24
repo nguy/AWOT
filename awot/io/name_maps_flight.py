@@ -6,8 +6,8 @@ Routines for mapping flight level data to
 AWOT objects. These are default name maps
 and are not guaranteed to work as they are
 based on specific project data generally.
-Unfortunately at this time the airborned
-community does not standardize.
+No real standardization currently exists in
+the airborne research community.
 
 Thse maps may be a good starting point for creating a
 custom name_map.
