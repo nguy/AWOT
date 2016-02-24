@@ -645,7 +645,7 @@ class RadarVerticalPlot(object):
                              cb_label=cb_label,
                              cb_fontsize=cb_fontsize,
                              cb_ticklabel_size=cb_ticklabel_size,
-                            ax=ax, fig=fig)
+                             ax=ax, fig=fig)
         if fill_surface:
             if self.surface is not None:
                 sfc = self._get_variable_subset(self.surface['data'][:],

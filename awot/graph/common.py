@@ -246,9 +246,9 @@ def plot_xy(var1, var2, color=None, lw=None, ls=None, marker=None, msize=None,
 
     # Set parameters if none
     if color is None:
-        color='k'
+        color = 'k'
     if lw is None:
-        lw=2
+        lw = 2
 
     ax.plot(var1, var2, color=color, ls=ls, lw=lw,
             marker=marker, markersize=msize, markeredgecolor=color)
@@ -899,6 +899,8 @@ def create_polar_fig_ax(nrows=1, ncols=1, figsize=(5, 5)):
 ##################
 #  Save methods  #
 ##################
+
+
 def save_figure(name='awot_plot', type="png", dpi=300):
     '''Save the current plot.
 
@@ -971,7 +973,7 @@ def _get_start_datetime(time, start_time):
     if dt_start < time['data'].min():
         import warnings
         warnings.warn("WARNING: Specified START time occurs before the first "
-              "time instance. Using start of time array instead.")
+                      "time instance. Using start of time array instead.")
         dt_start = time['data'].min()
     return dt_start
 
@@ -997,7 +999,7 @@ def _get_end_datetime(time, end_time):
     if dt_end > time['data'].max():
         import warnings
         warnings.warn("WARNING: Specified END time occurs after the last "
-              "time instance. Using end of time array instead.")
+                      "time instance. Using end of time array instead.")
         dt_end = time['data'].max()
     return dt_end
 

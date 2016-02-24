@@ -219,8 +219,8 @@ class FlightLevel(object):
         # Plot the track either coloring by altitude or as single color
         if color_by_altitude:
             p = self._colorline(xmask, ymask, z=varmask, cmap=track_cmap,
-                                 linewidth=track_lw, alpha=alpha,
-                                 vmin=min_altitude, vmax=max_altitude)
+                                linewidth=track_lw, alpha=alpha,
+                                vmin=min_altitude, vmax=max_altitude)
 
             ax.add_collection(p)
 
@@ -242,7 +242,7 @@ class FlightLevel(object):
             if kmz_filepath is None:
                 kmz_filepath = os.getcwd()
             if kmz_filename is None:
-                kmz_filename = ('awot_' + self.platform +'_' +
+                kmz_filename = ('awot_' + self.platform + '_' +
                                 self.flight_number + '_altitude' + '.kmz')
             util.write_kmz.write_kmz(fig, ax, p, lonrange, latrange, times,
                                      file_path=kmz_filepath,
@@ -365,8 +365,8 @@ class FlightLevel(object):
 
         # Plot the track
         p = self._colorline(xmask, ymask, z=varmask, cmap=track_cmap,
-                             vmin=min_value, vmax=max_value,
-                             linewidth=track_lw, alpha=alpha)
+                            vmin=min_value, vmax=max_value,
+                            linewidth=track_lw, alpha=alpha)
 
         ax.add_collection(p)
 
@@ -385,7 +385,7 @@ class FlightLevel(object):
             if kmz_filepath is None:
                 kmz_filepath = os.getcwd()
             if kmz_filename is None:
-                kmz_filename = ('awot_' + self.platform +'_' +
+                kmz_filename = ('awot_' + self.platform + '_' +
                                 self.flight_number + '_' + cblabel +
                                 '_' + '.kmz')
             util.write_kmz.write_kmz(fig, ax, p, lonrange, latrange, times,

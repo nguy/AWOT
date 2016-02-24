@@ -129,7 +129,7 @@ def write_track_kmz(awot, field, lat_name=None, lon_name=None,
     if file_path is None:
         file_path = os.getcwd()
     if file_name is None:
-        file_name = ('awot_' + awot['platform'] +'_' + awot['flight_number'] +
+        file_name = ('awot_' + awot['platform'] + '_' + awot['flight_number'] +
                      '_' + field + '.kmz')
     longname = os.path.join(file_path, file_name)
 
@@ -178,6 +178,7 @@ def write_track_kmz(awot, field, lat_name=None, lon_name=None,
     print('Google Earth image saved to: %s' % longname)
     _method_printout()
     return
+
 
 def write_kmz(fig, ax, plot, lonrange, latrange, times,
               file_path=None, file_name=None,
@@ -247,6 +248,7 @@ def write_kmz(fig, ax, plot, lonrange, latrange, times,
 #   Get methods   #
 ###################
 
+
 def _get_latrange_lonrange(lats=None, lons=None, latrange=None, lonrange=None):
     """ Determine domain of plot based on what user provided. """
     if latrange is None:
@@ -262,6 +264,7 @@ def _get_latrange_lonrange(lats=None, lons=None, latrange=None, lonrange=None):
 ####################
 #   Data methods   #
 ####################
+
 
 def _filter_bad_geolocations(lats, lons, data, time):
     """ Internal method to filter bad geolocation data. """
@@ -282,6 +285,7 @@ def _filter_bad_geolocations(lats, lons, data, time):
 ######################
 #   Helper methods   #
 ######################
+
 
 def _method_printout():
     """ Helps clarify text output. """

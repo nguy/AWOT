@@ -259,22 +259,22 @@ class MicrophysicalVerticalPlot(object):
         return
 
     def track_height_image(self, field, track_key=None,
-                         mask_procedure=None, mask_tuple=None,
-                         plot_log10_var=False,
-                         cminmax=(0., 60.), clevs=25,
-                         vmin=None, vmax=None,
-                         cmap='gist_ncar', discrete_cmap_levels=None,
-                         x_min=None, x_max=None,
-                         height_MajTicks=None, height_MinTicks=None,
-                         height_min=None, height_max=None,
-                         title=None,
-                         xlab=' ', xlabFontSize=16, xpad=7,
-                         ylab=' ', ylabFontSize=16, ypad=7,
-                         color_bar=True, cb_orient='vertical',
-                         cb_pad=.05, cb_tick_int=2,
-                         cb_label=None,
-                         cb_fontsize=None, cb_ticklabel_size=None,
-                         ax=None, fig=None):
+                           mask_procedure=None, mask_tuple=None,
+                           plot_log10_var=False,
+                           cminmax=(0., 60.), clevs=25,
+                           vmin=None, vmax=None,
+                           cmap='gist_ncar', discrete_cmap_levels=None,
+                           x_min=None, x_max=None,
+                           height_MajTicks=None, height_MinTicks=None,
+                           height_min=None, height_max=None,
+                           title=None,
+                           xlab=' ', xlabFontSize=16, xpad=7,
+                           ylab=' ', ylabFontSize=16, ypad=7,
+                           color_bar=True, cb_orient='vertical',
+                           cb_pad=.05, cb_tick_int=2,
+                           cb_label=None,
+                           cb_fontsize=None, cb_ticklabel_size=None,
+                           ax=None, fig=None):
         """
         Wrapper function to produce a contoured plot along a track
         of variable indicated.
@@ -407,23 +407,23 @@ class MicrophysicalVerticalPlot(object):
 
         # Plot the time series
         ts = common.image_2d(track2D, Ht2D, Data,
-                                  vmin=vmin, vmax=vmax, clevs=clevs,
-                                  date_format=date_format, tz=tz, xdate=xdate,
-                                  date_minor_string=date_minor_string,
-                                  other_major_ticks=height_MajTicks,
-                                  other_minor_ticks=height_MinTicks,
-                                  other_min=height_min, other_max=height_max,
-                                  title=title,
-                                  xlab=xlab, xlabFontSize=xlabFontSize,
-                                  xpad=xpad,
-                                  ylab=ylab, ylabFontSize=ylabFontSize,
-                                  ypad=ypad,
-                                  color_bar=color_bar, cb_orient=cb_orient,
-                                  cb_pad=cb_pad, cb_tick_int=cb_tick_int,
-                                  cb_label=cb_label,
-                                  cb_fontsize=cb_fontsize,
-                                  cb_ticklabel_size=cb_ticklabel_size,
-                                  ax=ax, fig=fig)
+                             vmin=vmin, vmax=vmax, clevs=clevs,
+                             date_format=date_format, tz=tz, xdate=xdate,
+                             date_minor_string=date_minor_string,
+                             other_major_ticks=height_MajTicks,
+                             other_minor_ticks=height_MinTicks,
+                             other_min=height_min, other_max=height_max,
+                             title=title,
+                             xlab=xlab, xlabFontSize=xlabFontSize,
+                             xpad=xpad,
+                             ylab=ylab, ylabFontSize=ylabFontSize,
+                             ypad=ypad,
+                             color_bar=color_bar, cb_orient=cb_orient,
+                             cb_pad=cb_pad, cb_tick_int=cb_tick_int,
+                             cb_label=cb_label,
+                             cb_fontsize=cb_fontsize,
+                             cb_ticklabel_size=cb_ticklabel_size,
+                             ax=ax, fig=fig)
         return
 
 #################
