@@ -14,12 +14,7 @@ from matplotlib.dates import DateFormatter, date2num
 from matplotlib import ticker
 import scipy.ndimage as scim
 
-from .common import (_check_basemap, _get_earth_radius,
-                     _parse_ax_fig, _parse_ax,
-                     plot_polar_contour, get_masked_data,
-                     _get_start_datetime, _get_end_datetime,
-                     _get_variable_dict, _get_variable_dict_data,
-                     image_2d_date)
+from . import common
 from .coord_transform import (radar_coords_to_cart_track_relative,
                               radar_coords_to_cart_earth_relative,
                               radar_coords_to_cart_aircraft_relative)
@@ -71,7 +66,6 @@ class RadarSweepPlot(object):
             self.pitch = self.radar['pitch']
             self.roll = self.radar['roll']
             self.tilt = self.radar['tilt']
-#            _check_basemap(self)
         elif map_type is 'pyart':
             self.longitude = self.radar.longitude
             self.latitude = self.radar.latitude
@@ -84,7 +78,6 @@ class RadarSweepPlot(object):
             self.pitch = self.radar.pitch
             self.roll = self.radar.roll
             self.tilt = self.radar.tilt
-#            _check_basemap(self)
 
 ################################
 #   Plotting generate method   #
@@ -151,7 +144,7 @@ class RadarSweepPlot(object):
         looking from the back of aircraft forward.
         """
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
         if plot_in_km:
             Xcoord = Xcoord / 1000.
@@ -273,13 +266,13 @@ class RadarSweepPlot(object):
         Defaults are established during DYNAMO project analysis
         """
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
         # Get variable
-        Var, Data = _get_variable_dict_data(self.fields, field)
+        Var, Data = common._get_variable_dict_data(self.fields, field)
 
         if mask_procedure is not None:
-            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            Data = common.get_masked_data(Data, mask_procedure, mask_tuple)
 
         if vmin is None:
             vmin = Data.min()
@@ -291,8 +284,9 @@ class RadarSweepPlot(object):
         range, rotation = self._get_2D_var(self.rotation['data'][:])
 
         # Plot the polar coordinate radar data
-        p = plot_polar_contour(Data, rotation, range,
-                               nlevs=nlevs, vmin=vmin, vmax=vmax, cmap=cmap)
+        p = common.plot_polar_contour(Data, rotation, range,
+                                      nlevs=nlevs, vmin=vmin,
+                                      vmax=vmax, cmap=cmap)
 
         # Set the range and turn grid on
         ax.set_rmax(1.05 * range.max())
@@ -404,13 +398,13 @@ class RadarSweepPlot(object):
         roll, pitch, or drift of the aircraft.
         """
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
         # Get variable
-        Var, Data = _get_variable_dict_data(self.fields, field)
+        Var, Data = common._get_variable_dict_data(self.fields, field)
 
         if mask_procedure is not None:
-            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            Data = common.get_masked_data(Data, mask_procedure, mask_tuple)
 
         if vmin is None:
             vmin = Data.min()
@@ -521,13 +515,13 @@ class RadarSweepPlot(object):
         This is considered a leveled, heading-relative coordinate system.
         """
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
         # Get variable
-        Var, Data = _get_variable_dict_data(self.fields, field)
+        Var, Data = common._get_variable_dict_data(self.fields, field)
 
         if mask_procedure is not None:
-            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            Data = common.get_masked_data(Data, mask_procedure, mask_tuple)
 
         if vmin is None:
             vmin = Data.min()
@@ -642,13 +636,13 @@ class RadarSweepPlot(object):
         This is considered a leveled, heading-relative coordinate system.
         """
         # parse parameters
-        ax, fig = _parse_ax_fig(ax, fig)
+        ax, fig = common._parse_ax_fig(ax, fig)
 
         # Get variable
-        Var, Data = _get_variable_dict_data(self.fields, field)
+        Var, Data = common._get_variable_dict_data(self.fields, field)
 
         if mask_procedure is not None:
-            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            Data = common.get_masked_data(Data, mask_procedure, mask_tuple)
 
         if vmin is None:
             vmin = Data.min()

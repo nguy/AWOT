@@ -141,6 +141,10 @@ def read_windsyn_tdr_netcdf(fname, field_mapping=None):
         radar['instrument'] = ncFile.instrument
     except:
         radar['instrument'] = 'windsyn_grid'
+    try:
+        data['flight_number'] = ncFile.Flight_ID
+    except:
+        data['flight_number'] = None
 
     # Set the format for AWOT
     radar['data_format'] = 'windsyn_grid'
@@ -316,6 +320,7 @@ def read_windsyn_binary(fname, platform=None, instrument=None, radar_num=None):
              'datetime_end': _get_datetime_start_from_header(hdr_dict),
              'platform': platform,
              'instrument': instrument,
+             'flight_number': hdr_dict['Flid1'],
              'data_format': 'windsyn_grid',
              }
     return radar

@@ -67,7 +67,7 @@ def read_netcdf(fname, time_var=None, mapping_dict=None, platform=None):
             name_map = _make_name_map_from_varlist(ncFile.variables.keys())
 
     # Cycle to through variables in file
-    data = _make_data_dictionary(ncFile, name_map, isRAF, RAFrate=RAFrate)
+    data = _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=RAFdim)
 
     # Calculate U,V wind if not present
     if 'Uwind' not in name_map:
@@ -169,7 +169,7 @@ def _get_time(ncFile, isRAF, RAFrate=None, timevar=None):
         # Check if it is a high rate file and 2D - yep instances of this
         # out there as well...
         if ((isRAF) & (RAFrate > 1) &
-            (RAFrate not in ncFile.variables[varname].shape)):
+           (RAFrate not in ncFile.variables[varname].shape)):
             Timehirate = np.linspace(
                 TimeSec[0], TimeSec[-1], len(TimeSec) * RAFrate)
             TimeSec = Timehirate
@@ -197,23 +197,39 @@ def _get_time(ncFile, isRAF, RAFrate=None, timevar=None):
     return Time
 
 
-def _make_data_dictionary(ncFile, name_map, isRAF, RAFrate=None):
-    data = {}
+def _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=None):
+    dd = {}
 
     for var in name_map:
         if name_map[var] in ncFile.variables.keys():
-            data[var] = common._ncvar_to_dict(ncFile.variables[name_map[var]])
-            if (isRAF) & (RAFrate in ncFile.variables[name_map[var]].shape):
-                data[var]['data'] = np.array(
-                    ncFile.variables[name_map[var]][:]).ravel()
+            dd[var] = common._ncvar_to_dict(ncFile.variables[name_map[var]])
+            data = ncFile.variables[name_map[var]]
+#            if (isRAF) & (RAFrate in ncFile.variables[name_map[var]].shape):
+            if (isRAF) & (RAFdim in data.dimensions):
+                ndim = len(data.shape)
+                if (ndim > 2):
+                    # Find the dimension to remove
+                    popdim = data.dimensions.index(RAFdim)
+                    # Create new indices and remove RAFdim
+                    reindex = range(ndim)
+                    reindex.pop(popdim)
+                    # Get the original shape
+                    origshape = ncFile.variables[name_map[var]].shape
+                    # Create the new shape, taking into account RAFdim
+                    newshape = [origshape[a] for a in reindex]
+                    newshape[0] = newshape[0] * origshape[popdim]
+                    dd[var]['data'] = np.array(
+                        data[:]).ravel().reshape(newshape)
+                else:
+                    dd[var]['data'] = np.array(data[:]).ravel()
             try:
-                mask = data[var]['data'].mask
+                mask = dd[var]['data'].mask
             except:
-                data[var]['data'] = np.ma.masked_array(data[var]['data'],
-                                                       mask=False)
+                dd[var]['data'] = np.ma.masked_array(dd[var]['data'],
+                                                     mask=False)
         else:
-            data[var] = None
-    return data
+            dd[var] = None
+    return dd
 
 #########################
 #   NASA AMES Methods   #

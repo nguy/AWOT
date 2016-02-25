@@ -17,6 +17,14 @@ from matplotlib import ticker as mtic
 import matplotlib.cm as cm
 from datetime import datetime
 
+
+########################
+#   Global Variables   #
+########################
+DATE_STRING_FORMAT = ("Date string format: YYYY-MM-DDTHH:MM:SS, "
+                      "(e.g. '2014-08-20T12:30:00')")
+EARTH_RADIUS = 6371.
+
 ###################
 #   Map modules   #
 ###################
@@ -209,7 +217,158 @@ def plot_fill_surface(xarr, surface, color=None, ymin=None, ax=None):
     return
 
 
-def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
+def plot_xy(var1, var2, color=None, lw=None, ls=None, marker=None, msize=None,
+            ax=None):
+    """
+    Returns an X-Y plot of variable1 vs. variable2.
+
+    Parameters
+    ----------
+    var1 : array
+        Variable to plot on x-axis.
+    var2 : array
+        Variable to plot on y-axis.
+    color : str
+        Line color.
+    lw : float
+        Linewidth to display
+    ls : str
+        Linestyle to use, can be abbreviation or name.
+    marker : str
+        Marker to display.
+    msize : float
+        Marker size.
+    ax : Matplotlib axis instance
+        Axis to plot. None will use the current axis.
+    """
+    # Parse parameters
+    ax = _parse_ax(ax)
+
+    # Set parameters if none
+    if color is None:
+        color = 'k'
+    if lw is None:
+        lw = 2
+
+    ax.plot(var1, var2, color=color, ls=ls, lw=lw,
+            marker=marker, markersize=msize, markeredgecolor=color)
+    return
+
+
+def image_2d(xvar, yvar, data_var,
+             plot_log10_var=False, vmin=None, vmax=None, clevs=25,
+             cmap=None, norm=None,
+             x_major_ticks=None, x_minor_ticks=None,
+             y_major_ticks=None, y_minor_ticks=None,
+             x_min=None, x_max=None, y_min=None, y_max=None,
+             title=None, titleFontSize=None,
+             xlab=None, xlabFontSize=None, xpad=None,
+             ylab=None, ylabFontSize=None, ypad=None,
+             color_bar=True, cb_orient=None,
+             cb_fontsize=None, cb_ticklabel_size=None,
+             cb_pad=None, cb_tick_int=None, cb_label=None,
+             ax=None, fig=None):
+    """
+    Returns a time series plot, with time on X-axis and variable on Y-axis.
+
+    Parameters
+    ----------
+    xvar : float
+        Array for x-axis (2D same as data_var).
+    ax_var : float
+        Array for y-axis (2D same as data_var).
+    data_var : float
+        Data variable.
+    vmin : float
+        Minimum contour value to display.
+    vmax : float
+        Maximum contour value to display.
+    clevs : int
+        Number of levels to use in colorbar tick calculation.
+    cmap : str
+        Matplotlib color map to use.
+    norm : Matplotlib.colors.Normalize instance
+        Matplotlib normaliztion instance used to scale luminance data.
+    title : str
+        Plot title.
+    titleFontSize : int
+        Font size to use for Title label.
+    xlab : str
+        X-axis label.
+    ylab : str
+        Y-axis label.
+    xpad : int
+        Padding for X-axis label.
+    ypad : int
+        Padding for Y-axis label.
+    xlabFontSize : int
+        Font size to use for X-axis label.
+    ylabFontSize : int
+        Font size to use for Y-axis label.
+    x_major_ticks : float
+        Values for x-axis major tickmark spacing.
+    x_minor_ticks : float
+        Values for x-axis minor tickmark spacing.
+    y_major_ticks : float
+        Values for y-axis major tickmark spacing.
+    y_minor_ticks : float
+        Values for y-axis minor tickmark spacing.
+    x_min : float
+        Minimum value for x-axis.
+    x_max : float
+        Maximum value for x-axis.
+    x_min : float
+        Minimum value for y-axis.
+    x_max : float
+        Maximum value for y-axis.
+    color_bar : bool
+        True to add colorbar, False does not.
+    cb_pad : str
+        Pad to move colorbar, in the form "5%",
+        pos is to right for righthand location.
+    cb_orient : str
+        Colorbar orientation, either 'vertical' or 'horizontal'.
+    cb_fontsize : int
+        Font size of the colorbar label.
+    cb_ticklabel_size : int
+        Font size of colorbar tick labels.
+    cb_tick_int : int
+        Interval to use for colorbar tick labels, higher number "thins" labels.
+    cb_label : str
+        String to use as colorbar label.
+    ax : Matplotlib axis instance
+        Axis to plot. None will use the current axis.
+    fig : Matplotlib figure instance
+        Figure on which to add the plot. None will use the current figure.
+    """
+    # parse parameters
+    ax = _parse_ax(ax)
+    # If no cmap is specified, grab current
+    if cmap is None:
+        cmap = cm.get_cmap()
+
+    # Set up the axes
+    _set_axes(ax, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
+              x_major_ticks=x_major_ticks, x_minor_ticks=x_minor_ticks,
+              y_major_ticks=y_major_ticks, y_minor_ticks=y_minor_ticks,
+              title=title, titleFontSize=titleFontSize,
+              xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
+              xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
+
+    # Create the plot
+    p = ax.pcolormesh(xvar, yvar, data_var,
+                      vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
+
+    # Add Colorbar
+    if color_bar:
+        cb = add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
+                          label=cb_label, fontsize=cb_fontsize,
+                          ticklabel_size=cb_ticklabel_size,
+                          clevs=clevs, tick_interval=cb_tick_int)
+    return
+
+
+def plot_date_ts(time, Var, color='k', marker='o', msize=1.5, lw=2,
                  date_format='%H:%M', tz=None, xdate=True,
                  date_minor_string='minute',
                  other_major_ticks=None, other_minor_ticks=None,
@@ -223,7 +382,7 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
 
     Parameters
     ----------
-    Time : float
+    time : float
         Time array to plot on x-axis.
     Var : float
         Variable to plot as time series.
@@ -233,7 +392,6 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
         Marker to display.
     msize : float
         Marker size.
-
     date_format : str
         Format of the time string for x-axis labels.
     tz : str
@@ -288,13 +446,13 @@ def plot_date_ts(Time, Var, color='k', marker='o', msize=1.5, lw=2,
                  xlab=xlab, xlabFontSize=xlabFontSize, xpad=xpad,
                  ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad)
     # Create the plot
-    ax.plot_date(Time, Var, tz=tz, xdate=xdate, ydate=ydate,
+    ax.plot_date(time, Var, tz=tz, xdate=xdate, ydate=ydate,
                  mfc=color, mec=color, marker=marker,
                  markersize=msize, lw=lw)
     return
 
 
-def image_2d_date(Time, AxVar, PlotVar,
+def image_2d_date(time, ax_var, data_var,
                   plot_log10_var=False,
                   vmin=None, vmax=None, clevs=25,
                   cmap=None, norm=None,
@@ -315,11 +473,11 @@ def image_2d_date(Time, AxVar, PlotVar,
 
     Parameters
     ----------
-    Time : float
-        Time array (2D same as PlotVar) to plot on x-axis.
-    AxVar : float
-        Variable (2D same as PlotVar) to use as other axis variable for plot.
-    PlotVar : float
+    time : float
+        time array (2D same as data_var) to plot on x-axis.
+    ax_var : float
+        Variable (2D same as data_var) to use as other axis variable for plot.
+    data_var : float
         Variable to plot as time series.
     vmin : float
         Minimum contour value to display.
@@ -393,12 +551,12 @@ def image_2d_date(Time, AxVar, PlotVar,
     # Set the axes variables depending on which is time axis
     if xdate:
         ydate = False
-        XVar = Time
-        YVar = AxVar
+        xvar = time
+        yvar = ax_var
     else:
         ydate = True
-        XVar = AxVar
-        YVar = Time
+        xvar = ax_var
+        yvar = time
 
     # Set up the axes
     _set_ts_axes(ax, date_format=date_format, tz=tz, xdate=xdate,
@@ -411,7 +569,7 @@ def image_2d_date(Time, AxVar, PlotVar,
                  ylab=ylab, ylabFontSize=ylabFontSize, ypad=ypad)
 
     # Create the plot
-    p = ax.pcolormesh(XVar, YVar, PlotVar,
+    p = ax.pcolormesh(xvar, yvar, data_var,
                       vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
 
     # Add Colorbar
@@ -447,6 +605,8 @@ def find_nearest_indices(array, values):
 
 def _set_axes(ax, x_min=None, x_max=None,
               y_min=None, y_max=None,
+              x_major_ticks=None, x_minor_ticks=None,
+              y_major_ticks=None, y_minor_ticks=None,
               title=None, titleFontSize=None,
               xlab=None, xlabFontSize=None, xpad=None,
               ylab=None, ylabFontSize=None, ypad=None):
@@ -465,6 +625,14 @@ def _set_axes(ax, x_min=None, x_max=None,
         Minimum value for Y-axis.
     y_max : float
         Maximum value for Y-axis.
+    x_major_ticks : float
+        Values for x-axis major tickmark spacing.
+    x_minor_ticks : float
+        Values for x-axis tickmark spacing.
+    y_major_ticks : float
+        Values for y-axis major tickmark spacing.
+    y_minor_ticks : float
+        Values for y-axis tickmark spacing.
     title : str
         Plot title.
     titleFontSize : int
@@ -492,6 +660,16 @@ def _set_axes(ax, x_min=None, x_max=None,
         ax.set_ylim(bottom=y_min)
     if y_max is not None:
         ax.set_ylim(top=y_max)
+
+    # Set the major and minor y-axis ticks/tickmarks
+    if x_major_ticks is not None:
+            ax.xaxis.set_major_locator(mtic.MultipleLocator(x_major_ticks))
+    if x_minor_ticks is not None:
+            ax.xaxis.set_minor_locator(mtic.MultipleLocator(x_minor_ticks))
+    if y_major_ticks is not None:
+            ax.yaxis.set_major_locator(mtic.MultipleLocator(y_major_ticks))
+    if y_minor_ticks is not None:
+            ax.yaxis.set_minor_locator(mtic.MultipleLocator(y_minor_ticks))
 
     # Turn the tick marks outward
     ax.tick_params(which='both', direction='out')
@@ -718,6 +896,25 @@ def create_polar_fig_ax(nrows=1, ncols=1, figsize=(5, 5)):
                            fig_kw=dict(figsize=figsize))
     return fig, ax
 
+##################
+#  Save methods  #
+##################
+
+
+def save_figure(name='awot_plot', type="png", dpi=300):
+    '''Save the current plot.
+
+    Parameters
+    ------------
+    name : str
+        Figure name.
+    type : str
+        Figure format, default to .png file type.
+    dpi : int
+        Resolution in dots per inch.
+    '''
+    plt.savefig(name+'.'+type, format=figType, dpi=dpi)
+
 #################
 #  Get methods  #
 #################
@@ -768,9 +965,16 @@ def _get_start_datetime(time, start_time):
                 startInt[0], startInt[1], startInt[2], startInt[3],
                 startInt[4], startInt[5], startInt[6])
         except:
-            print(
-                "Format of date string should be e.g. '2014-08-20 12:30:00'")
+            import warnings
+            warnings.warn(common.DATE_STRING_FORMAT)
             return
+
+    # Check to see if date time specified is beyond start
+    if dt_start < time['data'].min():
+        import warnings
+        warnings.warn("WARNING: Specified START time occurs before the first "
+                      "time instance. Using start of time array instead.")
+        dt_start = time['data'].min()
     return dt_start
 
 
@@ -787,26 +991,29 @@ def _get_end_datetime(time, end_time):
             dt_end = datetime(endInt[0], endInt[1], endInt[2], endInt[3],
                               endInt[4], endInt[5], endInt[6])
         except:
-            print(
-                "Check the format of date string (e.g. '2014-08-20 12:30:00')")
+            import warnings
+            warnings.warn(common.DATE_STRING_FORMAT)
             return
+
+    # Check to see if date time specified is beyond start
+    if dt_end > time['data'].max():
+        import warnings
+        warnings.warn("WARNING: Specified END time occurs after the last "
+                      "time instance. Using end of time array instead.")
+        dt_end = time['data'].max()
     return dt_end
 
 
 def _get_variable_dict(dict, field):
-    '''Get the variable from the fields dictionary.'''
+    ''' Return variable dictionary of specfied field. '''
     Var = dict[field]
     return Var
 
 
 def _get_variable_dict_data(dict, field):
-    '''Get the variable from the fields dictionary.'''
+    ''' Return variable dictionary and data of specfied field. '''
     Var, data = dict[field], dict[field]['data'][:]
     return Var, data
-
-
-def _get_earth_radius():
-    return 6371.
 
 ########################
 #   Parsing Methods    #
@@ -814,7 +1021,7 @@ def _get_earth_radius():
 
 
 def _parse_ax_fig(ax, fig):
-    """Parse and return ax and fig parameters."""
+    """ Parse and return ax and fig parameters. """
     if ax is None:
         ax = plt.gca()
     if fig is None:
@@ -823,14 +1030,14 @@ def _parse_ax_fig(ax, fig):
 
 
 def _parse_ax(ax):
-    """Parse and return ax parameters."""
+    """ Parse and return ax parameters. """
     if ax is None:
         ax = plt.gca()
     return ax
 
 
 def _parse_fig(fig):
-    """Parse and return fig parameters."""
+    """ Parse and return fig parameters. """
     if fig is None:
         fig = plt.gcf()
     return fig
