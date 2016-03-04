@@ -6,7 +6,7 @@ import matplotlib.patches as patches
 from .skew import SkewXTick
 
 
-def plot_skewt_logp(data, **kwargs):
+def plot_skewt_logp(data, instance, **kwargs):
 
     '''
     method to plot sounding or dropsonde data
@@ -17,10 +17,18 @@ def plot_skewt_logp(data, **kwargs):
 
     keyword arguments min, max, titles, and label.
     '''
-    T = data['temperature']
-    TD = data['dewpoint']
-    P = data['presssure']
+#    T = data['temperature']
+#    TD = data['dewpoint']
+#    P = data['presssure']
+#
 
+#Testing the first instance of the
+
+    T = data[instance]['fields']['Temp']['data']
+    TD = data[instance]['fields']['Dept']['data']
+    P = data[instance]['fields']['Press']['data']
+    
+    
     fig = plt.figure(figsize=(10, 8))
     ax1 = fig.add_axes([0.05, 0.1, 0.6, 0.8],
                        projection='skewx')
@@ -72,7 +80,7 @@ def plot_skewt_logp(data, **kwargs):
     ax1.set_xlim(x_min, x_max)
 
 
-def plot_hodograph(data):
+def plot_hodograph(data, instance):
 
     '''
     method to plot wind data on a hodograph
@@ -88,9 +96,13 @@ def plot_hodograph(data):
     # create axis and invert masks and assign values
     # for U, V, and h coordinates
 
-    Uwind = data['u_component']
-    Vwind = data['v_component']
-    Height = data['Height']
+#    Uwind = data['u_component']
+#    Vwind = data['v_component']
+#    Height = data['Height']
+
+    Uwind = data[instance]['fields']['Ucmp']['data']
+    Vwind = data[instance]['fields']['Vcmp']['data']
+    Height = data[instance]['fields']['Alt']['data']
 
     u_3km = []
     v_3km = []
@@ -317,7 +329,7 @@ def plot_dryadiabats(**kwargs):
                      color='#7F4B10', linewidth=0.5)
 
 
-def plot_wind_barbs(data, **kwargs):
+def plot_wind_barbs(data, instance, **kwargs):
     '''
     Notes
     -----
@@ -326,10 +338,10 @@ def plot_wind_barbs(data, **kwargs):
     Need to make this a function of the number of
     observations per second/vertical velocity
     '''
-    P = data['presssure']
-    Uwind = data['u_component']
-    Vwind = data['v_component']
-    Height = data['Height']
+    P = data[instance]['fields']['Press']['data']
+    Uwind = data[instance]['fields']['Ucmp']['data']
+    Vwind = data[instance]['fields']['Vcmp']['data']
+    Height = data[instance]['fields']['Alt']['data']
 
     # Copy y axis to plot wind barbs
     # Set x lim for windpbarbs
