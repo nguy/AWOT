@@ -110,16 +110,15 @@ class FlightLevel(object):
 #  Track plots  #
 #################
 
-    def plot_trackmap(
-            self, color_by_altitude=False, track_cmap=None,
-            track_color='k', track_lw=1.5, alpha=1.,
-            start_time=None, end_time=None,
-            min_altitude=None, max_altitude=None,
-            add_cb=True, cbloc='right', cbsize='3%', cbpad='10%',
-            addlegend=False, legLoc='lower right', legLab=None,
-            addtitle=False, title=None, ax=None, fig=None,
-            save_kmz=False, kmz_filepath=None, kmz_filename=None,
-            **kwargs):
+    def plot_trackmap(self, color_by_altitude=False, track_cmap=None,
+                      track_color='k', track_lw=1.5, alpha=1.,
+                      start_time=None, end_time=None,
+                      min_altitude=None, max_altitude=None,
+                      add_cb=True, cbloc='right', cbsize='3%', cbpad='10%',
+                      addlegend=False, legLoc='lower right', legLab=None,
+                      addtitle=False, title=None, ax=None, fig=None,
+                      save_kmz=False, kmz_filepath=None, kmz_filename=None,
+                      **kwargs):
         """
         Create a plot of the aircraft flight track, with optional enhancements.
         Note that the legend only works with single color track at this time.
@@ -275,8 +274,8 @@ class FlightLevel(object):
 
         Parameters
         ----------
-        field : float
-            Variable passed to plot, defaults to temperature.
+        field : str
+            Name of variable to plot.
         track_lw : float or int
             Line width to use for track.
         alpha : float

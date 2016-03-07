@@ -14,6 +14,8 @@ from matplotlib.dates import (
     DateFormatter, SecondLocator, MinuteLocator,
     HourLocator, DayLocator)
 from matplotlib import ticker as mtic
+from matplotlib.axes import Axes
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
 from datetime import datetime
 
@@ -35,8 +37,7 @@ def create_basemap(corners=None, proj=None, resolution='l',
                    meridians=True, parallels=True,
                    lon_spacing=2., lat_spacing=2.,
                    coastlines=True, countries=True, states=False,
-                   counties=False,
-                   rivers=False, etopo=False, ax=None):
+                   counties=False, rivers=False, etopo=False, ax=None):
     """
     Create a basemap instance for plotting.
 
@@ -115,6 +116,136 @@ def create_basemap(corners=None, proj=None, resolution='l',
         bm.drawrivers()
     return bm
 
+def create_basemap_3d(corners=None, proj=None, resolution='l',
+                      area_thresh=None, lon_0=None, lat_0=None,
+                      meridians=True, parallels=True,
+                      lon_spacing=2., lat_spacing=2.,
+                      xpad=None, ypad=None,
+                      coastlines=True, countries=True, states=False,
+                      counties=False, rivers=False, etopo=False):
+    """
+    Create a 3D basemap instance for plotting.
+
+    Parameters
+    ----------
+    corners : float tuple
+        Array of map corners
+        [lowerLeftLon, lowerLeftLat, upperRightLon, upperRightLat].
+        Default will find min max of arrays.
+    proj : str
+        Map projection to use.
+    resolution : string
+        Map resolution, 'l' or low res is default.
+    area_thresh : float
+        Minimum area threshold for basemap plot instance.
+    lon_0 : float
+        Longitudinal center of desire map [degrees].
+    lat_0 : float
+        Latitudinal center of desire map [degrees].
+    meridians : bool
+        Flag to turn on meridian (lonigitude) line plotting.
+    parallels : bool
+        Flag to turn on parallels (latitude) line plotting.
+    lon_spacing : float
+        Spacing for meridians, i.e. longitude [degrees].
+    lat_spacing : float
+        Spacing for parallels, i.e. latitude [degrees].
+    xpad : float
+        Padding to apply to longitude labels. Percentage of axis width.
+        None takes 1% of axis width.
+    ypad : float
+        Padding to apply to latitude labels. Percentage of axis width.
+        None takes 1% of axis width.
+    coastlines : bool
+        Flag to turn on basemap coastline plotting.
+    countries : bool
+        Flag to turn on basemap country plotting.
+    states : bool
+        Flag to turn on basemap state plotting.
+    counties : bool
+        Flag to turn on basemap county plotting.
+    rivers : bool
+        Flag to turn on basemap river plotting.
+    etopo : bool
+        Flag to turn on basemap etopo (topography) plotting.
+    """
+    # Get the current figure and create a 3D axes instance
+    fig = plt.gcf()
+#    ax = Axes3D(fig)
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Check inputs
+    if corners is None:
+        corners = [-180., -90., 180., 90.]
+
+    if proj is None:
+        proj = 'cea'
+
+    # Create a basemap instance
+    bm = Basemap(projection=proj, resolution=resolution,
+                 area_thresh=area_thresh,
+                 llcrnrlon=corners[0], urcrnrlon=corners[2],
+                 llcrnrlat=corners[1], urcrnrlat=corners[3],
+                 lon_0=lon_0, lat_0=lat_0, ax=ax)
+
+    # Now we need to create a "fake" axes instance because
+    # the drawmeridians and drawparallels will not otherwise work
+    ax2D = Axes(fig, [0, 0, 1, 1])
+    bm2 = Basemap(projection=proj, resolution=resolution,
+                  area_thresh=area_thresh,
+                  llcrnrlon=corners[0], urcrnrlon=corners[2],
+                  llcrnrlat=corners[1], urcrnrlat=corners[3],
+                  lon_0=lon_0, lat_0=lat_0, ax=ax2D)
+
+    llxc, llyc = bm2(corners[0], corners[1])
+    urxc, uryc = bm2(corners[2], corners[3])
+    if xpad is None:
+        xpad = 1.
+    xoffset = ((urxc - llxc)/100.) * xpad
+    if ypad is None:
+        ypad = 1.
+    yoffset = ((uryc - llyc)/100.) * ypad
+
+    # Check the customizations for the basemap
+    if meridians:
+        lons = np.arange(corners[0], corners[2], lon_spacing)
+        latax = np.full(np.shape(lons), corners[1])
+        bmlon = bm2.drawmeridians(lons, labels=[1, 0, 0, 1])
+        xm, ym = bm2(lons, latax)
+        llxm, llym = bm2(lons[0], corners[1])
+        urxm, urym = bm2(lons[-1], corners[3])
+        for i, mm in enumerate(bmlon.keys()):
+            ax.plot([xm[i], xm[i]], [llym, urym], zs=0.,
+                    color='0.92', ls=':')
+            ax.text(xm[i], llym - yoffset, 0., np.str(mm),
+                    horizontalalignment='center', verticalalignment='top')
+    if parallels:
+        lats = np.arange(corners[1], corners[3], lat_spacing)
+        lonax = np.full(np.shape(lats), corners[2])
+        bmlat = bm2.drawparallels(lats, labels=[1, 0, 0, 1])
+        xp, yp = bm2(lonax, lats)
+        llxp, llyp = bm2(corners[0], lats[0])
+        urxp, uryp = bm2(corners[2], lats[-1])
+        for i, pp in enumerate(bmlat.keys()):
+#            bm.plot([corners[0], corners[2]], [lats[i], lats[i]],
+#                    color='k', ls=':', latlon=True)
+            ax.plot([llxp, urxp], [xm[i], xm[i]], zs=0.,
+                    color='0.88', ls=':')
+            ax.text(urxc + xoffset, yp[i], 0., np.str(pp),
+                    horizontalalignment='left', verticalalignment='center')
+
+    if countries:
+        ax.add_collection3d(bm.drawcountries())
+    if coastlines:
+        ax.add_collection3d(bm.drawcoastlines())
+    if states:
+        ax.add_collection3d(bm.drawstates())
+    if counties:
+        ax.add_collection3d(bm.drawcounties())
+    if rivers:
+        ax.add_collection3d(bm.drawrivers())
+        self.basemap = bm
+    return bm, ax
 ####################
 #   Plot modules   #
 ####################

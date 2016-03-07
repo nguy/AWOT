@@ -14,6 +14,7 @@ from .microphysical_vertical import MicrophysicalVerticalPlot
 from .radar_sweep import RadarSweepPlot
 from .radar_utility import RadarUtilityPlot
 # from .radar_swath import RadarSwathPlot
+from .flight_level_3d import FlightLevel3D
 from .radar_3d import Radar3DPlot
 from .common import create_basemap, save_figure
 from .sonde import (plot_skewt_logp, plot_hodograph,
