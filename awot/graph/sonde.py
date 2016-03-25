@@ -17,18 +17,10 @@ def plot_skewt_logp(data, instance, **kwargs):
 
     keyword arguments min, max, titles, and label.
     '''
-#    T = data['temperature']
-#    TD = data['dewpoint']
-#    P = data['presssure']
-#
-
-#Testing the first instance of the
-
+    # pulling from new data structure
     T = data[instance]['fields']['Temp']['data']
     TD = data[instance]['fields']['Dept']['data']
     P = data[instance]['fields']['Press']['data']
-    
-    
     fig = plt.figure(figsize=(10, 8))
     ax1 = fig.add_axes([0.05, 0.1, 0.6, 0.8],
                        projection='skewx')
@@ -92,13 +84,8 @@ def plot_hodograph(data, instance):
     file path
     '''
     ax2 = fig.add_axes([.05, 0.6, 0.25, 0.3])
-
     # create axis and invert masks and assign values
     # for U, V, and h coordinates
-
-#    Uwind = data['u_component']
-#    Vwind = data['v_component']
-#    Height = data['Height']
 
     Uwind = data[instance]['fields']['Ucmp']['data']
     Vwind = data[instance]['fields']['Vcmp']['data']
@@ -335,8 +322,6 @@ def plot_wind_barbs(data, instance, **kwargs):
     -----
     Chooses specific wind barb plotting pattern based on
     the density of wind observations.
-    Need to make this a function of the number of
-    observations per second/vertical velocity
     '''
     P = data[instance]['fields']['Press']['data']
     Uwind = data[instance]['fields']['Ucmp']['data']
@@ -369,36 +354,36 @@ def plot_wind_barbs(data, instance, **kwargs):
 
 
 def plot_shear_calcs():
-#
-#    '''
-#    method to plot the thermodynamic parameters on the parameter list.
-#
-#    Input
-#
-#
-#
-#    # plot the parameters on the list generated.
-#    ax4.text(.01, .1, '0-1 km shear: '+str(SHEAR1KM)+(' 1/s'))
-#    ax4.text(.01, .14, '0-3 km shear: '+str(SHEAR3KM)+' 1/s')
-#    ax4.text(.01, .18, '0-6 km shear: '+str(SHEAR6KM)+' 1/s')
-#    ax4.text(
-#        .01, .22, '0-1km Bulk Shear: '+str(BULKSHEAR1km)+' m/s')
-#    ax4.text(
-#        .01, .26, '0-3km Bulk Shear: '+str(BULKSHEAR3km)+' m/s')
-#    ax4.text(
-#        .01, .3, '0-6km Bulk Shear: '+str(BULKSHEAR6km)+' m/s')
+    #
+    #    '''
+    #    method to plot the thermodynamic parameters on the parameter list.
+    #
+    #    Input
+    #
+    #
+    #
+    #    # plot the parameters on the list generated.
+    #    ax4.text(.01, .1, '0-1 km shear: '+str(SHEAR1KM)+(' 1/s'))
+    #    ax4.text(.01, .14, '0-3 km shear: '+str(SHEAR3KM)+' 1/s')
+    #    ax4.text(.01, .18, '0-6 km shear: '+str(SHEAR6KM)+' 1/s')
+    #    ax4.text(
+    #        .01, .22, '0-1km Bulk Shear: '+str(BULKSHEAR1km)+' m/s')
+    #    ax4.text(
+    #        .01, .26, '0-3km Bulk Shear: '+str(BULKSHEAR3km)+' m/s')
+    #    ax4.text(
+    #        .01, .3, '0-6km Bulk Shear: '+str(BULKSHEAR6km)+' m/s')
 
-#def dry_lift(data):
-#
-#    T = data['temperature']
-#    Td = data['dewpoint']
-#    p = data['presssure']
-#    RH = data['relative_humidity']
-#    u = data['u_component']
-#    v = data['v_component']
-#    h = data['Height']
-#
-#    t_parcel, p_parcel = tC.dry_lift(T, p, LCLT, LCLP)
-#
-#    ax1.semilogy(t_parcel, p_parcel, 'k--', ms=1)
-    return
+    # def dry_lift(data):
+    #
+    #    T = data['temperature']
+    #    Td = data['dewpoint']
+    #    p = data['presssure']
+    #    RH = data['relative_humidity']
+    #    u = data['u_component']
+    #    v = data['v_component']
+    #    h = data['Height']
+    #
+    #    t_parcel, p_parcel = tC.dry_lift(T, p, LCLT, LCLP)
+    #
+    #    ax1.semilogy(t_parcel, p_parcel, 'k--', ms=1)
+        return
