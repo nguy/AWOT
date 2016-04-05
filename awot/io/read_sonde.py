@@ -11,7 +11,9 @@ def read_sounding_data(filePath):
 
     Parameters
     ----------
-    fname:str
+    filepath:str
+        Long file path.
+    
     
     Output
     ------
@@ -22,16 +24,16 @@ def read_sounding_data(filePath):
         metadata : dict
             Dictionary of global attributes in file.
         temperature: dict
-            Temperature dictionary [c]
+            Temperature dictionary [c].
         dewpoint: dict
-            Dewpoint dictionary [c]
+            Dewpoint dictionary [c].
         pressure: dict
-            pressure dictionary [hpa]
-        relative_humidity: dict
+            pressure dictionary [hpa].
+        relative_humidity: dict[%].
             RH dictionary
-        U_component : float
+        u_component : dict
             Wind along u axis wind [m/s].
-        V_component : float
+        v_component : dict
             Wind perpendicular to u axis wind [m/s].
         height : dict
             Height array [m].
@@ -102,11 +104,11 @@ def read_dropsonde_data(filePath, split_file=True):
 
     Parameters
     -----------
-    filepath: string
-        long path file name
+    filepath: str
+        Long path file name.
         
     splitfile: string
-        keyword string telling the method to split the file at header
+        Keyword string telling the method to split the file at header.
 
     output
     ---------
@@ -115,16 +117,16 @@ def read_dropsonde_data(filePath, split_file=True):
         metadata : dict
             Dictionary of global attributes in file.
         temperature: dict
-            Temperature dictionary [c]
+            Temperature dictionary [c].
         dewpoint: dict
-            Dewpoint dictionary [c]
+            Dewpoint dictionary [c].
         pressure: dict 
-            pressure dictionary [hpa]
+            pressure dictionary [hpa].
         relative_humidity: dict 
-            RH dictionary
-        U_component : float
+            RH dictionary[%].
+        u_component : dict
             Wind along u axis wind [m/s].
-        V_component : float
+        v_component : dict
             Wind perpendicular to u axis wind [m/s].
         height : dict
             Height array [m].
@@ -198,7 +200,7 @@ def find_headers(filename):
 
     Parameters
     ----------
-    filename: string
+    filename: str
         Filename for cls file
 
     output
@@ -227,7 +229,7 @@ def count_lines(filename):
     
     Parameters 
     --------
-    filename: string
+    filename: str
         long file path
     
     output
@@ -305,18 +307,18 @@ def _get_header(f):
 
 def read_cls_file(filename):
     """
-    Method to read and split CLS files form the NOAA p3 Dropsondes
+    Method to read and split CLS files form the NOAA p3 Dropsondes.
     
     Parameters
     ----------
-    fname : string
+    fname : str
         Long path filename.
     
     Output
     ------
     cls : dict
         Dictionary containing instances of dropsonde
-        events containing variables.
+        events containing dictionaries of sounding variables.
      """
     # Find the total number of lines
     nfilelines = count_lines(filename)

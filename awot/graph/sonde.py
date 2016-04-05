@@ -13,9 +13,9 @@ def plot_skewt_logp(data, instance, **kwargs):
     Parameters
     -----------
     data: dict
-        data dictionary of sounding data in dictionary format
+        Data dictionary of dictionaries of sounding data variables.
     instance: string
-        a date time string used to pick the dropsonde to be plotted
+        A date time string used to pick the dropsonde to be plotted.
 
     '''
     # pulling from new data structure
@@ -81,9 +81,9 @@ def plot_hodograph(data, instance):
     Parameters
     ----------
     data: dict
-        Dictionary containing dictionary of sounding wind data.
+        Data dictionary of dictionaries of sounding data variables.
     instance: string
-        a date time string used to pick the dropsonde to be plotted
+        A date time string used to pick the dropsonde to be plotted.
 
     '''
     ax2 = fig.add_axes([.05, 0.6, 0.25, 0.3])
@@ -212,9 +212,9 @@ def plot_aux_graph(x_value, y_value, **kwargs):
     Parameters
     ----------
     xvalue : arraylike
-        x value of auxillary sounding data to be plotted
+        x value of auxillary sounding data to be plotted.
     yvalue : arraylike
-        Y value of auxillary sounding data to be plotted
+        Y value of auxillary sounding data to be plotted.
 
     **kwargs
         Adjust plot dimensions scales label, and title.
@@ -264,7 +264,7 @@ def plot_parameter_list():
     '''
     Method to generate a list of parameters calculated
     from the sounding data.
-    Blank axis for plotting
+    Blank axis for plotting.
     
     Parameters
     ---------
@@ -297,8 +297,11 @@ def plot_dryadiabats(**kwargs):
 
     '''
     method to plot the dry adibats. Used in the plotskewtlogp method.
-
-    # kwargs (does not function)
+    
+    Parameters
+    ----------
+    kwargs (does not function).
+    
     '''
     # test = shear1km
 
@@ -332,10 +335,10 @@ def plot_wind_barbs(data, instance, **kwargs):
     Parameters
     ----------
     data: dict
-        data dictionary of sounding wind data in dictionary format
+        data dictionary of dictionaries of sounding data variables.
     instance: string
-        a date time string used to pick the dropsonde to be plotted
-
+        a date time string used to pick the dropsonde to be plotted.
+    kwargs: string max,min.
     '''
     P = data[instance]['fields']['Press']['data']
     Uwind = data[instance]['fields']['Ucmp']['data']
