@@ -80,7 +80,7 @@ def read_sounding_data(filePath):
                                     'hPa', 'Pressure of ambient air',
                                     'Pressure')
     data['relative_humidity'] = _build_dict(RH,
-                                            '%', 'Relative Humidity of ambient air’,
+                                            '%', 'Relative Humidity of ambient air',
                                             'Relative_Humidity')
     data['u_component'] = _build_dict(Uwind,
                                       'm/s', 'u component of wind',
@@ -178,7 +178,7 @@ def read_dropsonde_data(filePath, split_file=True):
     data['presssure'] = _build_dict(P, 'hPa',
                                     'Pressure of ambient air', 'Pressure')
     data['relative_humidity'] = _build_dict(RH,
-                                            '%', 'Relative Humidity of ambient air’,
+                                            '%', 'Relative Humidity of ambient air',
                                             'Relative Humidity')
     data['u_component'] = _build_dict(Uwind,
                                       'm/s', 'u component of wind',
