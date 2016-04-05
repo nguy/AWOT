@@ -7,18 +7,37 @@ def read_sounding_data(filePath):
 
     '''
     method to retrieve standard sounding data from noaa radiosonde
-    and U of Wyoming repository.
+    and U of Wyoming RAOB sounding repository.
 
-    Inputs:
-
-    file path
-    # ============
-
-    output:
-
-    # Dictionary with variable for use in plotting
-
-    '''
+    Parameters
+    ----------
+    fname:str
+    
+    Output
+    ------
+    output
+    ---------
+    data : dict
+        AWOT dictionary instance.
+        metadata : dict
+            Dictionary of global attributes in file.
+        temperature: dict
+            Temperature dictionary [c]
+        dewpoint: dict
+            Dewpoint dictionary [c]
+        pressure: dict
+            pressure dictionary [hpa]
+        relative_humidity: dict
+            RH dictionary
+        U_component : float
+            Wind along u axis wind [m/s].
+        V_component : float
+            Wind perpendicular to u axis wind [m/s].
+        height : dict
+            Height array [m].
+        data_format: string
+            format string radiosonde or dropsonde.
+        '''
 
     data = filePath
     fp = open(data, 'r')
@@ -81,14 +100,36 @@ def read_dropsonde_data(filePath, split_file=True):
     '''
     method to retrieve dropsonde data
 
-    Inputs:
+    Parameters
+    -----------
+    filepath: string
+        long path file name
+        
+    splitfile: string
+        keyword string telling the method to split the file at header
 
-    file path
-    #============
-
-    output:
-
-    #Dictionary with variable for use in plotting
+    output
+    ---------
+    data : dict
+        AWOT dictionary instance.
+        metadata : dict
+            Dictionary of global attributes in file.
+        temperature: dict
+            Temperature dictionary [c]
+        dewpoint: dict
+            Dewpoint dictionary [c]
+        pressure: dict 
+            pressure dictionary [hpa]
+        relative_humidity: dict 
+            RH dictionary
+        U_component : float
+            Wind along u axis wind [m/s].
+        V_component : float
+            Wind perpendicular to u axis wind [m/s].
+        height : dict
+            Height array [m].
+        data_format: string
+            format string radiosonde or dropsonde.
 
     '''
     if split_file:
@@ -154,11 +195,20 @@ def read_dropsonde_data(filePath, split_file=True):
 def find_headers(filename):
     '''
     Finds the location of the headers of each data instance inside the CLS File
-    Inputs:
-    file path
-    #============
-    output:
-    #list of header locations and number of headers
+
+    Parameters
+    ----------
+    filename: string
+        Filename for cls file
+
+    output
+    ----------
+    Hdrcount: int
+        number of headers found in a file.
+    
+    hdrloc: list
+        list of the locations
+    
     '''
     headerID = 'Data Type:'
     f = open(filename, 'r')
@@ -173,14 +223,18 @@ def find_headers(filename):
 
 def count_lines(filename):
     '''
-        Returns the total number of lines in the file
-        --------
-        Inputs : filename
+    Returns the total number of lines in the file
+    
+    Parameters 
+    --------
+    filename: string
         long file path
-        --------------
-        output: float
-        float number of header lines
-        '''
+    
+    output
+    --------
+    nlines: float 
+        number of header lines
+    '''
     f = open(filename, 'r')
     nlines = len(f.readlines())
     f.close()
@@ -190,29 +244,35 @@ def count_lines(filename):
 def _get_header(f):
 
     '''
-        Method to get headers from CLS file
-        Parameters
-        ----------
-        f : file object
-        read file object
+    Method to get headers from CLS file
+    
+    Parameters
+    ----------
+    f : file object
+    read file object
 
-        data_type : Number of header lines
-        project : NASA AMES FFI format number
-        site : Originator/PI Name
-        site_type : Name of organization
-        site_id : Instrument/platform name
-        lon0_dms : Project/mission name
-        lat0_dms : Current volume number (almost always 1)
-        lat0_dec : Number of volumes for data (almost always 1)
-        alt : YYYY MM DD UTC begin date
-        datetime0 : Reduction/revision UTC date
-        launch_reference : Interval between successive values (data rate)
-        sonde_id : Name/Description of DX variable above
-        op_comments : Number of primary variables in file
-        proc_comments : Scaling factor for each variable column
-        varnames : Missing value for each variable column
-        varunits : Name of first variable
-        '''
+    data_type : Number of header lines
+    project : NASA AMES FFI format number
+    site : Originator/PI Name
+    site_type : Name of organization
+    site_id : Instrument/platform name
+    lon0_dms : Project/mission name
+    lat0_dms : Current volume number (almost always 1)
+    lat0_dec : Number of volumes for data (almost always 1)
+    alt : YYYY MM DD UTC begin date
+    datetime0 : Reduction/revision UTC date
+    launch_reference : Interval between successive values (data rate)
+    sonde_id : Name/Description of DX variable above
+    op_comments : Number of primary variables in file
+    proc_comments : Scaling factor for each variable column
+    varnames : Missing value for each variable column
+    varunits : Name of first variable
+    
+    Output
+    ----------
+    hdr: Dict
+        Dictionary containing header information.
+    '''
     hdr = {}
     hdr['data_type'] = f.readline().rstrip('\n').split(":")[1].strip()
     hdr['project'] = f.readline().rstrip('\n').split(":")[1].strip()
@@ -245,13 +305,17 @@ def _get_header(f):
 
 def read_cls_file(filename):
     """
-        Method to read and split CLS files form the NOAA p3 Dropsondes
-        Parameters
-        ----------
-        fname : str
+    Method to read and split CLS files form the NOAA p3 Dropsondes
+    
+    Parameters
+    ----------
+    fname : string
         Long path filename.
-        -----------
-        returns : Dictionary containing instances of dropsonde
+    
+    Output
+    ------
+    cls : dict
+        Dictionary containing instances of dropsonde
         events containing variables.
      """
     # Find the total number of lines

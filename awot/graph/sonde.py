@@ -5,17 +5,18 @@ import numpy as np
 import matplotlib.patches as patches
 from .skew import SkewXTick
 
-
 def plot_skewt_logp(data, instance, **kwargs):
 
     '''
     method to plot sounding or dropsonde data
 
-    Inputs
-    ------
-    dictionary of sounding data
+    Parameters
+    -----------
+    data: dict
+        data dictionary of sounding data in dictionary format
+    instance: string
+        a date time string used to pick the dropsonde to be plotted
 
-    keyword arguments min, max, titles, and label.
     '''
     # pulling from new data structure
     T = data[instance]['fields']['Temp']['data']
@@ -77,11 +78,13 @@ def plot_hodograph(data, instance):
     '''
     method to plot wind data on a hodograph
 
-    Input
-    -----
-    dictionary containing wind data.
+    Parameters
+    ----------
+    data: dict
+        Dictionary containing dictionary of sounding wind data.
+    instance: string
+        a date time string used to pick the dropsonde to be plotted
 
-    file path
     '''
     ax2 = fig.add_axes([.05, 0.6, 0.25, 0.3])
     # create axis and invert masks and assign values
@@ -206,11 +209,13 @@ def plot_aux_graph(x_value, y_value, **kwargs):
     '''
     method to plot an auxiliary graph of user defined data
 
-    Input
-    -----
-    xvalue :
-    yvalue :
-    sounding data (User specified)
+    Parameters
+    ----------
+    xvalue : arraylike
+        x value of auxillary sounding data to be plotted
+    yvalue : arraylike
+        Y value of auxillary sounding data to be plotted
+
     **kwargs
         Adjust plot dimensions scales label, and title.
     '''
@@ -260,6 +265,10 @@ def plot_parameter_list():
     Method to generate a list of parameters calculated
     from the sounding data.
     Blank axis for plotting
+    
+    Parameters
+    ---------
+    
     '''
     # Set axes position and set both axes invisible
 
@@ -318,10 +327,15 @@ def plot_dryadiabats(**kwargs):
 
 def plot_wind_barbs(data, instance, **kwargs):
     '''
-    Notes
-    -----
-    Chooses specific wind barb plotting pattern based on
-    the density of wind observations.
+    Method to plot wind barbs on the skewT
+    
+    Parameters
+    ----------
+    data: dict
+        data dictionary of sounding wind data in dictionary format
+    instance: string
+        a date time string used to pick the dropsonde to be plotted
+
     '''
     P = data[instance]['fields']['Press']['data']
     Uwind = data[instance]['fields']['Ucmp']['data']
