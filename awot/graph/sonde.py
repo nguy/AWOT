@@ -5,22 +5,23 @@ import numpy as np
 import matplotlib.patches as patches
 from .skew import SkewXTick
 
-
-def plot_skewt_logp(data, **kwargs):
+def plot_skewt_logp(data, instance, **kwargs):
 
     '''
     method to plot sounding or dropsonde data
 
-    Inputs
-    ------
-    dictionary of sounding data
+    Parameters
+    -----------
+    data: dict
+        Data dictionary of dictionaries of sounding data variables.
+    instance: string
+        A date time string used to pick the dropsonde to be plotted.
 
-    keyword arguments min, max, titles, and label.
     '''
-    T = data['temperature']
-    TD = data['dewpoint']
-    P = data['presssure']
-
+    # pulling from new data structure
+    T = data[instance]['fields']['Temp']['data']
+    TD = data[instance]['fields']['Dept']['data']
+    P = data[instance]['fields']['Press']['data']
     fig = plt.figure(figsize=(10, 8))
     ax1 = fig.add_axes([0.05, 0.1, 0.6, 0.8],
                        projection='skewx')
@@ -72,25 +73,26 @@ def plot_skewt_logp(data, **kwargs):
     ax1.set_xlim(x_min, x_max)
 
 
-def plot_hodograph(data):
+def plot_hodograph(data, instance):
 
     '''
     method to plot wind data on a hodograph
 
-    Input
-    -----
-    dictionary containing wind data.
+    Parameters
+    ----------
+    data: dict
+        Data dictionary of dictionaries of sounding data variables.
+    instance: string
+        A date time string used to pick the dropsonde to be plotted.
 
-    file path
     '''
     ax2 = fig.add_axes([.05, 0.6, 0.25, 0.3])
-
     # create axis and invert masks and assign values
     # for U, V, and h coordinates
 
-    Uwind = data['u_component']
-    Vwind = data['v_component']
-    Height = data['Height']
+    Uwind = data[instance]['fields']['Ucmp']['data']
+    Vwind = data[instance]['fields']['Vcmp']['data']
+    Height = data[instance]['fields']['Alt']['data']
 
     u_3km = []
     v_3km = []
@@ -207,11 +209,13 @@ def plot_aux_graph(x_value, y_value, **kwargs):
     '''
     method to plot an auxiliary graph of user defined data
 
-    Input
-    -----
-    xvalue :
-    yvalue :
-    sounding data (User specified)
+    Parameters
+    ----------
+    xvalue : arraylike
+        x value of auxillary sounding data to be plotted.
+    yvalue : arraylike
+        Y value of auxillary sounding data to be plotted.
+
     **kwargs
         Adjust plot dimensions scales label, and title.
     '''
@@ -260,7 +264,11 @@ def plot_parameter_list():
     '''
     Method to generate a list of parameters calculated
     from the sounding data.
-    Blank axis for plotting
+    Blank axis for plotting.
+    
+    Parameters
+    ---------
+    
     '''
     # Set axes position and set both axes invisible
 
@@ -289,8 +297,11 @@ def plot_dryadiabats(**kwargs):
 
     '''
     method to plot the dry adibats. Used in the plotskewtlogp method.
-
-    # kwargs (does not function)
+    
+    Parameters
+    ----------
+    kwargs (does not function).
+    
     '''
     # test = shear1km
 
@@ -317,19 +328,22 @@ def plot_dryadiabats(**kwargs):
                      color='#7F4B10', linewidth=0.5)
 
 
-def plot_wind_barbs(data, **kwargs):
+def plot_wind_barbs(data, instance, **kwargs):
     '''
-    Notes
-    -----
-    Chooses specific wind barb plotting pattern based on
-    the density of wind observations.
-    Need to make this a function of the number of
-    observations per second/vertical velocity
+    Method to plot wind barbs on the skewT
+    
+    Parameters
+    ----------
+    data: dict
+        data dictionary of dictionaries of sounding data variables.
+    instance: string
+        a date time string used to pick the dropsonde to be plotted.
+    kwargs: string max,min.
     '''
-    P = data['presssure']
-    Uwind = data['u_component']
-    Vwind = data['v_component']
-    Height = data['Height']
+    P = data[instance]['fields']['Press']['data']
+    Uwind = data[instance]['fields']['Ucmp']['data']
+    Vwind = data[instance]['fields']['Vcmp']['data']
+    Height = data[instance]['fields']['Alt']['data']
 
     # Copy y axis to plot wind barbs
     # Set x lim for windpbarbs
@@ -357,36 +371,36 @@ def plot_wind_barbs(data, **kwargs):
 
 
 def plot_shear_calcs():
-#
-#    '''
-#    method to plot the thermodynamic parameters on the parameter list.
-#
-#    Input
-#
-#
-#
-#    # plot the parameters on the list generated.
-#    ax4.text(.01, .1, '0-1 km shear: '+str(SHEAR1KM)+(' 1/s'))
-#    ax4.text(.01, .14, '0-3 km shear: '+str(SHEAR3KM)+' 1/s')
-#    ax4.text(.01, .18, '0-6 km shear: '+str(SHEAR6KM)+' 1/s')
-#    ax4.text(
-#        .01, .22, '0-1km Bulk Shear: '+str(BULKSHEAR1km)+' m/s')
-#    ax4.text(
-#        .01, .26, '0-3km Bulk Shear: '+str(BULKSHEAR3km)+' m/s')
-#    ax4.text(
-#        .01, .3, '0-6km Bulk Shear: '+str(BULKSHEAR6km)+' m/s')
+    #
+    #    '''
+    #    method to plot the thermodynamic parameters on the parameter list.
+    #
+    #    Input
+    #
+    #
+    #
+    #    # plot the parameters on the list generated.
+    #    ax4.text(.01, .1, '0-1 km shear: '+str(SHEAR1KM)+(' 1/s'))
+    #    ax4.text(.01, .14, '0-3 km shear: '+str(SHEAR3KM)+' 1/s')
+    #    ax4.text(.01, .18, '0-6 km shear: '+str(SHEAR6KM)+' 1/s')
+    #    ax4.text(
+    #        .01, .22, '0-1km Bulk Shear: '+str(BULKSHEAR1km)+' m/s')
+    #    ax4.text(
+    #        .01, .26, '0-3km Bulk Shear: '+str(BULKSHEAR3km)+' m/s')
+    #    ax4.text(
+    #        .01, .3, '0-6km Bulk Shear: '+str(BULKSHEAR6km)+' m/s')
 
-#def dry_lift(data):
-#
-#    T = data['temperature']
-#    Td = data['dewpoint']
-#    p = data['presssure']
-#    RH = data['relative_humidity']
-#    u = data['u_component']
-#    v = data['v_component']
-#    h = data['Height']
-#
-#    t_parcel, p_parcel = tC.dry_lift(T, p, LCLT, LCLP)
-#
-#    ax1.semilogy(t_parcel, p_parcel, 'k--', ms=1)
-    return
+    # def dry_lift(data):
+    #
+    #    T = data['temperature']
+    #    Td = data['dewpoint']
+    #    p = data['presssure']
+    #    RH = data['relative_humidity']
+    #    u = data['u_component']
+    #    v = data['v_component']
+    #    h = data['Height']
+    #
+    #    t_parcel, p_parcel = tC.dry_lift(T, p, LCLT, LCLP)
+    #
+    #    ax1.semilogy(t_parcel, p_parcel, 'k--', ms=1)
+        return
