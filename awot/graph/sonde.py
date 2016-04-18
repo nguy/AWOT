@@ -3,74 +3,137 @@ from matplotlib.collections import LineCollection
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.patches as patches
+
+from . import common
 from .skew import SkewXTick
 
-def plot_skewt_logp(data, instance, **kwargs):
+def plot_skewt_logp(data, instance,
+                    temp_key=None, temp_color='r', temp_ls='-', temp_lw=1.5,
+                    dewpt_key=None, dewpt_color='g', dewpt_ls='-', dewpt_lw=1.5,
+                    press_key=None,
+                    x_min=None, x_max=None, p_min=None, p_max=None,
+                    title=None, titleFontSize=None,
+                    xlab=None, xlabFontSize=None, xpad=None,
+                    ylab=None, ylabFontSize=None, ypad=None,
+                    ax=None, fig=None, **kwargs):
 
     '''
-    method to plot sounding or dropsonde data
+    Plot sounding or dropsonde data on Skew-T diagram.
 
     Parameters
-    -----------
+    ----------
     data: dict
         Data dictionary of dictionaries of sounding data variables.
-    instance: string
+    instance: str
         A date time string used to pick the dropsonde to be plotted.
-
+    temp_key: str
+        Optional keyword for the temperature field.
+        Default is 'Temp'.
+    dewpt_key: str
+        Optional keyword for the dewpoint temperature field.
+        Default is 'Dewpt'.
+    press_key: str
+        Optional keyword for the pressure field.
+        Default is 'Press'.
+    x_min : float
+        Minimum value for x-axis.
+    x_max : float
+        Maximum value for x-axis.
+    p_min : float
+        Minimum value for pressure-axis.
+    p_max : float
+        Maximum value for pressure-axis.
+    title : str
+        Plot title.
+    titleFontSize : int
+        Font size to use for Title label.
+    xlab : str
+        X-axis label.
+    ylab : str
+        Y-axis label.
+    xpad : int
+        Padding for X-axis label.
+    ypad : int
+        Padding for Y-axis label.
+    xlabFontSize : int
+        Font size to use for X-axis label.
+    ylabFontSize : int
+        Font size to use for Y-axis label.
+    ax : Matplotlib axis instance
+        Axis to plot. None will use the current axis.
+    fig : Matplotlib figure instance
+        Figure on which to add the plot. None will use the current figure.
     '''
     # pulling from new data structure
-    T = data[instance]['fields']['Temp']['data']
-    TD = data[instance]['fields']['Dept']['data']
-    P = data[instance]['fields']['Press']['data']
-    fig = plt.figure(figsize=(10, 8))
-    ax1 = fig.add_axes([0.05, 0.1, 0.6, 0.8],
-                       projection='skewx')
+    if temp_key is None:
+        try:
+            T = data[instance]['fields']['Temp']['data'][:]
+        except:
+            T = data[instance]['fields'][temp_key]['data'][:]
+            raise ValueError('Please check the temperature key!')
+            return None
+        try:
+            TD = data[instance]['fields']['Dewpt']['data']
+        except:
+            TD = data[instance]['fields'][dewpt_key]['data']
+            raise ValueError('Please check the dewpoint temperature key!')
+            return None
+        try:
+            P = data[instance]['fields']['Press']['data'][:]
+        except:
+            P = data[instance]['fields'][press_key]['data'][:]
+            raise ValueError('Please check the pressure key!')
+            return None
+    sub1 = (~T.mask & ~P.mask)
+    sub2 = (~TD.mask & ~P.mask)
+    T = T[sub1]
+    P1 = P[sub1]
+    TD = TD[sub2]
+    P2 = P[sub2]
+    if fig is None:
+        fig = plt.figure(figsize=(10, 8))
+    if ax is None:
+        ax_skew = fig.add_axes([0.05, 0.1, 0.6, 0.8], projection='skewx')
+    else:
+        ax_skew = ax
+    # Set up the axes
+    if p_min is None:
+        p_min = 100.
+    if p_max is None:
+        p_max = 1050.
+    if xlab is None:
+        xlab = 'Temperature (C)'
+    if ylab is None:
+        ylab = 'Pressure (hPa)'
+    if title is None:
+        title = 'Skew T - log P'
+    common._set_axes(ax_skew, x_min=x_min, x_max=x_max,
+                     y_min=p_max, y_max=p_min,
+                     title=title, titleFontSize=titleFontSize,
+                     xlab=xlab, ylab=ylab, xpad=xpad, ypad=ypad,
+                     xlabFontSize=xlabFontSize, ylabFontSize=ylabFontSize)
     plt.grid(True)
 
-    plot_dryadiabats()
+    plot_dryadiabats(ax_skew)
+    l = ax_skew.axvline(0, color='k', ls='-', lw=2)
 
-    ax1.semilogy(T, P, 'r-', linewidth=1.5)
-    ax1.semilogy(TD, P, 'g-', linewidth=1.5)
+    Tp = ax_skew.semilogy(T, P1, color=temp_color, ls=temp_ls, lw=1.5)
+    TDp = ax_skew.semilogy(TD, P2, color=dewpt_color, ls=dewpt_ls, lw=1.5)
 
     # Plot the data using normal plotting functions, in this case using
     # log scaling in Y, as dictated by the typical meteorological plot
     # Disables the log-formatting that comes with semilogy
     # set bounds for data on Skew T chart
 
-    ax1.yaxis.set_major_formatter(ScalarFormatter())
-    ax1.set_yticks(np.linspace(100, 1000, 10))
-    ax1.set_ylim(1050, 100)
-    ax1.set_ylabel('presssure mb')
-    ax1.set_xlabel('temperature C')
-    ax1.xaxis.set_major_locator(MultipleLocator(10))
-    ax1.set_title('Skew T log P')
+    ax_skew.yaxis.set_major_formatter(ScalarFormatter())
+#    ax_skew.set_yticks(np.linspace(100, 1000, 10))
+    ax_skew.set_yticks(np.linspace(p_min, 1000, 10))
+    ax_skew.xaxis.set_major_locator(MultipleLocator(10))
 
-    y_min = kwargs.get('y_min')
-    y_max = kwargs.get('y_max')
-
-    x_min = kwargs.get('x_min')
-    x_max = kwargs.get('x_max')
-
-    # data label, title and font sizes value assignments
-    # default values above.
-
-    y_label = kwargs.get('y_label')
-    x_label = kwargs.get('x_label')
-    title = kwargs.get('title')
-    font_size = kwargs.get('font_size')
-
-    for item in ([ax1.xaxis.label, ax1.yaxis.label] +
-                 ax1.get_xticklabels()+ax1.get_yticklabels()):
-        item.set_fontsize(font_size)
-
-    # set the labels and titles defaults to 'none'
-
-    ax1.set_ylabel(y_label)
-    ax1.set_xlabel(x_label)
-    ax1.set_title(title)
-
-    ax1.set_ylim(y_max, y_min)
-    ax1.set_xlim(x_min, x_max)
+    for item in ([ax_skew.xaxis.label, ax_skew.yaxis.label] +
+                 ax_skew.get_xticklabels() + ax_skew.get_yticklabels()):
+        item.set_fontsize(xlabFontSize)
+    return
 
 
 def plot_hodograph(data, instance):
@@ -265,10 +328,10 @@ def plot_parameter_list():
     Method to generate a list of parameters calculated
     from the sounding data.
     Blank axis for plotting.
-    
+
     Parameters
     ---------
-    
+
     '''
     # Set axes position and set both axes invisible
 
@@ -293,15 +356,15 @@ def plot_thermo_calcs():
 #    ax4.text(.01, .07, 'LCL Height: ' + str(lclz) + ' m')
 
 
-def plot_dryadiabats(**kwargs):
+def plot_dryadiabats(ax, **kwargs):
 
     '''
     method to plot the dry adibats. Used in the plotskewtlogp method.
-    
+
     Parameters
     ----------
     kwargs (does not function).
-    
+
     '''
     # test = shear1km
 
@@ -324,14 +387,14 @@ def plot_dryadiabats(**kwargs):
 
         # plot the dry adiabats given a specified color
 
-        ax1.semilogy((theta-273.15), press, line_style,
-                     color='#7F4B10', linewidth=0.5)
+        ax.semilogy((theta - 273.15), press, line_style,
+                    color='#7F4B10', linewidth=0.5)
 
 
 def plot_wind_barbs(data, instance, **kwargs):
     '''
     Method to plot wind barbs on the skewT
-    
+
     Parameters
     ----------
     data: dict

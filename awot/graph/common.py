@@ -289,6 +289,22 @@ def image_2d(xvar, yvar, data_var,
         Matplotlib color map to use.
     norm : Matplotlib.colors.Normalize instance
         Matplotlib normaliztion instance used to scale luminance data.
+    x_major_ticks : float
+        Values for x-axis major tickmark spacing.
+    x_minor_ticks : float
+        Values for x-axis minor tickmark spacing.
+    y_major_ticks : float
+        Values for y-axis major tickmark spacing.
+    y_minor_ticks : float
+        Values for y-axis minor tickmark spacing.
+    x_min : float
+        Minimum value for x-axis.
+    x_max : float
+        Maximum value for x-axis.
+    y_min : float
+        Minimum value for y-axis.
+    y_max : float
+        Maximum value for y-axis.
     title : str
         Plot title.
     titleFontSize : int
@@ -305,22 +321,6 @@ def image_2d(xvar, yvar, data_var,
         Font size to use for X-axis label.
     ylabFontSize : int
         Font size to use for Y-axis label.
-    x_major_ticks : float
-        Values for x-axis major tickmark spacing.
-    x_minor_ticks : float
-        Values for x-axis minor tickmark spacing.
-    y_major_ticks : float
-        Values for y-axis major tickmark spacing.
-    y_minor_ticks : float
-        Values for y-axis minor tickmark spacing.
-    x_min : float
-        Minimum value for x-axis.
-    x_max : float
-        Maximum value for x-axis.
-    x_min : float
-        Minimum value for y-axis.
-    x_max : float
-        Maximum value for y-axis.
     color_bar : bool
         True to add colorbar, False does not.
     cb_pad : str
