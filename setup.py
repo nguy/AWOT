@@ -14,6 +14,12 @@ import glob
 # - Pull the header into a variable
 doclines = __doc__.split("\n")
 
+# - Versioning
+MAJOR = 0
+MINOR = 2
+MICRO = 10
+VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+
 # - Set variables for setup
 packages = ['awot',
             'awot.io',
@@ -27,7 +33,7 @@ package_dirs = {'awot'}
 
 # - Run setup
 setup(name='awot',
-      version='0.2.9',
+      version=VERSION,
       author='Nick Guy',
       author_email='nick.guy@uwyo.edu',
       packages=packages,
@@ -36,7 +42,7 @@ setup(name='awot',
       url='https://github.com/nguy/AWOT',
       license='LICENSE.txt',
       description=doclines[0],
-      long_description="""A toolkit that contains utilities to analyze and
-      visualize observational data by aircraft.
+      long_description="""A toolkit containing utilities to analyze and
+      visualize observational data collected by aircraft.
         """,
       )
