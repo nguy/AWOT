@@ -22,6 +22,8 @@ from .read_uwka_radar import read_wcr2
 from .read_sonde import (read_sounding_data, read_dropsonde_data)
 from .read_nasa_hiwrap import read_hiwrap_netcdf, read_hiwrap_h5
 from .write_radar_netcdf import radar2nc
+from .read_haiper_radar import read_hcr
+
 
 
 __all__ = [s for s in dir() if not s.startswith('_')]
