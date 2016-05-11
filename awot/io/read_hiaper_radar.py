@@ -206,7 +206,8 @@ def _get_time(fname, ncFile, Good_Indices):
     
     #bad indent
     Time_unaware = num2date(ncFile.variables['time'][Good_Indices],
-    common.ncFile.variables['time'].units)
+                            ncFile.variables['time'].units)
+                            
     Time = {'data': Time_unaware, 'units': common.EPOCH_UNITS,
         'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time
