@@ -106,7 +106,7 @@ def read_hcr(fname, field_mapping=None, file_mapping=None):
     for varname in name_map_data:
         if name_map_data[varname] in ncvars:
             data[varname] = common._ncvar_to_dict(
-                                                      ncvars[name_map_data[varname]])
+                ncvars[name_map_data[varname]])
         else:
             data[varname] = None
             common._var_not_found(varname)
@@ -120,7 +120,7 @@ def read_hcr(fname, field_mapping=None, file_mapping=None):
     for varname in name_map_fields:
         if name_map_fields[varname] in ncvars:
             fields[varname] = common._ncvar_subset_to_dict(
-                                                               ncvars[name_map_fields[varname]], Good)
+                ncvars[name_map_fields[varname]], Good)
         else:
             fields[varname] = None
             common._var_not_found(varname)
