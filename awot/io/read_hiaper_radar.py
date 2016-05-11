@@ -30,7 +30,6 @@ def read_hcr(fname, field_mapping=None, file_mapping=None):
         Mapping dictionary to use for field variable data.
         If None, then the default mapping is used.
 
-    
     Output
     ------
     data : dict
@@ -107,7 +106,7 @@ def read_hcr(fname, field_mapping=None, file_mapping=None):
     for varname in name_map_data:
         if name_map_data[varname] in ncvars:
             data[varname] = common._ncvar_to_dict(
-                                                  ncvars[name_map_data[varname]])
+                                                      ncvars[name_map_data[varname]])
         else:
             data[varname] = None
             common._var_not_found(varname)
@@ -121,7 +120,7 @@ def read_hcr(fname, field_mapping=None, file_mapping=None):
     for varname in name_map_fields:
         if name_map_fields[varname] in ncvars:
             fields[varname] = common._ncvar_subset_to_dict(
-                                                           ncvars[name_map_fields[varname]], Good)
+                                                               ncvars[name_map_fields[varname]], Good)
         else:
             fields[varname] = None
             common._var_not_found(varname)
@@ -209,5 +208,5 @@ def _get_time(fname, ncFile, Good_Indices):
                             ncFile.variables['time'].units)
                             
     Time = {'data': Time_unaware, 'units': common.EPOCH_UNITS,
-        'title': 'Time', 'full_name': 'Time (UTC)'}
+            'title': 'Time', 'full_name': 'Time (UTC)'}
     return Time
