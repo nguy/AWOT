@@ -51,18 +51,6 @@ def read_sounding_data(filePath):
 
     u = -ws * np.sin(np.radians(wd))
     v = -ws * np.cos(np.radians(wd))
-    # RH = tC._dewpoint_to_RH(T+273.15, Td+273.15)
-
-    mask = T.mask
-    T = T[~mask]
-    TD = Td[~mask]
-    P = p[~mask]
-    H = h[~mask]
-    RH = RH[~mask]
-
-    mask = u.mask
-    Uwind = u[~mask]
-    Vwind = v[~mask]
 
     data = dict()
     data['metadata'] = header
@@ -280,35 +268,13 @@ def read_cls_drosponde(filename, hdr_num=15):
             fields[var]['data'] = np.ma.masked_greater_equal(
                 fields[var]['data'], 99999.0)
         # MODIFY THE TIME FIELD AS IN THE REAST OF AWOT
-        #       fields['Time'] =
         # Save the fields to the profile
         prof['fields'] = fields
         # Save the profile into the larger CLS instance
         cls[hdrdict['datetime0']] = prof
-        #        cls['time'].append(hdrdict['datetime0'].strftime("%Y%m%d%H%M"))
-        #        print(hdrdict['datetime0'].strftime("%Y%m%d%H%M"))
         # Save the profile into the larger CLS instance
         cls['time'].append(hdrdict['datetime0'])
         cls[hdrdict['datetime0'].strftime("%Y%m%d%H%M")] = prof
 
-
-    data = dict()
-    data['metadata'] = header
-    data['temperature'] = _build_dict(
-    T, 'C', 'Temperature of ambient air', 'Temperature')
-    data['dewpoint'] = _build_dict(
-                     TD, 'C', 'Dewpoint temperature of ambient air', 'Dewpoint Temperature')
-    data['presssure'] = _build_dict(
-                      P, 'hPa', 'Pressure of ambient air', 'Pressure')
-    data['relative_humidity'] = _build_dict(
-                              RH, '%', 'Relative Humidity of ambient air', 'Relative Humidity')
-    data['u_component'] = _build_dict(
-                        Uwind, 'm/s', 'u component of wind', 'U component')
-    data['v_component'] = _build_dict(
-                        Vwind, 'm/s', 'v component of wind', 'V component')
-    data['height'] = _build_dict(
-                   H, 'm', 'Geometric Height in meters', 'Height')
-    data['data_format'] = 'dropsonde'
-
-    return data
+    return cls
 

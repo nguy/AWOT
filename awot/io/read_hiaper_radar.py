@@ -1,12 +1,12 @@
 """
-    awot.io.read_haiper_radar
+    awot.io.read_hiaper_radar
     =================
     
     Scripts to read NCAR HIAPER Cloud Radar NetCDF data files.
     
     https://www.eol.ucar.edu/observing_facilities/hiaper-gulfstream-gv
     
-    Testing was done from data file provided by Nguy.
+    Testing was done from data file provided by Pei Tsai.
     """
 
 from netCDF4 import Dataset, num2date, date2num
@@ -25,42 +25,40 @@ def read_hcr(fname, field_mapping=None, file_mapping=None):
         Parameters
         ----------
         fname : str
-        Filename
+            Filename
         field_mapping : dict
-        Mapping dictionary to use for field variable data.
-        If None, then the default mapping is used.
-        file_mapping : dict
-        Mapping dictionary to use for pulling in data.
-        If None, then the default mapping is used.
+            Mapping dictionary to use for field variable data.
+            If None, then the default mapping is used.
+
         
         Output
         ------
         data : dict
         AWOT dictionary instance.
         latitude : float
-        Aircraft latitude [decimal degrees].
+            Aircraft latitude [decimal degrees].
         longitude : float
-        Aircraft longitude [decimal degrees].
+            Aircraft longitude [decimal degrees].
         height : float
-        Height_agl of center of radar range gate [km].
+            Height_agl of center of radar range gate [km].
         roll: float
-        Aircraft roll attitude [decimal degrees].
+            Aircraft roll attitude [decimal degrees].
         pitch: float
-        Aircraft pitch attitude[decimal degrees].
+            Aircraft pitch attitude[decimal degrees].
         drift: float
-        Aircraft drift.
+            Aircraft drift.
         roatation: float
-        Radar rotation rae for CF radial components [decimal degrees].
+            Radar rotation rae for CF radial components [decimal degrees].
         tilt: float 
-        Radar tilt angle [decimal degrees].
+            Radar tilt angle [decimal degrees].
         height: float
-        Beam range height[km].
+            Beam range height[km].
         project : str
-        Project name.
+            Project name.
         platform : str
-        Platform name or identifier.
+            Platform name or identifier.
         intrument_name: str
-        Name of the instrument HCR
+            Name of the instrument HCR
         '''
     # Create a dictionary to hold data
     data = {}
@@ -152,7 +150,7 @@ def read_hcr(fname, field_mapping=None, file_mapping=None):
     try:
         data['data_format'] = ncFile.version
     except:
-        data['data_format'] = 'CF-Radial-1.3'
+        data['data_format'] = 'hcr_vertical'
         
         ncFile.close()
         
