@@ -17,49 +17,49 @@ from . import common
 
 def read_hcr(fname, field_mapping=None, file_mapping=None):
     '''
-        Read NCAR HIAPER Cloud Radar HCR NetCDF data file.
-        
-        ATTENTION!
-        There are extra variables that are ignored by the reader at this time.
-        
-        Parameters
-        ----------
-        fname : str
-            Filename
-        field_mapping : dict
-            Mapping dictionary to use for field variable data.
-            If None, then the default mapping is used.
+    Read NCAR HIAPER Cloud Radar HCR NetCDF data file.
+    
+    ATTENTION!
+    There are extra variables that are ignored by the reader at this time.
+    
+    Parameters
+    ----------
+    fname : str
+        Filename
+    field_mapping : dict
+        Mapping dictionary to use for field variable data.
+        If None, then the default mapping is used.
 
-        
-        Output
-        ------
-        data : dict
-        AWOT dictionary instance.
-        latitude : float
-            Aircraft latitude [decimal degrees].
-        longitude : float
-            Aircraft longitude [decimal degrees].
-        height : float
-            Height_agl of center of radar range gate [km].
-        roll: float
-            Aircraft roll attitude [decimal degrees].
-        pitch: float
-            Aircraft pitch attitude[decimal degrees].
-        drift: float
-            Aircraft drift.
-        roatation: float
-            Radar rotation rae for CF radial components [decimal degrees].
-        tilt: float 
-            Radar tilt angle [decimal degrees].
-        height: float
-            Beam range height[km].
-        project : str
-            Project name.
-        platform : str
-            Platform name or identifier.
-        intrument_name: str
-            Name of the instrument HCR
-        '''
+    
+    Output
+    ------
+    data : dict
+    AWOT dictionary instance.
+    latitude : float
+        Aircraft latitude [decimal degrees].
+    longitude : float
+        Aircraft longitude [decimal degrees].
+    height : float
+        Height_agl of center of radar range gate [km].
+    roll: float
+        Aircraft roll attitude [decimal degrees].
+    pitch: float
+        Aircraft pitch attitude[decimal degrees].
+    drift: float
+        Aircraft drift.
+    roatation: float
+        Radar rotation rae for CF radial components [decimal degrees].
+    tilt: float 
+        Radar tilt angle [decimal degrees].
+    height: float
+        Beam range height[km].
+    project : str
+        Project name.
+    platform : str
+        Platform name or identifier.
+    intrument_name: str
+        Name of the instrument HCR
+    '''
     # Create a dictionary to hold data
     data = {}
     
