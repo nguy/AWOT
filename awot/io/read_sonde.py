@@ -178,7 +178,7 @@ def _get_header(f):
     return hdr
 
 
-def read_cls_drosponde(filename, hdr_num=15):
+def read_cls_dropsonde(filename, hdr_num=15):
     """
     Read and split CLS files form the NOAA p3 Dropsondes.
     Returns dictionary containing instances of dropsonde events and data. Each dropsonde
