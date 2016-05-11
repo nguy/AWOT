@@ -51,18 +51,6 @@ def read_sounding_data(filePath):
 
     u = -ws * np.sin(np.radians(wd))
     v = -ws * np.cos(np.radians(wd))
-    # RH = tC._dewpoint_to_RH(T+273.15, Td+273.15)
-
-    mask = T.mask
-    T = T[~mask]
-    TD = Td[~mask]
-    P = p[~mask]
-    H = h[~mask]
-    RH = RH[~mask]
-
-    mask = u.mask
-    Uwind = u[~mask]
-    Vwind = v[~mask]
 
     data = dict()
     data['metadata'] = header
@@ -91,95 +79,6 @@ def read_sounding_data(filePath):
 
     fp.close()
     return data
-
-
-def read_dropsonde_data(filePath, split_file=True):
-    '''
-    Retrieve dropsonde data.
-
-    Parameters
-    ----------
-    filepath: str
-        Long path file name.
-
-    split_file: bool
-        True to split the file at header, False does not apply split.
-
-    Output
-    ------
-    data : dict
-        AWOT dictionary instance.
-        metadata : dict
-            Dictionary of global attributes in file.
-        temperature: dict
-            Temperature dictionary [C].
-        dewpoint: dict
-            Dewpoint dictionary [C].
-        pressure: dict
-            pressure dictionary [hpa].
-        relative_humidity: dict
-            RH dictionary[%].
-        u_component : dict
-            Wind along u axis wind [m/s].
-        v_component : dict
-            Wind perpendicular to u axis wind [m/s].
-        height : dict
-            Height array [m].
-        data_format: str
-            format string radiosonde or dropsonde.
-    '''
-    if split_file:
-        data = read_cls_file(filePath)
-        sounding_data = data
-    else:
-        data = open(filePath, 'r')
-        lines = data.readlines()
-        header = lines[1]
-        data.close()
-        data = open(data, 'r')
-        sounding_data = data
-
-        p, T, Td, RH, u, v, h = np.genfromtxt(
-            sounding_data, skip_header=15, usecols=(1, 2, 3, 4, 5, 6, 14),
-            dtype=float, missing_values='9999.0', unpack=True, usemask=True)
-
-        # mask incoming T and dewpoint data
-        T = np.ma.masked_greater_equal(T, 999.0)
-        Td = np.ma.masked_greater_equal(Td, 999.0)
-        RH = np.ma.masked_greater_equal(RH, 999.0)
-        height = np.ma.masked_greater_equal(h, 99999.0)
-
-        mask = T.mask
-        T = T[~mask]
-        TD = Td[~mask]
-        P = p[~mask]
-        H = h[~mask]
-        RH = RH[~mask]
-
-        mask = u.mask
-        Uwind = u[~mask]
-        Vwind = v[~mask]
-
-        data = dict()
-        data['metadata'] = header
-        data['temperature'] = _build_dict(
-            T, 'C', 'Temperature of ambient air', 'Temperature')
-        data['dewpoint'] = _build_dict(
-            TD, 'C', 'Dewpoint temperature of ambient air', 'Dewpoint Temperature')
-        data['presssure'] = _build_dict(
-            P, 'hPa', 'Pressure of ambient air', 'Pressure')
-        data['relative_humidity'] = _build_dict(
-            RH, '%', 'Relative Humidity of ambient air', 'Relative Humidity')
-        data['u_component'] = _build_dict(
-            Uwind, 'm/s', 'u component of wind', 'U component')
-        data['v_component'] = _build_dict(
-            Vwind, 'm/s', 'v component of wind', 'V component')
-        data['height'] = _build_dict(
-            H, 'm', 'Geometric Height in meters', 'Height')
-    data['data_format'] = 'dropsonde'
-
-    return data
-
 
 def find_headers(filename):
     '''
@@ -249,6 +148,7 @@ def _get_header(f):
     varnames : Missing value for each variable column
     varunits : Name of first variable
     '''
+    
     hdr = {}
     hdr['data_type'] = f.readline().rstrip('\n').split(":")[1].strip()
     hdr['project'] = f.readline().rstrip('\n').split(":")[1].strip()
@@ -278,19 +178,42 @@ def _get_header(f):
     return hdr
 
 
-def read_cls_file(filename, hdr_num=15):
+def read_cls_dropsonde(filename, hdr_num=15):
     """
     Read and split CLS files form the NOAA p3 Dropsondes.
-    Returns dictionary containing instances of dropsonde events. Each dropsonde
-    event is a dictionary of sounding variables.
+    Returns dictionary containing instances of dropsonde events and data. Each dropsonde
+    event is a dictionary of sounding variables
 
     Parameters
     ----------
     fname : str
-        Long path filename.
+    Long path filename.
     hdr_num: int
-        Number of lines in the header, i.e. skip this number of lines.
-     """
+    Number of lines in the header, i.e. skip this number of lines.
+
+    Output
+    ------
+    data : dict
+    AWOT dictionary instance.
+    metadata : dict
+    Dictionary of global attributes in file.
+    temperature: dict
+    Temperature dictionary [C].
+    dewpoint: dict
+    Dewpoint dictionary [C].
+    pressure: dict
+    pressure dictionary [hpa].
+    relative_humidity: dict
+    RH dictionary[%].
+    u_component : dict
+    Wind along u axis wind [m/s].
+    v_component : dict
+    Wind perpendicular to u axis wind [m/s].
+    height : dict
+    Height array [m].
+    data_format: str
+    format string radiosonde or dropsonde.
+    """
     # Find the total number of lines
     nfilelines = count_lines(filename)
     # Find the numbers of headers
@@ -345,14 +268,13 @@ def read_cls_file(filename, hdr_num=15):
             fields[var]['data'] = np.ma.masked_greater_equal(
                 fields[var]['data'], 99999.0)
         # MODIFY THE TIME FIELD AS IN THE REAST OF AWOT
-        #       fields['Time'] =
         # Save the fields to the profile
         prof['fields'] = fields
         # Save the profile into the larger CLS instance
         cls[hdrdict['datetime0']] = prof
-        #        cls['time'].append(hdrdict['datetime0'].strftime("%Y%m%d%H%M"))
-        #        print(hdrdict['datetime0'].strftime("%Y%m%d%H%M"))
         # Save the profile into the larger CLS instance
         cls['time'].append(hdrdict['datetime0'])
         cls[hdrdict['datetime0'].strftime("%Y%m%d%H%M")] = prof
+
     return cls
+

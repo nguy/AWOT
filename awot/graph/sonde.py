@@ -341,6 +341,11 @@ def plot_parameter_list():
 
 
 def plot_thermo_calcs():
+    
+    '''
+    ATTENTION!
+    This module is still under development.
+    '''
 
     return
 #
@@ -359,6 +364,9 @@ def plot_thermo_calcs():
 def plot_dryadiabats(ax, **kwargs):
 
     '''
+    ATTENTION!
+    This module is still under development. 
+    
     method to plot the dry adibats. Used in the plotskewtlogp method.
 
     Parameters
@@ -434,6 +442,10 @@ def plot_wind_barbs(data, instance, **kwargs):
 
 
 def plot_shear_calcs():
+    '''
+        ATTENTION! 
+        This module is under development.
+    '''    
     #
     #    '''
     #    method to plot the thermodynamic parameters on the parameter list.
@@ -466,4 +478,4 @@ def plot_shear_calcs():
     #    t_parcel, p_parcel = tC.dry_lift(T, p, LCLT, LCLP)
     #
     #    ax1.semilogy(t_parcel, p_parcel, 'k--', ms=1)
-        return
+    return
