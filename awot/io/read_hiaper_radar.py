@@ -131,17 +131,17 @@ def read_hcr(fname, field_mapping=None, file_mapping=None):
     # Find the surface variable
     # See PROCESSED_DATA/WCR_L2_OWLES13.20131015.cdl
     # for details of mask properties
-    surface = np.empty_like(data['latitude']['data'])
-    condition = np.equal(fields['mask']['data'], 32)
-    for nn in range(len(surface)):
-        if np.any(condition[nn, :]):
-            surface[nn] = data['height']['data'][np.where(
-                                                          condition[nn, :])[0][0]]
-    data['surface'] = {'name': "surface",
-        'long_name': "Height of Surface",
-            'data': surface,
-                'units': 'meters'
-                }
+    ##surface = np.empty_like(data['latitude']['data'])
+    #    condition = np.equal(fields['mask']['data'], 32)
+    #    for nn in range(len(surface)):
+    #        if np.any(condition[nn, :]):
+    #            surface[nn] = data['height']['data'][np.where(
+    #                                                          condition[nn, :])[0][0]]
+    #    data['surface'] = {'name': "surface",
+    #        'long_name': "Height of Surface",
+    #            'data': surface,
+    #                'units': 'meters'
+    #                }
 
     # Save to output dictionary
     data['fields'] = fields
