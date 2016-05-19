@@ -31,7 +31,7 @@ from netCDF4 import date2num
 import numpy as np
 
 from ..graph.common import _get_start_datetime, _get_end_datetime
-from ..io.common import _build_dict
+from ..io import common as iocommon
 
 # From http://www.movable-type.co.uk/scripts/LatLongVincenty.html:
 #   The most accurate and widely used globally-applicable model for the earth
@@ -134,7 +134,7 @@ def calc_ground_distance(awot, method='great circle',
         longname = "Track distance traveled over ground"
     if stdname is None:
         stdname = "Track ground distance"
-    newdict = _build_dict(dcum, units, longname, stdname)
+    newdict = iocommon._build_dict(dcum, units, longname, stdname)
 
     # Add dictionary to AWOT dictionary if indicated
     if keyname is None:
@@ -207,7 +207,7 @@ def calc_air_distance(awot, airspeed_key=None, time_key=None,
         longname = "Track distance traveled through air"
     if stdname is None:
         stdname = "Track air distance"
-    newdict = _build_dict(dcum, units, longname, stdname)
+    newdict = iocommon._build_dict(dcum, units, longname, stdname)
 
     # Add dictionary to AWOT dictionary if indicated
     if keyname is None:

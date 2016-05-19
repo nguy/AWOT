@@ -198,17 +198,17 @@ class FlightLevel(object):
         dt_end = self._get_datetime(end_time, get_end=True)
 
         # Subset the data (will use min/max if None given)
-        xSub, ySub = self._get_x_y_time_subset(
+        xsub, ysub = self._get_x_y_time_subset(
             start_time, end_time, return_time=False)
-        lonSub, latSub = self._get_lon_lat_time_subset(start_time, end_time)
-        timeSub, VarSub = self._get_time_var_time_subset(
+        lonsub, latsub = self._get_lon_lat_time_subset(start_time, end_time)
+        timesub, varsub = self._get_time_var_time_subset(
             'altitude', start_time, end_time)
 
         # Clean up the masked data for plotting
-        all_mask = latSub.mask + lonSub.mask + VarSub.mask
-        lonmask = np.ma.array(lonSub, mask=all_mask).compressed()
-        latmask = np.ma.array(latSub, mask=all_mask).compressed()
-        varmask = np.ma.array(VarSub, mask=all_mask).compressed()
+        all_mask = latsub.mask + lonsub.mask + varsub.mask
+        lonmask = np.ma.array(lonsub, mask=all_mask).compressed()
+        latmask = np.ma.array(latsub, mask=all_mask).compressed()
+        varmask = np.ma.array(varsub, mask=all_mask).compressed()
 
         xmask, ymask = self.basemap(lonmask, latmask)
 
@@ -337,17 +337,17 @@ class FlightLevel(object):
         dt_end = self._get_datetime(end_time, get_end=True)
 
         # Subset the data (will use min/max if None given)
-        xSub, ySub = self._get_x_y_time_subset(
+        xsub, ysub = self._get_x_y_time_subset(
             start_time, end_time, return_time=False)
-        lonSub, latSub = self._get_lon_lat_time_subset(start_time, end_time)
-        timeSub, VarSub = self._get_time_var_time_subset(
+        lonsub, latsub = self._get_lon_lat_time_subset(start_time, end_time)
+        timesub, varsub = self._get_time_var_time_subset(
             field, start_time, end_time)
 
         # Clean up the masked data for plotting
-        all_mask = latSub.mask + lonSub.mask + VarSub.mask
-        lonmask = np.ma.array(lonSub, mask=all_mask).compressed()
-        latmask = np.ma.array(latSub, mask=all_mask).compressed()
-        varmask = np.ma.array(VarSub, mask=all_mask).compressed()
+        all_mask = latsub.mask + lonsub.mask + varsub.mask
+        lonmask = np.ma.array(lonsub, mask=all_mask).compressed()
+        latmask = np.ma.array(latsub, mask=all_mask).compressed()
+        varmask = np.ma.array(varsub, mask=all_mask).compressed()
 
         xmask, ymask = self.basemap(lonmask, latmask)
 
@@ -499,71 +499,73 @@ class FlightLevel(object):
         dt_end = self._get_datetime(end_time, get_end=True)
 
         # Subset the data (will use min/max if None given)
-        xSub, ySub = self._get_x_y_time_subset(
+        xsub, ysub = self._get_x_y_time_subset(
             start_time, end_time, return_time=False)
-        lonSub, latSub = self._get_lon_lat_time_subset(start_time, end_time)
-        timeSub = self._get_time_subset(start_time, end_time)
+        lonsub, latsub = self._get_lon_lat_time_subset(start_time, end_time)
+        timesub = self._get_time_subset(start_time, end_time)
 
         # Return masked or unmasked variable
-        Var, Data = self._get_radar_variable_dict_data(radar, field)
+        var, data = self._get_radar_variable_dict_data(radar, field)
         if mask_procedure is not None:
-            Data = get_masked_data(Data, mask_procedure, mask_tuple)
+            data = get_masked_data(data, mask_procedure, mask_tuple)
 
         # Create contour level array
         clevels = np.linspace(cminmax[0], cminmax[1], clevs)
 
         # Create an array to hold the interpolated cross-section
-        xs_data = np.empty([len(lonSub), len(radar['height']['data'][:])])
+        xs_data = np.empty([len(lonsub), len(radar['height']['data'][:])])
 
         # Create arrays for cross-section lon-lat index points
-        xsY = np.empty(len(lonSub))
-        xsX = np.empty(len(lonSub))
-        Xdist = np.empty(len(lonSub))
-        Ydist = np.empty(len(lonSub))
-        xsDist = np.empty(len(lonSub))
+        xcross = np.empty(len(lonsub))
+        ycross = np.empty(len(lonsub))
+        x_dist = np.empty(len(lonsub))
+        y_dist = np.empty(len(lonsub))
+        xs_dist = np.empty(len(lonsub))
 
-        for ii in range(len(lonSub)):
-            xsX[ii] = self._get_lon_index(lonSub[ii], radar)
-            xsY[ii] = self._get_lat_index(latSub[ii], radar)
+        for ii in range(len(lonsub)):
+            xcross[ii] = self._get_lon_index(lonsub[ii], radar)
+            ycross[ii] = self._get_lat_index(latsub[ii], radar)
 
             # Calculate the distance array along the cross-section
             # Need to keep a running tally moving through track array
             if ii == 0:
-                Xdist[ii] = 0.
-                Ydist[ii] = 0.
-                xsDist[ii] = 0.
+                x_dist[ii] = 0.
+                y_dist[ii] = 0.
+                xs_dist[ii] = 0.
             else:
-                Xdist[ii] = np.absolute(
+                x_dist[ii] = np.absolute(
                     (np.pi * common.EARTH_RADIUS / 180.) *
-                    (lonSub[ii] - lonSub[ii - 1]))
-                Ydist[ii] = np.absolute(
+                    (lonsub[ii] - lonsub[ii - 1]))
+                y_dist[ii] = np.absolute(
                     (np.pi * common.EARTH_RADIUS / 180.) *
-                    (latSub[ii] - latSub[ii - 1]))
-                xsDist[ii] = (np.sqrt(Xdist[ii]**2 + Ydist[ii]**2)
-                              ) + xsDist[ii - 1]
+                    (latsub[ii] - latsub[ii - 1]))
+                xs_dist[ii] = (
+                    (np.sqrt(x_dist[ii]**2 + y_dist[ii]**2)) +
+                    xs_dist[ii - 1])
 
         # Loop through each level to create cross-section and stack them
         for nlev in range(len(radar['height']['data'][:])):
             # Extract the values along the line, using cubic interpolation
             xs_data[:, nlev] = scim.map_coordinates(
-                Data[nlev, :, :], np.vstack((xsY, xsX)), prefilter=False)
+                data[nlev, :, :], np.vstack((ycross, xcross)), prefilter=False)
             # , mode='nearest')
 
         # Calculate the distance array along the cross-section
         if x_axis_array == 'distance':
-            Xax = xsDist
+            newx = xs_dist
         elif x_axis_array == 'time':
-            Xax = date2num(timeSub)
+            newx = date2num(timesub)
 
         # Convert Height, distance arrays to 2D
         if plot_km:
-            Ht2D, Xax2D = np.meshgrid(radar['height']['data'][:]/1000., Xax)
+            Ht2D, newx2D = np.meshgrid(radar['height']['data'][:]/1000., newx)
             ylabel = 'Altitude (km)'
         else:
-            Ht2D, Xax2D = np.meshgrid(radar['height']['data'][:], Xax)
+            Ht2D, newx2D = np.meshgrid(radar['height']['data'][:], newx)
             ylabel = 'Altitude (m)'
 
-        p = ax.pcolormesh(Xax2D, Ht2D, np.ma.masked_less_equal(xs_data, -800.),
+        p = ax.pcolormesh(newx2D, Ht2D,
+                          np.ma.masked_less_equal(xs_data, -800.),
                           vmin=vmin, vmax=vmax, cmap=cmap)
 
         ax.set_ylabel(ylabel)
@@ -589,7 +591,7 @@ class FlightLevel(object):
 
         # Add Colorbar
         if color_bar:
-            cbStr = Var['long_name'] + ' (' + Var['units'] + ')'
+            cbStr = var['long_name'] + ' (' + var['units'] + ')'
             cb = common.add_colorbar(ax, p, orientation=cb_orient, pad=cb_pad,
                                      label=cbStr, fontsize=cb_fontsize,
                                      ticklabel_size=cb_ticklabel_size,
@@ -633,44 +635,44 @@ class FlightLevel(object):
         # that calculates 'lower left'
         if (location.lower() == 'upper left') or \
                 (location.lower() == 'upper_left'):
-            xScaleOffset = (
+            xoffset = (
                 self.basemap.urcrnrlon - self.basemap.llcrnrlon) * 0.10
-            yScaleOffset = (
+            yoffset = (
                 self.basemap.urcrnrlat - self.basemap.llcrnrlat) * 0.90
         elif (location.lower() == 'upper middle') or \
                 (location.lower() == 'upper_middle'):
-            xScaleOffset = (
+            xoffset = (
                 self.basemap.urcrnrlon - self.basemap.llcrnrlon) * 0.50
-            yScaleOffset = (
+            yoffset = (
                 self.basemap.urcrnrlat - self.basemap.llcrnrlat) * 0.90
         elif (location.lower() == 'upper right') or \
                 (location.lower() == 'upper_right'):
-            xScaleOffset = (
+            xoffset = (
                 self.basemap.urcrnrlon - self.basemap.llcrnrlon) * 0.90
-            yScaleOffset = (
+            yoffset = (
                 self.basemap.urcrnrlat - self.basemap.llcrnrlat) * 0.90
         elif (location.lower() == 'lower right') or \
                 (location.lower() == 'lower_right'):
-            xScaleOffset = (
+            xoffset = (
                 self.basemap.urcrnrlon - self.basemap.llcrnrlon) * 0.90
-            yScaleOffset = (
+            yoffset = (
                 self.basemap.urcrnrlat - self.basemap.llcrnrlat) * 0.10
         elif (location.lower() == 'lower middle') or \
                 (location.lower() == 'lower_middle'):
-            xScaleOffset = (
+            xoffset = (
                 self.basemap.urcrnrlon - self.basemap.llcrnrlon) * 0.50
-            yScaleOffset = (
+            yoffset = (
                 self.basemap.urcrnrlat - self.basemap.llcrnrlat) * 0.10
         else:
-            xScaleOffset = (
+            xoffset = (
                 self.basemap.urcrnrlon - self.basemap.llcrnrlon) * 0.10
-            yScaleOffset = (
+            yoffset = (
                 self.basemap.urcrnrlat - self.basemap.llcrnrlat) * 0.10
 
         if lon is None:
-            lon = self.basemap.llcrnrlon + xScaleOffset
+            lon = self.basemap.llcrnrlon + xoffset
         if lat is None:
-            lat = self.basemap.llcrnrlat + yScaleOffset
+            lat = self.basemap.llcrnrlat + yoffset
         if lon0 is None:
             lon0 = (self.basemap.llcrnrlon + self.basemap.urcrnrlon) / 2.
         if lat0 is None:
@@ -703,14 +705,14 @@ class FlightLevel(object):
                    (self.time['data'][:] <= dt_end)]
         Y = self.y[(self.time['data'][:] >= dt_start) &
                    (self.time['data'][:] <= dt_end)]
-        Uwnd = self.Uwind['data'][(self.time['data'][:] >= dt_start) &
-                                  (self.time['data'][:] <= dt_end)]
-        Vwnd = self.Vwind['data'][(self.time['data'][:] >= dt_start) &
-                                  (self.time['data'][:] <= dt_end)]
+        u_wind = self.Uwind['data'][(self.time['data'][:] >= dt_start) &
+                                    (self.time['data'][:] <= dt_end)]
+        v_wind = self.Vwind['data'][(self.time['data'][:] >= dt_start) &
+                                    (self.time['data'][:] <= dt_end)]
 
         # Only plot every nth barb from the barbspacing parameter
         self.basemap.barbs(X[::barbspacing], Y[::barbspacing],
-                           Uwnd[::barbspacing], Vwnd[::barbspacing],
+                           u_wind[::barbspacing], v_wind[::barbspacing],
                            barbcolor=barbcolor, flagcolor=flagcolor,
                            linewidth=lw, **kwargs)
 
@@ -769,8 +771,8 @@ class FlightLevel(object):
         line_style : str
             Matplotlib compatible string which specifies the line style.
         """
-        X, Y = self.basemap(line_lons, line_lats)
-        self.basemap.plot(X, Y, line_style, **kwargs)
+        x, y = self.basemap(line_lons, line_lats)
+        self.basemap.plot(x, y, line_style, **kwargs)
 
     def time_stamps(self, labelspacing=1800, symbol='k*',
                     size=12, color='k', label_offset=(None, None),
@@ -1125,12 +1127,12 @@ class FlightLevel(object):
         common._check_field(self.flight_data, field)
 
         # Get the subsetted data
-        tSub, VarSub = self._get_time_var_time_subset(
+        tsub, varsub = self._get_time_var_time_subset(
             field, start_time=start_time, end_time=end_time)
 
         # Plot the time series
         ts = common.plot_date_ts(
-            tSub, VarSub, color=color, marker=marker, msize=msize, lw=lw,
+            tsub, varsub, color=color, marker=marker, msize=msize, lw=lw,
             date_format=date_format, tz=tz, xdate=xdate,
             date_minor_string=date_minor_string,
             other_major_ticks=other_major_ticks,
@@ -1174,11 +1176,11 @@ class FlightLevel(object):
         common._check_field(self.flight_data, field)
 
         # Get the subsetted data
-        tSub, VarSub = self._get_time_var_time_subset(
+        tsub, varsub = self._get_time_var_time_subset(
             field, start_time=start_time, end_time=end_time)
 
         # Create the plot
-        ax.plot_date(tSub, VarSub, mfc=color, mec=color, marker=marker,
+        ax.plot_date(tsub, varsub, mfc=color, mec=color, marker=marker,
                      markersize=msize, lw=lw)
         return
 
@@ -1265,14 +1267,14 @@ class FlightLevel(object):
         common._check_field(self.flight_data, field)
 
         # Get the subsetted data
-        tSub, VarSub = self._get_time_var_time_subset(
+        tsub, varsub = self._get_time_var_time_subset(
             field, start_time=start_time, end_time=end_time)
 
-        tSub2D, Ht2D = np.meshgrid(tsub, self.flight_data['height'])
+        tsub2D, Ht2D = np.meshgrid(tsub, self.flight_data['height'])
 
         # Plot the time series
         ts = common.image_2d_date(
-            tSub2D, Ht2D, VarSub, vmin=vmin, vmax=vmax,
+            tsub2D, Ht2D, varsub, vmin=vmin, vmax=vmax,
             date_format=date_format, tz=tz, xdate=xdate,
             date_minor_string=date_minor_string,
             other_major_ticks=other_major_ticks,
@@ -1498,7 +1500,7 @@ class FlightLevel(object):
 
     def _get_lon_lat_time_subset(self, start_time, end_time):
         '''
-        Get a subsetted Lon and Lat to control track length if input by user.
+        Subsetted longitude/latitude to control track length if input by user.
         '''
         # Check to see if time is subsetted
         dt_start = self._get_datetime(start_time, get_start=True)
@@ -1508,13 +1510,11 @@ class FlightLevel(object):
                                      (self.time['data'][:] <= dt_end)]
         lat = self.latitude['data'][(self.time['data'][:] >= dt_start) &
                                     (self.time['data'][:] <= dt_end)]
-
         return lon, lat
 
     def _get_time_var_time_subset(self, field, start_time, end_time):
         '''
-        Get a subsetted time and Variable to control track
-        length if input by user.
+        Subsetted time and variable to control trac length if input by user.
         '''
         # Check to see if time is subsetted
         dt_start = self._get_datetime(start_time, get_start=True)
@@ -1528,7 +1528,7 @@ class FlightLevel(object):
 
     def _get_time_subset(self, start_time, end_time):
         '''
-        Get a subsetted time to control track length if input by user.
+        Subsetted time to control track length if input by user.
         '''
         # Check to see if time is subsetted
         dt_start = self._get_datetime(start_time, get_start=True)
@@ -1539,26 +1539,28 @@ class FlightLevel(object):
 
     def _get_lat_index(self, value, radar):
         ''' Calculate the exact index position within latitude array. '''
-        # Find the spacing
-        dp = radar['latitude']['data'][1] - radar['latitude']['data'][0]
+        # Find the spacing, ravel in case dimensions greater 1
+        dp = np.absolute(
+            radar['latitude']['data'].ravel()[1] -
+            radar['latitude']['data'].ravel()[0])
 
         # Calculate the relative position
-        pos = (value - radar['latitude']['data'][0]) / dp
-        return pos
+        return (value - radar['latitude']['data'].ravel()[0]) / dp
 
     def _get_lon_index(self, value, radar):
         ''' Calculate the exact index position within longitude array. '''
-        # Find the spacing
-        dp = radar['longitude']['data'][1] - radar['longitude']['data'][0]
+        # Find the spacing, ravel in case dimensions greater 1
+        dp = np.absolute(
+            radar['longitude']['data'].ravel()[1] -
+            radar['longitude']['data'].ravel()[0])
 
         # Calculate the relative position
-        pos = (value - radar['longitude']['data'][0]) / dp
-        return pos
+        return (value - radar['longitude']['data'].ravel()[0]) / dp
 
     def _get_radar_variable_dict_data(self, radar, field):
         ''' Get the variable from the fields dictionary. '''
-        Var, data = radar['fields'][field], radar['fields'][field]['data'][:]
-        return Var, data
+        var, data = radar['fields'][field], radar['fields'][field]['data'][:]
+        return var, data
 
     def _get_var_dict(self, field):
         ''' Get the variable from the flight dictionary. '''

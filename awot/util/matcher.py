@@ -1,25 +1,26 @@
 """
 awot.util.matcher
-================
+=================
 
 Matching function for airborne and ground-based radar data.
 
 Original version provided by George Duffy 'APRmacher2.py'.
-This code looks to generalize it to a formation that works with
+This code looks to generalize it to a structure that works with
 AWOT objects.
 
+This code should be extendable to any input data set.
 """
 import numpy as np
 import scipy
 import datetime
 from netCDF4 import date2num
-from ..io.common import convert_to_epoch_dict, _get_epoch_dict
+from ..io import common
 
 
 class TrackMatch(object):
     """Class for matching flight level data to other observations."""
 
-    def __init__(self, flight, data,
+    def __init__(self, flight, datavolume,
                  start_time=None, end_time=None,
                  data_lon=None, data_lat=None,
                  data_height=None, data_time=None,
@@ -35,8 +36,9 @@ class TrackMatch(object):
         ----------
         flight : dict
             AWOT flight data dictionary object.
-        data : dict
-            AWOT dictionary object.
+        datavolume : dict
+            AWOT dictionary object of some data field. The nearest points
+            in this field are matched to flight track points.
 
         Optional
         --------
@@ -76,10 +78,14 @@ class TrackMatch(object):
             List of field names to match for data object.
             None loops through existing fields.
         '''
+        import time as timer
+        appbegin = timer.time()
+
         self.flight_data = flight
-        self.data = data
+        self.datavol = datavolume
         self.time = flight['time']
 
+        # Check if keyword names were given
         if flight_lon_name is None:
             lonkey = 'longitude'
         else:
@@ -105,6 +111,7 @@ class TrackMatch(object):
         else:
             vkey = vwind_name
 
+        # Set the required flight fields
         self.flight_lon = self._get_var_time_subset(
                              flight[lonkey].copy(),
                              start_time, end_time)
@@ -125,17 +132,18 @@ class TrackMatch(object):
 
         # Since time could come in in different datetime units,
         # we need to convert to common epoch times
-        flight_epoch = convert_to_epoch_dict(flight[timekey])
+        flight_epoch = common.convert_to_epoch_dict(flight[timekey])
         self.flight_time = self._get_var_time_subset(
                              flight_epoch,
                              start_time, end_time)
 
-        # Create a field to store matched data
+        # Create a field to store flight-matched data
         self.flight_matchdata = {}
         self.flight_matchdata['longitude'] = self.flight_lon
         self.flight_matchdata['latitude'] = self.flight_lat
         self.flight_matchdata['altitude'] = self.flight_alt
         self.flight_matchdata['time'] = self.flight_time
+##        print("A --- %s seconds ---" % (timer.time() - appbegin))
 
         for field in flight.keys():
             try:
@@ -145,64 +153,68 @@ class TrackMatch(object):
             except:
                 self.flight_matchdata[field] = None
 
+        # Create a field to store data field to matching data
         self.data_fields = {}
         if field_match_dict is None:
-            for field in self.data['fields'].keys():
-                self.data_fields[field] = self.data['fields'][field]
+            for field in self.datavol['fields'].keys():
+                self.data_fields[field] = self.datavol['fields'][field].copy()
         else:
             for field in field_match_dict:
-                self.data_fields[field] = self.data['fields'][field]
+                self.data_fields[field] = self.datavol['fields'][field].copy()
 
         # Run checks to make sure array lengths are the same
+        warntxt = "Check that data is an AWOT object!"
         if data_lon is None:
             try:
-                self.data_lon = self.data['longitude']['data']
+                self.data_lon = self.datavol['longitude']['data']
             except:
-                print("Check that data is an AWOT object!")
+                print("Cannot find longitude, %s" % warntxt)
         else:
             self.data_lon = np.array(data_lon)
 
         if data_lat is None:
             try:
-                self.data_lat = self.data['latitude']['data']
+                self.data_lat = self.datavol['latitude']['data']
             except:
-                print("Check that data is an AWOT object!")
+                print("Cannot find latitude, %s" % warntxt)
         else:
             self.data_lat = np.array(data_lat)
 
         if data_height is None:
             try:
-                self.data_height = self.data['height']['data']
+                self.data_height = self.datavol['height']['data']
             except:
-                print("Check that data is an AWOT object!")
+                print("Cannot find height, %s" % warntxt)
         else:
             self.data_height = np.array(data_height)
+##        print("B --- %s seconds ---" % (timer.time() - appbegin))
 
         if data_time is None:
             try:
-                self.data_time = convert_to_epoch_dict(self.data['time'])
+                self.data_time = common.convert_to_epoch_dict(self.datavol['time'])
             except:
-                self.data_time = _get_epoch_dict(
-                                    self.data['time']['data'],
-                                    self.data['time']['units'])
+                self.data_time = common._get_epoch_dict(
+                    self.datavol['time']['data'],
+                    self.datavol['time']['units'])
             else:
-                print("Check that data is an AWOT object!")
+                print("Cannot find time, %s" % warntxt)
         else:
             try:
-                self.data_time = convert_to_epoch_dict(data_time)
+                self.data_time = common.convert_to_epoch_dict(data_time)
             except:
-                self.data_time = _get_epoch_dict(
+                self.data_time = common._get_epoch_dict(
                                     data_time['data'],
                                     data_time['units'])
+        print("C --- %s seconds ---" % (timer.time() - appbegin))
 
         self.start_time = start_time
         self.end_time = end_time
 
         # Convert latitude and longitude to radians
-        self.latvals = np.radians(self.data_lat)
-        self.lonvals = np.radians(self.data_lon)
-        self.lat0vals = np.radians(self.flight_lat['data'][:])
-        self.lon0vals = np.radians(self.flight_lon['data'][:])
+        self.latvalsr = np.radians(self.data_lat)
+        self.lonvalsr = np.radians(self.data_lon)
+        self.lat0valsr = np.radians(self.flight_lat['data'][:])
+        self.lon0valsr = np.radians(self.flight_lon['data'][:])
 
     def kdtree(self, leafsize=16,
                use_time=False, print_match_pairs=False,
@@ -228,14 +240,16 @@ class TrackMatch(object):
             Default keyword values used in the cKDTree.query.
         '''
         # Create lists to contain the indices for each flight point
-        indlat = []
-        indlon = []
+        ind1d = []
+##        indy = []
+##        indx = []
+        distance = []
 
         # Calculate sines and cosines of lats/lon
-        clat, clon = np.cos(self.latvals), np.cos(self.lonvals)
-        slon, slat = np.sin(self.lonvals), np.sin(self.latvals)
-        clats0, clons0 = np.cos(self.lat0vals), np.cos(self.lon0vals)
-        slons0, slats0 = np.sin(self.lon0vals), np.sin(self.lat0vals)
+        clat, clon = np.cos(self.latvalsr), np.cos(self.lonvalsr)
+        slon, slat = np.sin(self.lonvalsr), np.sin(self.latvalsr)
+        clats0, clons0 = np.cos(self.lat0valsr), np.cos(self.lon0valsr)
+        slons0, slats0 = np.sin(self.lon0valsr), np.sin(self.lat0valsr)
 
         # Build kd-tree from big arrays of 3D coordinates
         if use_time:
@@ -250,7 +264,7 @@ class TrackMatch(object):
                                np.ravel(self.data_height)))
         kdt = scipy.spatial.cKDTree(triples, leafsize=leafsize)
 
-        for ii in range(len(self.lat0vals)):
+        for ii in range(len(self.lat0valsr)):
             if use_time:
                 dist_sq_min, minindex_1d = kdt.query(
                     [self.flight_lon['data'][ii], self.flight_lat['data'][ii],
@@ -267,16 +281,21 @@ class TrackMatch(object):
                     k=query_k, eps=query_eps, p=query_p,
                     distance_upper_bound=query_distance_upper_bound,
                     n_jobs=query_n_jobs)
-            iy_min, ix_min = np.unravel_index(minindex_1d, self.data_lat.shape)
-            indlon.append(iy_min)
-            indlat.append(ix_min)
+            distance.append(dist_sq_min)
+##            iy_min, ix_min = np.unravel_index(minindex_1d, self.data_lat.shape)
+            ind1d.append(minindex_1d)
+##            indy.append(iy_min)
+##            indx.append(ix_min)
+        indnd = np.unravel_index(ind1d, self.latvalsr.shape)
 
         if print_match_pairs:
-            self._print_pair_by_index(indlon, indlat)
+            self._print_pair_by_index(indy, indx)
 
-        self._get_matchdata_by_index(indlon, indlat)
-        return MatchData(self.flight_matchdata, self.data_matchdata,
-                         self.start_time, self.end_time)
+##        matchdata = self._get_data_by_index(indy, indx)
+        matchdata = self._get_data_by_index(ind1d)
+        return MatchData(self.flight_matchdata, matchdata, distance,
+                         ind1d, indnd,
+                         start_time=self.start_time, end_time=self.end_time)
 
     def near_neighbor_tunnel(self, use_time=False):
         '''
@@ -296,16 +315,18 @@ class TrackMatch(object):
             Default is False.
         '''
         # Create lists to contain the indices for each flight point
-        indlat = []
-        indlon = []
+        ind1d = []
+##        indx = []
+##        indy = []
+        distance = []
 
         # Calculate sines and cosines of lats/lon
-        clat, clon = np.cos(self.latvals), np.cos(self.lonvals)
-        slon, slat = np.sin(self.lonvals), np.sin(self.latvals)
-        clats0, clons0 = np.cos(self.lat0vals), np.cos(self.lon0vals)
-        slons0, slats0 = np.sin(self.lon0vals), np.sin(self.lat0vals)
+        clat, clon = np.cos(self.latvalsr), np.cos(self.lonvalsr)
+        slon, slat = np.sin(self.lonvalsr), np.sin(self.latvalsr)
+        clats0, clons0 = np.cos(self.lat0valsr), np.cos(self.lon0valsr)
+        slons0, slats0 = np.sin(self.lon0valsr), np.sin(self.lat0valsr)
 
-        for ii in range(len(self.lat0vals)):
+        for ii in range(len(self.lat0valsr)):
             delX = clats0[ii] * clons0[ii] - clat * clon
             delY = clats0[ii] * slons0[ii] - clat * slon
             delZ = slats0[ii] - slat
@@ -313,13 +334,21 @@ class TrackMatch(object):
             dist_sq = delX**2 + delY**2 + delZ**2
             # Find the 1D index of the minimum element
             minindex_1d = dist_sq.argmin()
-            iy_min, ix_min = np.unravel_index(minindex_1d, self.latvals.shape)
-            indlon.append(iy_min)
-            indlat.append(ix_min)
+            distance.append(dist_sq.min())
+##            iy_min, ix_min = np.unravel_index(minindex_1d, self.latvalsr.shape)
+            ind1d.append(minindex_1d)
+##            indy.append(iy_min)
+##            indx.append(ix_min)
+        indnd = np.unravel_index(ind1d, self.latvalsr.shape)
 
-        self._get_matchdata_by_index(indlon, indlat)
-        return MatchData(self.flight_matchdata, self.data_matchdata,
-                         self.start_time, self.end_time)
+        matchdata = self._get_data_by_index(ind1d)
+        return MatchData(self.flight_matchdata, matchdata, distance,
+                         ind1d, indnd,
+                         start_time=self.start_time, end_time=self.end_time)
+##        matchdata = self._get_data_by_index(indy, indx)
+##        return MatchData(self.flight_matchdata, matchdata, distance,
+##                         ind1d, indx, indy,
+##                         start_time=self.start_time, end_time=self.end_time)
 
     def near_neighbor_pyart(self, radar, basemap=None):
         """
@@ -337,11 +366,12 @@ class TrackMatch(object):
         indaz = []
         indrng = []
         indel = []
+        self.matchdata = {}
 
         # First let's save the fields data into this class structure
         for field in radar.fields.keys():
                 self.matchdata[field] = radar.fields[field].copy()
-                self.matchdata[field]['data'] = np.ma.empty(len(self.lat0vals))
+                self.matchdata[field]['data'] = np.ma.empty(len(self.lat0valsr))
 
         rlat, rlon = radar.latitude['data'][0], radar.longitude['data'][0]
 
@@ -357,14 +387,14 @@ class TrackMatch(object):
         ac_az = self.calc_az_to_aircraft(rlat, rlon,
                                          self.flight_lat['data'],
                                          self.flight_lon['data'], dist_to_ac)
-        for ii in range(len(self.lat0vals)):
+        for ii in range(len(self.lat0valsr)):
             elin = np.argmin(np.abs(ac_elev[ii] - radar.fixed_angle['data']))
             radar_sweep = radar.extract_sweeps([elin])
             azin = np.argmin(np.abs(ac_az[ii]-radar_sweep.azimuth['data']))
             rgin = np.argmin(np.abs(dist_to_ac[ii] -
-                                    radar_sweep.range['data']/1000.0))
+                                    radar_sweep.range['data']))#/1000.0))
             for field in self.data_fields.keys():
-                self.data_fields[field]['data'][ii] = radar_sweep.fields[field]['data'][azin, rgin]
+                self.matchdata[field]['data'][ii] = radar_sweep.fields[field]['data'][azin, rgin]
 
         return self.matchdata
 #         tpos1 = sweep_latlon_to_flat_xy(radar, elin)
@@ -471,7 +501,7 @@ class TrackMatch(object):
         return dt
 
     def _get_var_time_subset(self, var, start_time, end_time):
-        '''Get a subsetted time and Variable.'''
+        '''Variable subsetted by time.'''
         # Check to see if time is subsetted
         dt_start = self._get_datetime(start_time, get_start=True)
         dt_end = self._get_datetime(end_time, get_end=True)
@@ -480,32 +510,68 @@ class TrackMatch(object):
                                     (self.time['data'][:] <= dt_end)]
         return vsub
 
-    def _get_matchdata_by_index(self, indlon, indlat):
+#     def _get_data_by_index(self, indlon, indlat):
+#         '''Retrieve data fields using calculated indices.'''
+#         data_by_ind = {}
+#         for field in self.data_fields.keys():
+#             dfield = self.data_fields[field]
+#             data_by_ind[field] = dfield.copy()
+#             data_by_ind[field]['data'] = dfield['data'][indlon, indlat]
+#         return data_by_ind
+
+    def _get_data_by_index(self, indices_1d):
         '''Retrieve data fields using calculated indices.'''
-        self.data_matchdata = {}
+        data_by_ind = {}
         for field in self.data_fields.keys():
             dfield = self.data_fields[field]
-            self.data_matchdata[field] = dfield.copy()
-            self.data_matchdata[field]['data'] = dfield['data'][indlon, indlat]
-        return
+            data_by_ind[field] = dfield.copy()
+            data_by_ind[field]['data'] = np.ravel(dfield['data'])[indices_1d]
+        return data_by_ind
 
-    def _get_matchdata_by_pyart_index(self, radar, indel, indaz, indrng):
+    def _get_data_by_pyart_index(self, radar, indel, indaz, indrng):
         '''Retrieve data fields using calculated Py-ART indices.'''
-        self.data_matchdata = {}
+        data_by_ind = {}
         for field in radar.fields.keys():
             rfield = radar.fields[field]
-            self.data_matchdata[field] = rfield.copy()
-            self.data_matchdata[field]['data'] = rfield['data'][azin, rgin]
+            data_by_ind[field] = rfield.copy()
+            data_by_ind[field]['data'] = rfield['data'][azin, rgin]
+        return data_by_ind
 
 
 class MatchData(object):
     """Class for storing matched flight level data to other observations."""
 
-    def __init__(self, flight, data, start_time=None, end_time=None):
+    def __init__(self, flight, data, distance_to_point, indices_1d, indices_nd,
+                 start_time=None, end_time=None):
+##                 indices_x, indices_y, start_time=None, end_time=None):
         '''
+
+        Parameters
+        ----------
+        flight: dict
+            Dictionary of flight data variables.
+        data: dict
+            Dictionary of matched data points.
+        distance_to_point: array
+            Distance of nearest neighbor to flight point.
+        indices_1d: list
+            List of 1D indices of nearest neighbor.
+        indices_x: array
+            Longitudinal indices of nearest neighbor.
+        indices_y: array
+            Latitudinal indices of nearest neighbor.
+        start_time: datetime
+            Start of nearest neighbor times.
+        end_time: datetime
+            End of nearest neighbor times.
         '''
         self.flight = flight
         self.data = data
+        self.distance_to_point = distance_to_point
+        self.indices_1d = indices_1d
+        self.indices_nd = indices_nd
+##        self.lon_indices = lon_indices
+##        self.lat_indices = lat_indices
         self.start_time = start_time
         self.end_time = end_time
         return

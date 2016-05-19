@@ -13,7 +13,8 @@ from netCDF4 import num2date, date2num
 #################################
 #  variable/dictionary methods  #
 #################################
-EPOCH_UNITS = 'seconds since 1970-1-1 00:00:00+0:00'
+EPOCH_UNITS = 'seconds since 1970-1-1T00:00:00+0:00'
+EPOCH_UNITS2 = 'seconds since 1970-1-1 00:00:00+0:00'
 
 
 def _build_dict(data, units, longname, stdname):
@@ -120,28 +121,47 @@ def _var_not_found(var):
 ##################
 
 
-def _get_epoch_dict(TimeSec, time_units):
-    '''Output Epoch time dictionary.'''
+def _get_epoch_dict(timesec, time_units):
+    '''Output AWOT standard Epoch time dictionary.'''
     # Convert the time array into a datetime instance
-    dtHrs = num2date(TimeSec, time_units)
+    dt = num2date(timesec, time_units)
     # Now convert this datetime instance into a number of seconds since Epoch
-    TimeEpoch = date2num(dtHrs, EPOCH_UNITS)
+    eptime = date2num(dt, EPOCH_UNITS)
     # Now once again convert this data into a datetime instance
-    Time_unaware = num2date(TimeEpoch, EPOCH_UNITS)
-    Time = {'data': Time_unaware, 'units': EPOCH_UNITS,
-            'standard_name': 'Time', 'long_name': 'Time (UTC)'}
-    return Time
+    dt_ep = num2date(eptime, EPOCH_UNITS)
+    epdict = {'data': dt_ep, 'units': EPOCH_UNITS,
+              'standard_name': 'Time', 'long_name': 'Time (UTC)'}
+    return epdict
 
 
 def convert_to_epoch_dict(datetime_dict):
-    '''Output Epoch time dictionary.'''
-    # Now convert this datetime instance into a number array
-    TimeSec = date2num(datetime_dict['data'], EPOCH_UNITS)
-    # Now once again convert  data into a datetime instance
-    Time_unaware = num2date(TimeSec, EPOCH_UNITS)
-    Time = {'data': Time_unaware, 'units': EPOCH_UNITS,
-            'standard_name': 'Time', 'long_name': 'Time (UTC)'}
-    return Time
+    '''Output AWOT standard Epoch time dictionary.'''
+    # Check to see if already using AWOT epoch units
+    if ((datetime_dict['units'] == EPOCH_UNITS) or
+        (datetime_dict['units'] == EPOCH_UNITS2)):
+        dt_ep = datetime_dict['data']
+    else:
+        # Convert the datetime instance into a number array
+        try:
+            eptime = date2num(datetime_dict['data'], EPOCH_UNITS)
+        except:
+            dt = num2date(datetime_dict['data'], datetime_dict['units'])
+            eptime = date2num(dt, EPOCH_UNITS)
+        # Convert number array into AWOT epoch datetime instance
+        dt_ep = num2date(eptime, EPOCH_UNITS)
+    # Build dictionary to return
+    epdict = {'data': dt_ep, 'units': EPOCH_UNITS,
+              'standard_name': 'Time', 'long_name': 'Time in %s' % EPOCH_UNITS}
+    return epdict
+
+
+def check_epoch_units(datetime_dict):
+    '''Check to see if dictionary has AWOT epoch units.'''
+    if ((datetime_dict['units'] == EPOCH_UNITS) or
+        (datetime_dict['units'] == EPOCH_UNITS2)):
+        return True
+    else:
+        return False
 
 ########################
 #  image save methods  #

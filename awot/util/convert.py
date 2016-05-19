@@ -2,15 +2,16 @@
 awot.util.convert
 =================
 
-These scripts are various convenience utilities.
+Conversion convenience utilities.
 
 """
 from netCDF4 import num2date
 
-from ..io.common import _build_dict
+from ..io import common
 
 
-def pyart_radar_to_awot(radar, instrument=None, platform=None):
+def pyart_radar_to_awot(radar, instrument=None, platform=None,
+                        data_format=None):
     """
     This function creates an AWOT radar instance from a Py-ART
     radar instance.
@@ -18,29 +19,37 @@ def pyart_radar_to_awot(radar, instrument=None, platform=None):
     Parameters
     ----------
     radar : Py-ART radar instance
-        A Py-ART radar instance created using the Py_ART read
+        A Py-ART radar instance created using the Py-ART read
         functions.
     instrument : str
         If set this supersedes the instrument key in AWOT dictionary.
     platform : str
         If set this supersedes the platform key in AWOT dictionary.
     """
-    awotradar = {'metadata': radar.metadata.copy(),
-                 'longitude': radar.longitude.copy(),
-                 'latitude': radar.latitude.copy(),
-                 'height': radar.altitude.copy(),
+    awot_radar = {'metadata': radar.metadata.copy(),
+                 'radar_longitude': radar.longitude.copy(),
+                 'radar_latitude': radar.latitude.copy(),
+                 'radar_height': radar.altitude.copy(),
+                 'longitude': radar.gate_longitude.copy(),
+                 'latitude': radar.gate_latitude.copy(),
+                 'height': radar.gate_altitude.copy(),
                  'fields': radar.fields.copy(),
                  'platform': radar.metadata['instrument_name'],
                  'instrument': radar.metadata['instrument_name'],
-                 'time': radar.time.copy(),
                  'data_format': 'ground'}
-    Time = num2date(radar.time['data'], radar.time['units'])
-    awotradar['time']['data'] = Time
+
+    try:
+        awot_radar['time'] = common.convert_to_epoch_dict(radar.time.copy())
+    except:
+        awot_radar['time'] = radar.time.copy()
+
     if instrument is not None:
-        awotradar['instrument'] = instrument
+        awot_radar['instrument'] = instrument
     if platform is not None:
-        awotradar['platform'] = platform
-    return awotradar
+        awot_radar['platform'] = platform
+    if data_format is not None:
+        awot_radar['data_format'] = data_format
+    return awot_radar
 
 
 def to_awot_flight(lon_dict=None, lat_dict=None, alt_dict=None,
@@ -75,8 +84,8 @@ def to_awot_flight(lon_dict=None, lat_dict=None, alt_dict=None,
         Dictionary to use for time.
         Should include 'data', 'units', and 'standard_name' keys minimally.
         Data should be datetime instances.
-    other_dict : list
-        List of other dictionaries to be included.
+    other_dict : dict
+        Dictionary of other dictionaries to be included.
         If fields are passed, combine the dictionaries into a
         'fields' dictionary.
 
@@ -127,33 +136,28 @@ def to_awot_flight(lon_dict=None, lat_dict=None, alt_dict=None,
     if lon_dict is not None:
         awot_flight['longitude'] = lon_dict
 
-    for d in other_dict:
+    for d in other_dict.keys():
         awot_flight[d] = other_dict[d]
 
     # Attempt to build AWOT dictionaries if arrays are provided
     if lon_array is not None:
-        awot_flight = _build_dict(awot_flight, 'longitude',
-                                  lon_array, lon_unit,
-                                  lon_longname, lon_stdname)
+        awot_flight['longitude'] = common._build_dict(
+            lon_array, lon_unit, lon_longname, lon_stdname)
     if lat_array is not None:
-        awot_flight = _build_dict(awot_flight, 'latitude',
-                                  lat_array, lat_unit,
-                                  lat_longname, lat_stdname)
+        awot_flight['latitude'] = common._build_dict(
+            lat_array, lat_unit, lat_longname, lat_stdname)
     if alt_array is not None:
-        awot_flight = _build_dict(awot_flight, 'altitude',
-                                  alt_array, alt_unit,
-                                  alt_longname, alt_stdname)
+        awot_flight['altitude'] = common._build_dict(
+            alt_array, alt_unit, alt_longname, alt_stdname)
     if time_array is not None:
-        awot_flight = _build_dict(awot_flight, 'time',
-                                  time_array, time_unit,
-                                  time_longname, time_stdname)
-
+        awot_flight['time'] = common._build_dict(
+            time_array, time_unit, time_longname, time_stdname)
     return awot_flight
 
 
-def _build_dict(flight, key, data, units, longname, stdname):
-    flight[key] = {'data': data,
-                   'units': units,
-                   'long_name': longname,
-                   'standard_name': stdname}
-    return flight
+# def _build_dict(flight, key, data, units, longname, stdname):
+#     flight[key] = {'data': data,
+#                    'units': units,
+#                    'long_name': longname,
+#                    'standard_name': stdname}
+#     return flight

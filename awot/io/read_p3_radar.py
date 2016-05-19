@@ -142,9 +142,9 @@ def read_windsyn_tdr_netcdf(fname, field_mapping=None):
     except:
         radar['instrument'] = 'windsyn_grid'
     try:
-        data['flight_number'] = ncFile.Flight_ID
+        radar['flight_number'] = ncFile.Flight_ID
     except:
-        data['flight_number'] = None
+        radar['flight_number'] = None
 
     # Set the format for AWOT
     radar['data_format'] = 'windsyn_grid'

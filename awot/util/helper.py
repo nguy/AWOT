@@ -1,6 +1,6 @@
 """
 awot.util.helper
-=================
+================
 
 These scripts are various convenience utilities.
 
@@ -9,7 +9,7 @@ from netCDF4 import num2date
 import numpy as np
 
 from ..graph.common import _get_start_datetime, _get_end_datetime
-from ..io.common import _build_dict
+from ..io import common
 
 
 def time_subset_awot_dict(time, data, start_time, end_time, time_axis=0):
@@ -66,7 +66,7 @@ def add_dict_to_awot(awot, keyname, newdict=None, data=None, units=None,
         The standard name associated with keyname dictionary. Optional.
     '''
     if newdict is None:
-        newdict = _build_dict(data, units, longname, stdname)
+        newdict = common._build_dict(data, units, longname, stdname)
     awot[keyname] = newdict
 
     # Mask any invalid entries
@@ -102,7 +102,7 @@ def add_dict_to_awot_fields(awot, keyname, newdict=None, data=None, units=None,
         The standard name associated with keyname dictionary. Optional.
     '''
     if newdict is None:
-        newdict = _build_dict(data, units, longname, stdname)
+        newdict = common._build_dict(data, units, longname, stdname)
     awot['fields'][keyname] = newdict
 
     # Mask any invalid entries
