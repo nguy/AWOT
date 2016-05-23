@@ -13,8 +13,11 @@ This code should be extendable to any input data set.
 import numpy as np
 import scipy
 import datetime
-from netCDF4 import date2num
+from netCDF4 import date2num, num2date
+import time as timer
+
 from ..io import common
+from ..graph import common as gcommon
 
 
 class TrackMatch(object):
@@ -78,8 +81,7 @@ class TrackMatch(object):
             List of field names to match for data object.
             None loops through existing fields.
         '''
-        import time as timer
-        appbegin = timer.time()
+        appbegin = timer.time() ##NG
 
         self.flight_data = flight
         self.datavol = datavolume
@@ -136,6 +138,8 @@ class TrackMatch(object):
         self.flight_time = self._get_var_time_subset(
                              flight_epoch,
                              start_time, end_time)
+        self.flight_numtime = date2num(
+            self.flight_time['data'], self.flight_time['units'])
 
         # Create a field to store flight-matched data
         self.flight_matchdata = {}
@@ -143,7 +147,6 @@ class TrackMatch(object):
         self.flight_matchdata['latitude'] = self.flight_lat
         self.flight_matchdata['altitude'] = self.flight_alt
         self.flight_matchdata['time'] = self.flight_time
-##        print("A --- %s seconds ---" % (timer.time() - appbegin))
 
         for field in flight.keys():
             try:
@@ -161,6 +164,7 @@ class TrackMatch(object):
         else:
             for field in field_match_dict:
                 self.data_fields[field] = self.datavol['fields'][field].copy()
+        dshape = self.data_fields[self.data_fields.keys()[0]]['data'].shape
 
         # Run checks to make sure array lengths are the same
         warntxt = "Check that data is an AWOT object!"
@@ -187,7 +191,6 @@ class TrackMatch(object):
                 print("Cannot find height, %s" % warntxt)
         else:
             self.data_height = np.array(data_height)
-##        print("B --- %s seconds ---" % (timer.time() - appbegin))
 
         if data_time is None:
             try:
@@ -205,7 +208,13 @@ class TrackMatch(object):
                 self.data_time = common._get_epoch_dict(
                                     data_time['data'],
                                     data_time['units'])
-        print("C --- %s seconds ---" % (timer.time() - appbegin))
+        self.data_numtime = date2num(self.data_time['data'][:], self.time['units'])
+        print("A --- %s seconds ---" % (timer.time() - appbegin)) ##NG
+
+        # Convert time to same shape as fields if not already
+        if len(self.data_numtime.shape) == 1:
+            self.data_numtime = np.resize(self.data_numtime, dshape)
+        print("B --- %s seconds ---" % (timer.time() - appbegin)) #NG
 
         self.start_time = start_time
         self.end_time = end_time
@@ -223,6 +232,8 @@ class TrackMatch(object):
                query_n_jobs=1):
         '''
         Find the closest point using a K-Dimensional Tree method.
+        The tree building can take a long time depending on how
+        large the input data array.
 
         Parameters
         ----------
@@ -239,11 +250,10 @@ class TrackMatch(object):
         query_?? : See scipy.spatial.cKDTree.query
             Default keyword values used in the cKDTree.query.
         '''
+        kdbegin = timer.time() ##NG
         # Create lists to contain the indices for each flight point
-        ind1d = []
-##        indy = []
-##        indx = []
-        distance = []
+##        ind1d = []
+##        distance = []
 
         # Calculate sines and cosines of lats/lon
         clat, clon = np.cos(self.latvalsr), np.cos(self.lonvalsr)
@@ -251,45 +261,68 @@ class TrackMatch(object):
         clats0, clons0 = np.cos(self.lat0valsr), np.cos(self.lon0valsr)
         slons0, slats0 = np.sin(self.lon0valsr), np.sin(self.lat0valsr)
 
-        # Build kd-tree from big arrays of 3D coordinates
-        if use_time:
-            triples = list(zip(np.ravel(self.data_lon),
-                               np.ravel(self.data_lat),
-                               np.ravel(self.data_height),
-                               date2num(np.ravel(self.data_time['data']),
-                                        self.data_time['units'])))
-        else:
-            triples = list(zip(np.ravel(self.data_lon),
-                               np.ravel(self.data_lat),
-                               np.ravel(self.data_height)))
-        kdt = scipy.spatial.cKDTree(triples, leafsize=leafsize)
+        dlon, dlat = np.ravel(self.data_lon), np.ravel(self.data_lat)
+        dht, dti = np.ravel(self.data_height), np.ravel(self.data_numtime)
+        print("C --- %s seconds ---" % (timer.time() - kdbegin)) ##NG
 
-        for ii in range(len(self.lat0valsr)):
-            if use_time:
-                dist_sq_min, minindex_1d = kdt.query(
-                    [self.flight_lon['data'][ii], self.flight_lat['data'][ii],
-                     self.flight_alt['data'][ii],
-                     date2num(self.flight_time['data'][ii],
-                              self.flight_time['units'])],
-                    k=query_k, eps=query_eps, p=query_p,
-                    distance_upper_bound=query_distance_upper_bound,
-                    n_jobs=query_n_jobs)
-            else:
-                dist_sq_min, minindex_1d = kdt.query(
-                    [self.flight_lon['data'][ii], self.flight_lat['data'][ii],
-                     self.flight_alt['data'][ii]],
-                    k=query_k, eps=query_eps, p=query_p,
-                    distance_upper_bound=query_distance_upper_bound,
-                    n_jobs=query_n_jobs)
-            distance.append(dist_sq_min)
-##            iy_min, ix_min = np.unravel_index(minindex_1d, self.data_lat.shape)
-            ind1d.append(minindex_1d)
-##            indy.append(iy_min)
-##            indx.append(ix_min)
+        # Build kd-tree from big arrays of 3D coordinates
+#         if use_time:
+#             triples = list(zip(np.ravel(self.data_lon),
+#                                np.ravel(self.data_lat),
+#                                np.ravel(self.data_height),
+#                                np.ravel(self.data_numtime)))
+# ##                               date2num(np.ravel(self.data_time['data']),
+# ##                                        self.data_time['units'])))
+#         else:
+#             triples = list(zip(np.ravel(self.data_lon),
+#                                np.ravel(self.data_lat),
+#                                np.ravel(self.data_height)))
+#         kdt = scipy.spatial.cKDTree(triples, leafsize=leafsize)
+        if use_time:
+            kdt = scipy.spatial.cKDTree(zip(dlon, dlat, dht, dti), leafsize=leafsize)
+        else:
+            kdt = scipy.spatial.cKDTree(zip(dlon, dlat, dht), leafsize=leafsize)
+        print("D --- %s seconds ---" % (timer.time() - kdbegin)) ##NG
+        if use_time:
+            distance, ind1d = kdt.query(
+                zip(self.flight_lon['data'], self.flight_lat['data'],
+                self.flight_alt['data'], self.flight_numtime),
+                k=query_k, eps=query_eps, p=query_p,
+                distance_upper_bound=query_distance_upper_bound,
+                n_jobs=query_n_jobs)
+        else:
+            distance, ind1d = kdt.query(
+                zip(self.flight_lon['data'], self.flight_lat['data'],
+                self.flight_alt['data']),
+                k=query_k, eps=query_eps, p=query_p,
+                distance_upper_bound=query_distance_upper_bound,
+                n_jobs=query_n_jobs)
+        print("E --- %s seconds ---" % (timer.time() - kdbegin)) ##NG
+
+#         for ii in range(len(self.lat0valsr)):
+#             if use_time:
+#                 dist_sq_min, minindex_1d = kdt.query(
+#                     [self.flight_lon['data'][ii], self.flight_lat['data'][ii],
+#                      self.flight_alt['data'][ii],
+#                      self.flight_numtime[ii]],
+# ##                     date2num(self.flight_time['data'][ii],
+# ##                              self.flight_time['units'])],
+#                     k=query_k, eps=query_eps, p=query_p,
+#                     distance_upper_bound=query_distance_upper_bound,
+#                     n_jobs=query_n_jobs)
+#             else:
+#                 dist_sq_min, minindex_1d = kdt.query(
+#                     [self.flight_lon['data'][ii], self.flight_lat['data'][ii],
+#                      self.flight_alt['data'][ii]],
+#                     k=query_k, eps=query_eps, p=query_p,
+#                     distance_upper_bound=query_distance_upper_bound,
+#                     n_jobs=query_n_jobs)
+#             distance.append(dist_sq_min)
+#             ind1d.append(minindex_1d)
         indnd = np.unravel_index(ind1d, self.latvalsr.shape)
 
         if print_match_pairs:
-            self._print_pair_by_index(indy, indx)
+            self._print_pair_by_index(ind1d)
 
 ##        matchdata = self._get_data_by_index(indy, indx)
         matchdata = self._get_data_by_index(ind1d)
@@ -297,7 +330,7 @@ class TrackMatch(object):
                          ind1d, indnd,
                          start_time=self.start_time, end_time=self.end_time)
 
-    def near_neighbor_tunnel(self, use_time=False):
+    def near_neighbor_tunnel(self, use_time=False, print_match_pairs=False):
         '''
         Find closest point to the set of (lat,lon) points
         provided by the flight data object to data object points.
@@ -314,6 +347,7 @@ class TrackMatch(object):
             True to limit results to closest time value.
             Default is False.
         '''
+        nntbegin = timer.time() ##NG
         # Create lists to contain the indices for each flight point
         ind1d = []
 ##        indx = []
@@ -341,6 +375,9 @@ class TrackMatch(object):
 ##            indx.append(ix_min)
         indnd = np.unravel_index(ind1d, self.latvalsr.shape)
 
+        if print_match_pairs:
+            self._print_pair_by_index(ind1d)
+
         matchdata = self._get_data_by_index(ind1d)
         return MatchData(self.flight_matchdata, matchdata, distance,
                          ind1d, indnd,
@@ -357,58 +394,102 @@ class TrackMatch(object):
 
         Parameters
         ----------
-        radar : object
+        radar : object or list of objects
             A Py-ART radar object dervied using Py-ART read statement.
+            If a list is of Py-ART radar objects is supplied the function
+            loops through each instance looking for nearest neighbor points.
         basemap : object
 
         """
+        nnpbegin = timer.time() ##NG
         # Create lists to contain the indices for each flight point
         indaz = []
         indrng = []
         indel = []
         self.matchdata = {}
 
+        # Check if list is passed, if single build a list of 1
+        if type(radar).__name__ == 'list':
+            rlist = radar
+        else:
+            rlist = [radar]
+
         # First let's save the fields data into this class structure
-        for field in radar.fields.keys():
-                self.matchdata[field] = radar.fields[field].copy()
+        # We assume that all files have the same setup
+        for field in rlist[0].fields.keys():
+                self.matchdata[field] = rlist[0].fields[field].copy()
                 self.matchdata[field]['data'] = np.ma.empty(len(self.lat0valsr))
 
-        rlat, rlon = radar.latitude['data'][0], radar.longitude['data'][0]
+##        for pr in rlist:
+        for num, pr in enumerate(rlist):
+            rlat, rlon = pr.latitude['data'][0], pr.longitude['data'][0]
 
-        # Calculate the distance to the aircraft from radar
-        dist_to_ac = self.calc_dist_to_aircraft(rlat, rlon,
-                                                self.flight_lat['data'],
-                                                self.flight_lon['data'])
+            # Calculate the distance to the aircraft from radar
+            ac_dist = self.distance_to_point(
+                rlat, rlon, self.flight_lat['data'], self.flight_lon['data'])
+#            ac_dist = self.bearing_to_point(
+#                rlat, rlon, self.flight_lat['data'], self.flight_lon['data'])
 
-        # Calculate the elevation angle corresponding to aircraft position
-        ac_elev = np.degrees(np.arctan2(self.flight_alt['data'][:],
-                                        dist_to_ac))
+            # Calculate the elevation angle corresponding to aircraft position
+#            ac_elev = np.degrees(np.arctan2(self.flight_alt['data'][:],
+#                                            ac_dist))
+            ac_az = self.azimuth_to_point(
+                rlat, rlon, self.flight_lat['data'],
+                self.flight_lon['data'], ac_dist)
+            ac_rng, ac_elev = self.slant_range_and_elev(
+                ac_dist, self.flight_alt['data'][:])
 
-        ac_az = self.calc_az_to_aircraft(rlat, rlon,
-                                         self.flight_lat['data'],
-                                         self.flight_lon['data'], dist_to_ac)
-        for ii in range(len(self.lat0valsr)):
-            elin = np.argmin(np.abs(ac_elev[ii] - radar.fixed_angle['data']))
-            radar_sweep = radar.extract_sweeps([elin])
-            azin = np.argmin(np.abs(ac_az[ii]-radar_sweep.azimuth['data']))
-            rgin = np.argmin(np.abs(dist_to_ac[ii] -
-                                    radar_sweep.range['data']))#/1000.0))
-            for field in self.data_fields.keys():
-                self.matchdata[field]['data'][ii] = radar_sweep.fields[field]['data'][azin, rgin]
+            # Convert the radar time to AWOT epoch
+            rtime = common.convert_to_epoch_dict(pr.time.copy())
+            rnumtime = date2num(rtime['data'], rtime['units'])
+##            pr_start = datetime.datetime.strptime(
+##                pr.time['units'][14:], '%Y-%m-%dT%H:%M:%SZ')
+##        # Subtracting 35 seconds (half the volume update time)
+##        # Treating volume start as midpoint for aircraft comparison
+##    std = pr_start + dt.timedelta(seconds=pr.time['data'][0]-35)
+##    edd = pr_start + dt.timedelta(seconds=pr.time['data'][-1]-35)
+##    cond = np.logical_and(fl['time']['data'] >= std, fl['time']['data'] < edd)
+
+##            cond = np.logical_and(rtime['data'] >= std, rtime['data'] < edd)
+            cond = np.logical_and(self.flight_numtime >= rnumtime[0],
+                                  self.flight_numtime <= rnumtime[-1])
+            indices = np.where(cond)
+
+            if np.size(indices[0]) > 0:
+##                for i, index in enumerate(indices[0]):
+##                    elin = np.argmin(np.abs(kel[index]-radar2.fixed_angle['data']))
+##                    radar_sweep = radar2.extract_sweeps([elin])
+##                    azin = np.argmin(np.abs(kbear[index]-radar_sweep.azimuth['data']))
+##                    rgin = np.argmin(np.abs(ksr[index]-radar_sweep.range['data']/1000.0))
+
+##                for ii in range(len(self.lat0valsr)):
+                for index in indices[0]:
+                    elin = np.argmin(np.abs(ac_elev[index] - pr.fixed_angle['data']))
+                    pr_sweep = pr.extract_sweeps([elin])
+                    azin = np.argmin(np.abs(ac_az[index]-pr_sweep.azimuth['data']))
+#                    rgin = np.argmin(np.abs(ac_dist[index] -
+#                                    pr_sweep.range['data']))
+                    rgin = np.argmin(np.abs(ac_rng[index] -
+                                    pr_sweep.range['data']))
+                    print(azin, rgin)
+                    print("AC/Radar lat/lon/alt: %g/%g, %g/%g, %g/%g" % (
+                        self.flight_lat['data'][index],
+                        pr.gate_latitude['data'][azin, rgin],
+                        self.flight_lon['data'][index],
+                        pr.gate_longitude['data'][azin, rgin],
+                        self.flight_alt['data'][index],
+                        pr.gate_altitude['data'][azin, rgin]))
+                    for field in pr_sweep.fields.keys():
+                        self.matchdata[field]['data'][index] = pr_sweep.fields[field]['data'][azin, rgin]
+            print("B --- %s seconds for loop %d---" % (timer.time() - nnpbegin, num)) ##NG
 
         return self.matchdata
-#         tpos1 = sweep_latlon_to_flat_xy(radar, elin)
-#         swpfields = radar_sweep.fields
-#         ts_dz[index] = swpfields['reflectivity']['data'][azin, rgin]
-#         ts_edr[index] = swpfields['turbulence']['data'][azin, rgin]
-#         ts_vel[index] = swpfields['velocity']['data'][azin, rgin]
-#         ts_sw[index] = swpfields['spectrum_width']['data'][azin, rgin]
 
 ###################
 #  Calculations   #
 ###################
 
-    def calc_dist_to_aircraft(self, lat0, lon0, aclats, aclons, R=6371000.):
+    def distance_to_point(self, lat0, lon0, aclats, aclons, R=6371100.):
         '''
         Calculate the distance to the aircraft from some point using
         the Haversine formula.
@@ -416,35 +497,40 @@ class TrackMatch(object):
         Parameters
         ----------
         lat0 : float
-            Latitude value of origin point to calculate from.
+            Latitude [deg] value of origin point from which to calculate.
         lon0 : float
-            Longitude value of origin point to calculate from.
+            Longitude [deg] value of origin point from which to calculate.
         aclats : float array
-            Array of aircraft latitude values.
+            Array of aircraft latitude [deg] values.
         aclons : float array
-            Array of aircraft longitude values.
+            Array of aircraft longitude [deg] values.
         R : float, optional
             Earth radius in meters.
         '''
-        delLat = lat0 - aclats
-        delLon = lon0 - aclons
+        lat0r = np.radians(lat0)
+        lon0r = np.radians(lon0)
+        aclatsr = np.radians(aclats)
+        aclonsr = np.radians(aclons)
+        dlat = lat0r - aclatsr
+        dlon = lon0r - aclonsr
 
-        a = ((np.sin(np.radians(delLat)/2))**2 + np.cos(np.radians(lat0)) *
-             np.cos(np.radians(aclats)) * (np.sin(np.radians(delLon)/2))**2)
-        c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
-        distance = R * c
-        return distance
+        a = ((np.sin(dlat/2.))**2 + np.cos(lat0r) *
+             np.cos(aclatsr) * (np.sin(dlon/2.))**2)
+        c = 2. * np.arctan2(np.sqrt(a), np.sqrt(1. - a))
+        return R * c
+##        return (np.arccos(np.sin(aclatsr) * np.sin(lat0r) +
+##            np.cos(aclatsr) * np.cos(lat0r) * np.cos(lon0r - aclonsr)) * R)
 
-    def calc_az_to_aircraft(self, lat0, lon0, aclats, aclons, rng, R=6371000.):
+    def azimuth_to_point(self, lat0, lon0, aclats, aclons, rng, R=6371100.):
         '''
         Calculate the azimuth to the aircraft.
 
         Parameters
         ----------
         lat0 : float
-            Latitude value of origin point to calculate from.
+            Latitude value of origin point from which to calculate.
         lon0 : float
-            Longitude value of origin point to calculate from.
+            Longitude value of origin point from which to calculate.
         aclats : float array
             Array of aircraft latitude values.
         aclons : float array
@@ -452,26 +538,81 @@ class TrackMatch(object):
         R : float, optional
             Earth radius in meters.
         '''
-        factor = 2 * np.pi * R / 360.
-
-        top = np.sin(aclats) - np.cos(rng/factor) * np.sin(lat0)
-        bottom = np.sin(rng/factor) * np.cos(lat0)
-
-        azimuth = np.arccos(top / bottom)
+        factor = 2. * np.pi * R / 360.
+        top = np.sin(np.radians(aclats)) - np.cos(rng/factor) * np.sin(np.radians(lat0))
+        bottom = np.sin(rng/factor) * np.cos(np.radians(lat0))
+        azimuth = np.degrees(np.arccos(top / bottom))
+        try:
+            azimuth[azimuth < 0.] = azimuth[azimuth < 0.] + 360.
+        except:
+            pass
         return azimuth
+
+    def bearing_to_point(self, lat0, lon0, aclats, aclons):
+        '''
+        Calculate the bearing to the aircraft.
+
+        Parameters
+        ----------
+        lat0 : float
+            Latitude value of origin point from which to calculate.
+        lon0 : float
+            Longitude value of origin point from which to calculate.
+        aclats : float array
+            Array of aircraft latitude values.
+        aclons : float array
+            Array of aircraft longitude values.
+        '''
+        aclonsr = np.radians(aclons)
+        aclatsr = np.radians(aclats)
+        lon0r = np.radians(lon0)
+        lat0r = np.radians(lat0)
+
+        bear = np.arctan2(
+            (np.sin(aclonsr - lon0r) * np.cos(aclatsr)),
+            (np.cos(lat0r) * np.sin(aclatsr) -
+             np.sin(lat0r) * np.cos(aclatsr) * np.cos(aclonsr - lon0r)))
+        return np.degrees(bear)
+
+    def slant_range_and_elev(self, ground_range, height, R=6371100.):
+        '''
+        Calculate slant range and elevation.
+
+        Parameters
+        ----------
+        ground_range: float or array
+            Ground range [m]
+        height: float or array
+            Height [m]
+        R : float, optional
+            Earth radius in meters.
+        '''
+        Re = 4.0/3.0 * R  # Effective earth radius.
+        rh = height + Re
+        slantrsq = Re**2 + rh**2 - (2 * Re * rh * np.cos(ground_range/Re))
+        slantr = np.sqrt(slantrsq)
+        elev = np.arccos((Re**2 + slantrsq - rh**2)/(2 * Re * slantr))
+        elev = elev * 180.0/np.pi
+        elev = elev - 90.0
+        return slantr, elev
 
 ####################
 #  Print methods   #
 ####################
 
-    def _print_pair_by_index(self, indlon, indlat):
-        for ii in range(len(indlon)):
+    def _print_pair_by_index(self, ind1d):
+        for ii, ind in enumerate(ind1d):
             print(("AC Lat: %g, Lon: %g, Alt: %g | "
                    "Rad Lat: %g, Lon: %g, Alt: %g") % (
-                  self.flight_lon['data'][ii], self.flight_lat['data'][ii],
-                  self.flight_alt['data'][ii], self.data_lon[iy_min, ix_min],
-                  self.data_lat[iy_min, ix_min],
-                  self.data_height[iy_min, ix_min]))
+                  self.flight_lon['data'][ii],
+                  self.flight_lat['data'][ii],
+                  self.flight_alt['data'][ii],
+                  np.ravel(self.data_lon)[ind],
+                  np.ravel(self.data_lat)[ind],
+                  np.ravel(self.data_height)[ind]))
+            print(
+            "AC/Rad Turb: %g / %g" % (self.flight_matchdata['turb']['data'][ii],
+                                      np.ravel(self.data_fields['turbulence']['data'])[ind]))
 
 ##################
 #  Get methods   #
