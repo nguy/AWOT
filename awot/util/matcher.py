@@ -420,22 +420,24 @@ class TrackMatch(object):
                 self.matchdata[field] = rlist[0].fields[field].copy()
                 self.matchdata[field]['data'] = np.ma.empty(len(self.lat0valsr))
 
-##        for pr in rlist:
         for num, pr in enumerate(rlist):
             rlat, rlon = pr.latitude['data'][0], pr.longitude['data'][0]
 
             # Calculate the distance to the aircraft from radar
-            ac_dist = self.distance_to_point(
-                rlat, rlon, self.flight_lat['data'], self.flight_lon['data'])
-#            ac_dist = self.bearing_to_point(
+#            ac_dist = self.distance_to_point(
 #                rlat, rlon, self.flight_lat['data'], self.flight_lon['data'])
+            ac_dist = self.distance_to_point2(
+                rlat, rlon, self.flight_lat['data'], self.flight_lon['data'])
 
             # Calculate the elevation angle corresponding to aircraft position
-#            ac_elev = np.degrees(np.arctan2(self.flight_alt['data'][:],
-#                                            ac_dist))
-            ac_az = self.azimuth_to_point(
+##            ac_elev = np.degrees(np.arctan2(self.flight_alt['data'][:],
+##                                            ac_dist))
+##            ac_az = self.azimuth_to_point(
+##                rlat, rlon, self.flight_lat['data'],
+##                self.flight_lon['data'], ac_dist))
+            ac_az = self.bearing_to_point(
                 rlat, rlon, self.flight_lat['data'],
-                self.flight_lon['data'], ac_dist)
+                self.flight_lon['data'])
             ac_rng, ac_elev = self.slant_range_and_elev(
                 ac_dist, self.flight_alt['data'][:])
 
@@ -450,7 +452,6 @@ class TrackMatch(object):
 ##    edd = pr_start + dt.timedelta(seconds=pr.time['data'][-1]-35)
 ##    cond = np.logical_and(fl['time']['data'] >= std, fl['time']['data'] < edd)
 
-##            cond = np.logical_and(rtime['data'] >= std, rtime['data'] < edd)
             cond = np.logical_and(self.flight_numtime >= rnumtime[0],
                                   self.flight_numtime <= rnumtime[-1])
             indices = np.where(cond)
@@ -462,7 +463,6 @@ class TrackMatch(object):
 ##                    azin = np.argmin(np.abs(kbear[index]-radar_sweep.azimuth['data']))
 ##                    rgin = np.argmin(np.abs(ksr[index]-radar_sweep.range['data']/1000.0))
 
-##                for ii in range(len(self.lat0valsr)):
                 for index in indices[0]:
                     elin = np.argmin(np.abs(ac_elev[index] - pr.fixed_angle['data']))
                     pr_sweep = pr.extract_sweeps([elin])
@@ -471,14 +471,14 @@ class TrackMatch(object):
 #                                    pr_sweep.range['data']))
                     rgin = np.argmin(np.abs(ac_rng[index] -
                                     pr_sweep.range['data']))
-                    print(azin, rgin)
-                    print("AC/Radar lat/lon/alt: %g/%g, %g/%g, %g/%g" % (
-                        self.flight_lat['data'][index],
-                        pr.gate_latitude['data'][azin, rgin],
-                        self.flight_lon['data'][index],
-                        pr.gate_longitude['data'][azin, rgin],
-                        self.flight_alt['data'][index],
-                        pr.gate_altitude['data'][azin, rgin]))
+#                    print(azin, rgin)
+#                    print("AC/Radar lat/lon/alt: %g/%g, %g/%g, %g/%g" % (
+#                        self.flight_lat['data'][index],
+#                        pr.gate_latitude['data'][azin, rgin],
+#                        self.flight_lon['data'][index],
+#                        pr.gate_longitude['data'][azin, rgin],
+#                        self.flight_alt['data'][index],
+#                        pr.gate_altitude['data'][azin, rgin]))
                     for field in pr_sweep.fields.keys():
                         self.matchdata[field]['data'][index] = pr_sweep.fields[field]['data'][azin, rgin]
             print("B --- %s seconds for loop %d---" % (timer.time() - nnpbegin, num)) ##NG
@@ -518,8 +518,32 @@ class TrackMatch(object):
              np.cos(aclatsr) * (np.sin(dlon/2.))**2)
         c = 2. * np.arctan2(np.sqrt(a), np.sqrt(1. - a))
         return R * c
-##        return (np.arccos(np.sin(aclatsr) * np.sin(lat0r) +
-##            np.cos(aclatsr) * np.cos(lat0r) * np.cos(lon0r - aclonsr)) * R)
+
+    def distance_to_point2(self, lat0, lon0, aclats, aclons, R=6371100.):
+        '''
+        Calculate the distance to the aircraft.
+
+        Parameters
+        ----------
+        lat0 : float
+            Latitude [deg] value of origin point from which to calculate.
+        lon0 : float
+            Longitude [deg] value of origin point from which to calculate.
+        aclats : float array
+            Array of aircraft latitude [deg] values.
+        aclons : float array
+            Array of aircraft longitude [deg] values.
+        R : float, optional
+            Earth radius in meters.
+        '''
+        lat0r = np.radians(lat0)
+        lon0r = np.radians(lon0)
+        aclatsr = np.radians(aclats)
+        aclonsr = np.radians(aclons)
+        dlat = lat0r - aclatsr
+        dlon = lon0r - aclonsr
+        return (np.arccos(np.sin(aclatsr) * np.sin(lat0r) +
+            np.cos(aclatsr) * np.cos(lat0r) * np.cos(lon0r - aclonsr)) * R)
 
     def azimuth_to_point(self, lat0, lon0, aclats, aclons, rng, R=6371100.):
         '''
@@ -551,6 +575,7 @@ class TrackMatch(object):
     def bearing_to_point(self, lat0, lon0, aclats, aclons):
         '''
         Calculate the bearing to the aircraft.
+        Method was adopted from PyTDA by Timothy Lang.
 
         Parameters
         ----------
@@ -577,6 +602,7 @@ class TrackMatch(object):
     def slant_range_and_elev(self, ground_range, height, R=6371100.):
         '''
         Calculate slant range and elevation.
+        Method was adopted from PyTDA by Timothy Lang.
 
         Parameters
         ----------
