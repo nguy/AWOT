@@ -18,6 +18,6 @@ from .track_distance import (calc_ground_distance, calc_air_distance,
 from .thermocalcs import ThermoCalcs
 from .shearcalcs import ShearCalcs
 from .sonde_calcs import (add_thermo_calcs, add_shear_calcs)
-from .write_kmz import write_track_kmz
+from .write_kmz import write_track_kmz, write_line_kml
 
 __all__ = [s for s in dir() if not s.startswith('_')]
