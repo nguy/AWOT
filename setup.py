@@ -17,7 +17,7 @@ doclines = __doc__.split("\n")
 # - Versioning
 MAJOR = 0
 MINOR = 2
-MICRO = 10
+MICRO = 11
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 # - Set variables for setup
