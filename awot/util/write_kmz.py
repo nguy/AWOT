@@ -2,10 +2,10 @@
 awot.util.write_kmz
 ========================
 
-Functions to save AWOT data into KMZ file. These files may be displayed
+Functions to save AWOT data into KML/KMZ files. These files may be displayed
 for example with Google Earth.
 
-Code was directely adapted from the NASA PyAMPR package by Timothy Lang.
+Some code was directely adapted from the NASA PyAMPR package by Timothy Lang.
 https://github.com/nasa/PyAMPR/blob/master/pyampr/pyampr.py
 
 This present method is proof of concept and is expected to expand over time.
@@ -19,7 +19,11 @@ import os
 from ..graph import common as gcommon
 from . import helper
 from .google_earth_tools import gearth_fig, make_kml
-import simplekml
+try:
+    import simplekml
+except:
+    raise ValueError("This module requires installation of simplekml...")
+    return
 
 
 def write_track_kmz(awot, field, lat_name=None, lon_name=None,
@@ -182,10 +186,9 @@ def write_line_kml(awot, field, lat_name=None, lon_name=None,
                     latrange=None, lonrange=None,
                     cmap=None, color=None, lw=None,
                     file_path=None, file_name=None,
-                    line_name=None, join_to_groud=False):
+                    line_name=None, join_to_ground=False):
     """
-    This method plots geolocated AWOT track data as a filled color Google Earth
-    kmz.
+    Write a field of AWOT track data as a KML file for Google Earth.
 
     Parameters
     ----------
@@ -227,7 +230,7 @@ def write_line_kml(awot, field, lat_name=None, lon_name=None,
         to build using dictionary information.
     line_name : str
         Name of line string to create.
-    join_to_groud : bool
+    join_to_ground : bool
         True to create a line that is joined to the ground. False does not.
     """
     plt.close()  # mpl seems buggy if multiple windows are left open
@@ -295,7 +298,7 @@ def write_line_kml(awot, field, lat_name=None, lon_name=None,
         linestr.style.linestyle.width = lw
     if color is not None:
         linestr.style.linestyle.color = color
-    if join_to_groud:
+    if join_to_ground:
         linestr.altitudemode = simplekml.AltitudeMode.relativetoground
         linestr.extrude = 1
 
@@ -303,6 +306,82 @@ def write_line_kml(awot, field, lat_name=None, lon_name=None,
     kml.save(longname)
     print('KML file saved to: %s' % longname)
     _method_printout()
+    return
+
+
+def write_poly_kml(name="Polygon", innerboundary=None, outerboundary=None,
+                   lw=4, color=None, fill=False, extrude=False,
+                   join_to_ground=False,
+                   timestamp=False, outputdir=None, filename=None):
+    '''
+    Write a polygon KML file for Google Earth.
+
+    Parameters
+    ----------
+    name : str
+        Name to assign KML polygon instance.
+    innerboundary : tuple or array
+        Longitude/latitude coordinate pairs of inner boundary.
+    outerboundary : tuple or array
+        Longitude/latitude coordinate pairs of outer boundary.
+    lw : int
+        Width of line connecting polygon points.
+    color : str
+        Hex string color of line connection polygon points.
+    fill : bool
+        True to fill in polygon, False (default) for no fill.
+    extrude : bool
+        True to connect line to ground, Fales (default) does not.
+    join_to_ground : bool
+        True to create a line that is joined to the ground. False does not.
+    timestamp : bool
+        True adds UTC time at processing.
+    outputdir : str
+        Directory to save KML file. Defaults to current working directory.
+    filename : str
+        KML filename to save. Defualts to polygon.kml
+    '''
+    # Create a kml instance
+    kml = simplekml.Kml()
+
+    # Instantiate a polygon instance
+    pol = kml.newpolygon(name=name)
+
+    # Set the boundaries
+    if outerboundary is not None:
+        pol.outerboundaryis = outerboundary
+    if innerboundary is not None:
+        pol.innerboundaryis = innerboundary
+
+    if fill:
+        pol.polystyle.fill = 1
+    else:
+        pol.polystyle.fill = 0
+    if extrude:
+        pol.extrude = 1
+    else:
+        pol.extrude = 0
+    if join_to_ground:
+        pol.altitudemode = simplekml.AltitudeMode.relativetoground
+        pol.extrude = 1
+
+
+    # Set styling properties according to keywords
+    if lw is not None:
+        pol.linestyle.width = lw
+    if color is not None:
+        pol.linestyle.color = simplekml.Color.hex(color)
+
+    if timestamp:
+        pol.timestamp.when = datetime.strftime(datetime.utcnow(),
+                                               '%Y-%m-%d %H:%M:%SZ')
+    # Save the file
+    if outputdir is None:
+        outputdir = os.getcwd()
+    if filename is None:
+        filename = "polygon"
+    outfname = os.path.join(outputdir, filename + ".kml")
+    kml.save(outfname)
     return
 
 

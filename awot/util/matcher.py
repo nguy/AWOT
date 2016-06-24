@@ -891,20 +891,20 @@ class RadarMatch(object):
                         np.abs(ac_az2[index] - pr_sweep2.azimuth['data']))
                     rgin2 = np.argmin(
                         np.abs(ac_dist_hav[index] - pr_sweep2.range['data']))
-                    print("AC/Radar lat/lon/alt: %g/%g, %g/%g, %g/%g" % (
-                        self.flight_lat['data'][index],
-                        pr.gate_latitude['data'][azin, rgin],
-                        self.flight_lon['data'][index],
-                        pr.gate_longitude['data'][azin, rgin],
-                        self.flight_alt['data'][index],
-                        pr.gate_altitude['data'][azin, rgin]))
-                    print("2AC/Radar lat/lon/alt: %g/%g, %g/%g, %g/%g" % (
-                        self.flight_lat['data'][index],
-                        pr.gate_latitude['data'][azin2, rgin2],
-                        self.flight_lon['data'][index],
-                        pr.gate_longitude['data'][azin2, rgin2],
-                        self.flight_alt['data'][index],
-                        pr.gate_altitude['data'][azin2, rgin2]))
+#                     print("AC/Radar lat/lon/alt: %g/%g, %g/%g, %g/%g" % (
+#                         self.flight_lat['data'][index],
+#                         pr.gate_latitude['data'][azin, rgin],
+#                         self.flight_lon['data'][index],
+#                         pr.gate_longitude['data'][azin, rgin],
+#                         self.flight_alt['data'][index],
+#                         pr.gate_altitude['data'][azin, rgin]))
+#                     print("2AC/Radar lat/lon/alt: %g/%g, %g/%g, %g/%g" % (
+#                         self.flight_lat['data'][index],
+#                         pr.gate_latitude['data'][azin2, rgin2],
+#                         self.flight_lon['data'][index],
+#                         pr.gate_longitude['data'][azin2, rgin2],
+#                         self.flight_alt['data'][index],
+#                         pr.gate_altitude['data'][azin2, rgin2]))
                     for field in pr_sweep.fields.keys():
                         prdata[field]['data'][index] = pr_sweep.fields[field]['data'][azin, rgin]
 
