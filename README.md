@@ -4,26 +4,6 @@ AWOT - Airborne Weather Observations Toolkit
 AWOT provides a toolkit of utilities to read and visualize weather observation files collected via aircraft platforms.
 
 
-##Installation
-The latest source code for AWOT can be obtained from the GitHub repository,
-[https://github.com/nguy/AWOT](https://github.com/nguy/AWOT).
-
-Either download and unpack the zip file of the source code or use git to checkout the repository
-
-```
-git clone https://github.com/nguy/AWOT
-```
-To install in your home directory, use:
-
-```
-python setup.py install --user
-```
-To install for all users on Unix/Linux:
-```
-python setup.py build
-sudo python setup.py install
-```
-
 ##Package Structure
 _(Documentation to follow soon!)_
 ###io
@@ -84,6 +64,27 @@ from awot import graph
 flp = FlightLevel(flight)
 
 flp.plot_trackmap(color_by_altitude=True, track_cmap='spectral', addlegend=True, addtitle=True)
+```
+
+
+##Installation
+The latest source code for AWOT can be obtained from the GitHub repository,
+[https://github.com/nguy/AWOT](https://github.com/nguy/AWOT).
+
+Either download and unpack the zip file of the source code or use git to checkout the repository
+
+```
+git clone https://github.com/nguy/AWOT
+```
+To install in your home directory, use:
+
+```
+python setup.py install --user
+```
+To install for all users on Unix/Linux:
+```
+python setup.py build
+sudo python setup.py install
 ```
 
 ##Dependencies
