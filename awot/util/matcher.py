@@ -223,7 +223,7 @@ class TrackMatch(object):
         self.lon0valsr = np.radians(self.flight_lon['data'][:])
 
     def kdtree(self, leafsize=16,
-               use_time=False, print_match_pairs=False,
+               use_time=False, verbose=False,
                query_k=1, query_eps=0, query_p=2,
                query_distance_upper_bound=np.inf,
                query_n_jobs=1):
@@ -240,11 +240,9 @@ class TrackMatch(object):
             scipy.spatial.cKDTree switches to brute force.
             Default same as scipy default.
         use_time: bool
-            True includes the time variables in KD-Tree.
-            Default is False.
-        print_match_pairs: bool
-            True returns screen print out of pair results.
-            Default is False.
+            True includes the time variables in KD-Tree. Defaults False.
+        verbose: bool
+            True returns screen print out of pair results. Defaults False.
         query_?? : See scipy.spatial.cKDTree.query
             Default keyword values used in the cKDTree.query.
         '''
@@ -307,7 +305,7 @@ class TrackMatch(object):
         print("E --- %s seconds ---" % (timer.time() - kdbegin))  # NG
         indnd = np.unravel_index(ind1d, self.latvalsr.shape)
 
-        if print_match_pairs:
+        if verbose:
             self._print_pair_by_index(ind1d)
 
         matchdata = self._get_data_by_index(ind1d)
@@ -315,7 +313,7 @@ class TrackMatch(object):
                          indices_1d=ind1d[0], indices_nd=indnd,
                          start_time=self.start_time, end_time=self.end_time)
 
-    def near_neighbor_tunnel(self, use_time=False, print_match_pairs=False):
+    def near_neighbor_tunnel(self, use_time=False, verbose=False):
         '''
         Find closest point to the set of (lat,lon) points
         provided by the flight data object to data object points.
@@ -329,8 +327,9 @@ class TrackMatch(object):
         Parameters
         ----------
         use_time: bool
-            True to limit results to closest time value.
-            Default is False.
+            True to limit results to closest time value. Defaults False.
+        verbose: bool
+            True returns screen print out of pair results. Defaults False.
         '''
         nntbegin = timer.time()  # NG
         # Create lists to contain the indices for each flight point
@@ -355,7 +354,7 @@ class TrackMatch(object):
             ind1d.append(minindex_1d)
         indnd = np.unravel_index(ind1d, self.latvalsr.shape)
 
-        if print_match_pairs:
+        if verbose:
             self._print_pair_by_index(ind1d)
 
         matchdata = self._get_data_by_index(ind1d)
@@ -574,7 +573,7 @@ class RadarMatch(object):
             self.rlist = [radar]
 
     def kdtree(self, leafsize=16,
-               print_match_pairs=False,
+               verbose=False,
                query_k=1, query_eps=0, query_p=2,
                query_distance_upper_bound=np.inf,
                query_n_jobs=1):
@@ -590,9 +589,8 @@ class RadarMatch(object):
             Positive number of points at which time
             scipy.spatial.cKDTree switches to brute force.
             Default same as scipy default.
-        print_match_pairs: bool
-            True returns screen print out of pair results.
-            Default is False.
+        verbose: bool
+            True returns screen print out of pair results. Defaults False.
         query_?? : See scipy.spatial.cKDTree.query
             Default keyword values used in the cKDTree.query.
         '''
@@ -670,7 +668,7 @@ class RadarMatch(object):
                 for field in pr.fields.keys():
                     prdata[field]['data'][indt[0]] = dfield[field][prind1d]
 
-                if print_match_pairs:
+                if verbose:
                     for ii, ind in enumerate(ind1d[0]):
                         print(("AC Lat: %g, Lon: %g, Alt: %g | "
                                "Rad Lat: %g, Lon: %g, Alt: %g") % (
@@ -695,7 +693,7 @@ class RadarMatch(object):
                          distance_to_point=distance, indices_1d=ind1d[0],
                          start_time=self.start_time, end_time=self.end_time)
 
-    def near_neighbor_tunnel(self, print_match_pairs=False):
+    def near_neighbor_tunnel(self, verbose=False):
         '''
         Find closest point to the set of (lat,lon) points
         provided by the flight data object to data object points.
@@ -708,6 +706,8 @@ class RadarMatch(object):
 
         Parameters
         ----------
+        verbose: bool
+            True returns screen print out of pair results. Defaults False.
         '''
         nntbegin = timer.time()  # NG
         # Create processing variables
@@ -790,7 +790,7 @@ class RadarMatch(object):
                 for field in pr.fields.keys():
                     prdata[field]['data'][indt[0]] = dfield[field][prind1d]
 
-                if print_match_pairs:
+                if verbose:
                     for ii, ind in enumerate(ind1d[0]):
                         print(("AC Lat: %g, Lon: %g, Alt: %g | "
                                "Rad Lat: %g, Lon: %g, Alt: %g") % (
@@ -815,13 +815,15 @@ class RadarMatch(object):
                          distance_to_point=distance, indices_1d=ind1d[0],
                          start_time=self.start_time, end_time=self.end_time)
 
-    def near_neighbor(self):
+    def near_neighbor(self, verbose=False):
         """
         Calculate variables using a nearest neighbor approach when the input
         data is a Py-ART radar object.
 
         Parameters
         ----------
+        verbose: bool
+            True returns screen print out of pair results. Defaults False.
         """
         nnpbegin = timer.time()  # NG
         # Create processing variables
@@ -891,20 +893,16 @@ class RadarMatch(object):
                         np.abs(ac_az2[index] - pr_sweep2.azimuth['data']))
                     rgin2 = np.argmin(
                         np.abs(ac_dist_hav[index] - pr_sweep2.range['data']))
-                    print("AC/Radar lat/lon/alt: %g/%g, %g/%g, %g/%g" % (
-                        self.flight_lat['data'][index],
-                        pr.gate_latitude['data'][azin, rgin],
-                        self.flight_lon['data'][index],
-                        pr.gate_longitude['data'][azin, rgin],
-                        self.flight_alt['data'][index],
-                        pr.gate_altitude['data'][azin, rgin]))
-                    print("2AC/Radar lat/lon/alt: %g/%g, %g/%g, %g/%g" % (
-                        self.flight_lat['data'][index],
-                        pr.gate_latitude['data'][azin2, rgin2],
-                        self.flight_lon['data'][index],
-                        pr.gate_longitude['data'][azin2, rgin2],
-                        self.flight_alt['data'][index],
-                        pr.gate_altitude['data'][azin2, rgin2]))
+
+                    if verbose:
+                        print("AC/Radar lat/lon/alt: %g/%g, %g/%g, %g/%g" % (
+                            self.flight_lat['data'][index],
+                            pr.gate_latitude['data'][azin, rgin],
+                            self.flight_lon['data'][index],
+                            pr.gate_longitude['data'][azin, rgin],
+                            self.flight_alt['data'][index],
+                            pr.gate_altitude['data'][azin, rgin]))
+
                     for field in pr_sweep.fields.keys():
                         prdata[field]['data'][index] = pr_sweep.fields[field]['data'][azin, rgin]
 
