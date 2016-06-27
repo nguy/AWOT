@@ -1,18 +1,10 @@
-AWOT
+AWOT - Airborne Weather Observations Toolkit
 ===============
 
-AWOT is a toolkit of utilities to read in and visualize weather
-observations taken by aircraft.
+AWOT provides a toolkit of utilities to read and visualize weather observation files collected via aircraft platforms.
 
-Contributors:
 
-Nick Guy (nick.guy@uwyo.edu)
-
-Timothy Lang
-
-Andrew Lyons
-
-## Installation
+##Installation
 The latest source code for AWOT can be obtained from the GitHub repository,
 [https://github.com/nguy/AWOT](https://github.com/nguy/AWOT).
 
@@ -32,30 +24,32 @@ python setup.py build
 sudo python setup.py install
 ```
 
-## Structure
-This package is currently divided as follows:
+##Package Structure
+_(Documentation to follow soon!)_
+###io
+Input and output of specific data files<br><br>
+In-Situ Flight Data:<br>
+&nbsp;&nbsp;* NetCDF<br>
+&nbsp;&nbsp;* NASA AMES FFI 1001 format<br>
+Remote Sensing:<br>
+&nbsp;&nbsp;* Univ. Wyoming Cloud Radar (W-band) Level 2 NetCDF files.<br>
+&nbsp;&nbsp;* Univ. of Wyoming Cloud Lidar.<br>
+&nbsp;&nbsp;* NOAA P-3/G-IV tail Doppler and lower fuselage radar native radar coordinates.<br>
+&nbsp;&nbsp;* NOAA P-3 tail Doppler and lower fuselage radar gridded coordinates produced by the windysn program.<br>
+&nbsp;&nbsp;* LATMOS/SAFIRE Falcon NetCDF files which contain both W-band radar and flight information.<br>
+&nbsp;&nbsp;* Any surface-based radar file readable with Py-ART.
 
-###io - Input and output of specific data files
-Flight Data:
-	 NetCDF files
-	 NASA AMES FFI 1001 format
+###graph
+Produce horizontal or vertical plots.  Horizontal plots are overlaid on a Basemap instance and vertical plots are regular 2D plots. Experimental 3D plotting is also provided.
 
-Radar:
-	 Univ. Wyoming Cloud Radar (W-band) Level 2 NetCDF files.
-	 Univ. of Wyoming Cloud Lidar.
-	 NOAA P-3/G-IV tail Doppler and lower fuselage radar native radar coordinates.
- 	 NOAA P-3 tail Doppler and lower fuselage radar gridded coordinates produced by the windysn program.
-	 LATMOS/SAFIRE Falcon NetCDF files which contain both W-band radar and flight information.
+###utility
+Routines for matching flight track to points in a volume of data, creating radar CFAD diagrams. In addition, a number of helper/conversion routines can be found here.
 
-###graph - Produces plots.  Horizontal plots are overlaid on a basemap instance
-and vertical plots are regular 2D plots.
+###src
+Processing software for NOAA P-3 tail radar data. Work in progress, not operational yet.
 
-###display - Very immature visualization routines.  Work is in progress.
-
-###src - Processing software for NOAA P-3 tail radar data.
-
-## Usage
-See the [examples](https://github.com/nguy/AWOT/tree/master/examples) directory for a number of notebooks.
+##How-to
+Many [examples](https://github.com/nguy/AWOT/tree/master/examples) Jupyter notebooks are provided to familiarize yourself with AWOT.
 
 Read a NOAA P-3 tail radar sweep file:
 
@@ -92,7 +86,7 @@ flp = FlightLevel(flight)
 flp.plot_trackmap(color_by_altitude=True, track_cmap='spectral', addlegend=True, addtitle=True)
 ```
 
-## Dependencies
+##Dependencies
 
 A typical scientific python stack is employed:
     [Numpy](http://www.scipy.org)
@@ -110,7 +104,7 @@ Optional:
 
 
 
-## Notes
+##Notes
 At present this package is primarily for visualization.  However, work is underway to connect
 many processing routines that allow processing from start to finish with airborne data.
 
@@ -118,5 +112,11 @@ Development to provide the ability to process Wyoming Cloud radar and lidar file
 
 AWOT was developed on MacOSX 10.9 - 10.10.5 using Python 2.7, though it should be Python 3 compliant.
 
+##Contributors
 
+Nick Guy (nick.guy@uwyo.edu)
+
+Timothy Lang
+
+Andrew Lyons
 
