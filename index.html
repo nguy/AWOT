@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>AWOT - Airborne Weather Observations Toolkit by nguy</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1>AWOT - Airborne Weather Observations Toolkit</h1>
+          <h2> A python-based airborne observations analysis package</h2>
+        </header>
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/nguy/AWOT/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/nguy/AWOT/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/nguy/AWOT" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <section id="main_content">
+          <p>AWOT provides a toolkit of utilities to read and visualize weather observation files collected via aircraft platforms.</p>
+
+<hr>
+
+<h2>
+<a id="package-structure" class="anchor" href="#package-structure" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Package Structure</h2>
+
+<p><em>(Documentation to follow soon!)</em></p>
+
+<h3>
+<a id="io" class="anchor" href="#io" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>io</h3>
+
+<p>Input and output of specific data files<br><br>
+In-Situ Flight Data:<br>
+  * NetCDF<br>
+  * NASA AMES FFI 1001 format<br>
+Remote Sensing:<br>
+  * Univ. Wyoming Cloud Radar (W-band) Level 2 NetCDF files.<br>
+  * Univ. of Wyoming Cloud Lidar.<br>
+  * NOAA P-3/G-IV tail Doppler and lower fuselage radar native radar coordinates.<br>
+  * NOAA P-3 tail Doppler and lower fuselage radar gridded coordinates produced by the windysn program.<br>
+  * LATMOS/SAFIRE Falcon NetCDF files which contain both W-band radar and flight information.<br>
+  * Any surface-based radar file readable with Py-ART.</p>
+
+<h3>
+<a id="graph" class="anchor" href="#graph" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>graph</h3>
+
+<p>Produce horizontal or vertical plots.  Horizontal plots are overlaid on a Basemap instance and vertical plots are regular 2D plots. Experimental 3D plotting is also provided.</p>
+
+<h3>
+<a id="utility" class="anchor" href="#utility" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>utility</h3>
+
+<p>Routines for matching flight track to points in a volume of data, creating radar CFAD diagrams. In addition, a number of helper/conversion routines can be found here.</p>
+
+<h3>
+<a id="src" class="anchor" href="#src" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>src</h3>
+
+<p>Processing software for NOAA P-3 tail radar data. Work in progress, not operational yet.</p>
+
+<h2>
+<a id="how-to" class="anchor" href="#how-to" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How-to</h2>
+
+<p>Many <a href="https://github.com/nguy/AWOT/tree/master/examples">examples</a> Jupyter notebooks are provided to familiarize yourself with AWOT.</p>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>The latest source code for AWOT can be obtained from the GitHub repository,
+<a href="https://github.com/nguy/AWOT">https://github.com/nguy/AWOT</a>.</p>
+
+<p>Either download and unpack the zip file of the source code or use git to checkout the repository</p>
+
+<pre><code>git clone https://github.com/nguy/AWOT
+</code></pre>
+
+<p>To install in your home directory, use:</p>
+
+<pre><code>python setup.py install --user
+</code></pre>
+
+<p>To install for all users on Unix/Linux:</p>
+
+<pre><code>python setup.py build
+sudo python setup.py install
+</code></pre>
+
+<p>Dependencies are listed in the README at the <a href="https://github.com/nguy/AWOT">code repository</a></p>
+
+<p>AWOT is developed on MacOSX 10.9 - 10.10.5 using Python 2.7, though it <em>should</em> be Python 3 compliant.</p>
+
+<h2>
+<a id="contributors" class="anchor" href="#contributors" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Contributors</h2>
+
+<p><a href="https://github.com/nguy">Nick Guy</a><br>
+Timothy Lang<br>
+Andrew Lyons</p>
+        </section>
+
+        <footer>
+          AWOT - Airborne Weather Observations Toolkit is maintained by <a href="https://github.com/nguy">nguy</a><br>
+          This page was generated by <a href="https://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
+    </div>
+  </body>
+</html>
