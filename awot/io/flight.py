@@ -201,7 +201,8 @@ def _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=None):
     dd = {}
 
     for var in name_map:
-        if name_map[var] in ncFile.variables.keys():
+        matching = [s for s in ncFile.variables.keys() if var[0:5] in s]
+        if (len(matching) > 0):
             dd[var] = common._ncvar_to_dict(ncFile.variables[name_map[var]])
             data = ncFile.variables[name_map[var]]
 #            if (isRAF) & (RAFrate in ncFile.variables[name_map[var]].shape):
