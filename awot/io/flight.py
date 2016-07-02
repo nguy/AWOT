@@ -201,7 +201,9 @@ def _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=None):
     dd = {}
 
     for var in name_map:
-        matching = [s for s in ncFile.variables.keys() if var[0:5] in s]
+        print(var)
+        matching = [s.lower() for s in ncFile.variables.keys()
+                    if var[0:13].lower() in s]
         if (len(matching) > 0):
             dd[var] = common._ncvar_to_dict(ncFile.variables[name_map[var]])
             data = ncFile.variables[name_map[var]]
@@ -275,7 +277,7 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
             name_map = _get_name_map(platform)
         else:
             name_map = _make_name_map_from_varlist(hdr['VNAME'])
-
+    print(name_map)
     # Loop through the variables and pull data
     readfile = {}
 
@@ -306,11 +308,19 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
     readfile['time'] = Time
 
     data = {}
+    print(readfile)
+    sht_var = [elem[:37].lower() for elem in readfile.keys()]
+    print(sht_var)
+    print('keys')
+    print(name_map.keys())
     for varname in name_map:
         try:
+            matching = sht_var.index(name_map[varname][:37].lower())
+            print(varname, matching, list(readfile.keys())[matching])
             data[varname] = common._nasa_ames_var_to_dict(
-                               readfile[name_map[varname]],
+                               readfile[list(readfile.keys())[matching]],
                                varname, name_map[varname])
+
         except:
             data[varname] = None
 
