@@ -274,6 +274,10 @@ def _latmos_name_map():
         "longitude": "longitude : from GPS (degree)",
         "altitude": "altitude : from GPS (meter)",
         "true_heading": "platform_orientation : from INS (degree)",
+        "true_heading1": "Aircraft heading angle from the Applanix Position "
+                         "and Orientation System (POS); 0 to 360 range with "
+                         "0 being North and angles increasing in a clockwise "
+                         "(right) direction [degrees].",
         "temperature":
         "air_temperature : from deiced Rosemount sensor (Celsius)",
         "dewpoint_temperature": "dew_point_temperature : from 1011B "
@@ -305,8 +309,14 @@ def _latmos_name_map():
                                         "from GPS (m/s)",
         "attack_angle": "angle_of_attack : from sensor on the boom "
                         "(degree)",
+        "attack_angle1": "Alpha (Attack) Angle based on Nose Pitot Pressure "
+                         "[degrees] {Calibration:  slope = 0.066317100 offset "
+                         "= 0.40082229}",
         "sideslip_angle": "angle_of_sideslip : from sensor on the "
                           "boom (degree)",
+        "sideslip_angle1": "Beta (Sideslip) Angle based on Nose Pitot "
+                           "Pressure [degrees] {Calibration:  slope = "
+                           "0.085875130 offset = 0.16014451}",
         "Uwind": "eastward_wind : Attitudes and speed wrt ground from "
                  "INS, air angles from radome, air speed from pitot (m/s)",
         "Vwind": "northward_wind : Attitudes and speed wrt ground from "
@@ -368,6 +378,10 @@ def _und_citation_name_map():
         'pitch': "Aircraft Pitch Angle from the Applanix POS System [degrees]",
         'true_heading': "Aircraft Heading Angle [degrees]; 0-360 with 0 "
                         "being North",
+        'true_heading1': "Aircraft heading angle from the Applanix Position "
+                         "and Orientation System (POS); 0 to 360 range with 0 "
+                         "being North and angles increasing in a clockwise "
+                         "(right) direction [degrees].",
         'aircraft_vert_accel': "Aircraft Z-direction (Vertical) Acceleration "
                                "for the Applanix POS system [m/s^2]",
         'latitude': "Aircraft Latitude from the Applanix POS System [degrees]",
@@ -375,14 +389,26 @@ def _und_citation_name_map():
                      "[degrees]",
         'altitude': "Aircraft Altitude from the Applanix POS system [m]",
         'aircraft_speed': "Aircraft Speed from the Applanix POS system [m/s]",
+        'aircraft_speed1': "Aircraft ground speed from the Applanix Position "
+                           "and Orientation System (POS) [m/s]",
         'track': "Aircraft Track Angle [degrees]; 0-360 with 0 "
                  "being North",
+        'track1': "Aircraft track angle from the Applanix Position and "
+                  "Orientation System (POS); 0 to 360 range with 0 being "
+                  "North.and angles increasing in a clockwise (right) "
+                  "direction [degrees].",
         'attack_angle': "Alpha (Attack) Angle [degrees] "
                         "{Calibration:  slope = 0.070310700 "
                         "offset = 0.33308870}",
+        'attack_angle1': "Alpha (Attack) Angle based on Nose Pitot Pressure "
+                         "[degrees] {Calibration:  slope = 0.066317100 "
+                         "offset = 0.40082229}",
         'sideslip_angle': "Beta (Sideslip) Angle [degrees] "
                           "{Calibration:  slope = -0.073846080 "
                           "offset = -1.6202790}",
+        'sideslip_angle1': "Beta (Sideslip) Angle based on Nose Pitot "
+                           "Pressure [degrees] {Calibration:  slope = "
+                           "0.085875130 offset = 0.16014451}",
         'aicrcaft_vert_vel': "Vertical Velocity of the aircraft based on "
                              "the change in position over a 2 seceond "
                              "interval [m/s]",
