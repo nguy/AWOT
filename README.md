@@ -12,6 +12,8 @@ Timothy Lang
 
 Andrew Lyons
 
+Steve Nesbitt
+
 ## Installation
 The latest source code for AWOT can be obtained from the GitHub repository,
 [https://github.com/nguy/AWOT](https://github.com/nguy/AWOT).
