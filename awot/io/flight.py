@@ -201,7 +201,10 @@ def _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=None):
     dd = {}
 
     for var in name_map:
-        if name_map[var] in ncFile.variables.keys():
+        print(var)
+        matching = [s.lower() for s in ncFile.variables.keys()
+                    if var[0:13].lower() in s]
+        if (len(matching) > 0):
             dd[var] = common._ncvar_to_dict(ncFile.variables[name_map[var]])
             data = ncFile.variables[name_map[var]]
 #            if (isRAF) & (RAFrate in ncFile.variables[name_map[var]].shape):
@@ -236,7 +239,7 @@ def _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=None):
 #########################
 
 
-def read_nasa_ames(filename, mapping_dict=None, platform=None):
+def read_nasa_ames(filename, mapping_dict=None, platform=None, verbose=False):
     '''
     Read NASA AMES FFI 1001 formatted data files.
     The header tells all about the file. Find format here:
@@ -255,6 +258,9 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
     platform : str
         If value is set and valid, use the default mapping
         dictionary provided for that platform.
+    verbose : bool
+        Set to `True` to see how variables in the file are matched to
+        AWOT variable naming conventions (default = `False`)
     '''
     f = open(filename, 'r')
 
@@ -305,13 +311,21 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None):
     readfile['time'] = Time
 
     data = {}
+    sht_var = [elem[:37].lower() for elem in readfile.keys()]
     for varname in name_map:
         try:
+            matching = sht_var.index(name_map[varname][:37].lower())
             data[varname] = common._nasa_ames_var_to_dict(
-                               readfile[name_map[varname]],
-                               varname, name_map[varname])
+                readfile[list(readfile.keys())[matching]],
+                varname, name_map[varname])
+            if verbose:
+                print('{} -> {}'.format(varname,
+                      list(readfile.keys())[matching]))
+
         except:
             data[varname] = None
+            if verbose:
+                print('{} -> NO MATCH'.format(varname))
 
     # Calculate U,V wind if not present
     if 'Uwind' not in name_map:
