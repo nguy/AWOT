@@ -485,6 +485,10 @@ class RadarMatch(object):
         field_match_dict : list
             List of field names to match for data object.
             None loops through existing fields.
+        Zfield : str
+            Field to use for reflectivity (i.e. linear weighting) in
+            kdtree matching if more than one point is averaged
+            None uses 'reflectivity'
         '''
         # Set data to be used later by any function
         self.time = flight['time']
@@ -672,7 +676,7 @@ class RadarMatch(object):
             # instance
             p = Proj(proj='laea', zone=10, ellps='WGS84',
                      lat_0=pr.latitude['data'][0],
-                     lon_0=pr.longitude['data'][0])
+                     lon_0=pr.latitude['data'][0])
 
             rad_x, rad_y = p(dlon, dlat)
 
@@ -1189,7 +1193,7 @@ class MatchData(object):
     def __init__(self, flight, data, distance_to_point=None,
                  indices_1d=None, indices_nd=None,
                  start_time=None, end_time=None,
-                 ac_rng=None, ac_az=None, ac_elev=None):
+                 ac_rng=None, ac_az=None, ac_el=None):
         '''
         Parameters
         ----------
@@ -1215,5 +1219,5 @@ class MatchData(object):
         self.end_time = end_time
         self.ac_rng = ac_rng
         self.ac_az = ac_az
-        self.ac_elev = ac_elev
+        self.ac_el = ac_elev
         return

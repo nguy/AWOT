@@ -433,7 +433,7 @@ class RadarMatch(object):
                  flight_lon_name=None, flight_lat_name=None,
                  flight_alt_name=None, flight_time_name=None,
                  flight_uwind_name=None, flight_vwind_name=None,
-                 field_match_dict=None,
+                 field_match_dict=None, Zfield='reflectivity'
                  ):
         '''
         Intitialize the class with provided data.
@@ -601,6 +601,15 @@ class RadarMatch(object):
         distance = []
         prdata = {}
 
+        ac_dist_cos = self.ground_distance_cosines(
+            rlat, rlon, self.flight_lat['data'], self.flight_lon['data'])
+        # Calculate the azimuth angle corresponding to aircraft position
+        ac_az = self.bearing_to_point(
+            rlat, rlon, self.flight_lat['data'],
+            self.flight_lon['data'])
+        # Calculate the elevation angle corresponding to aircraft position
+        ac_rng, ac_elev = self.slant_range_and_elev(
+            ac_dist_cos, self.flight_alt['data'][:])
 
         # We assume that all files have the same data field dimensions
         for field in self.rlist[0].fields.keys():
@@ -610,19 +619,6 @@ class RadarMatch(object):
 
         # Loop through the list or radar instances
         for num, pr in enumerate(self.rlist):
-
-            rlat, rlon = pr.latitude['data'][0], pr.longitude['data'][0]
-
-            ac_dist_cos = self.ground_distance_cosines(
-                rlat, rlon, self.flight_lat['data'], self.flight_lon['data'])
-            # Calculate the azimuth angle corresponding to aircraft position
-            ac_az = self.bearing_to_point(
-                rlat, rlon, self.flight_lat['data'],
-                self.flight_lon['data'])
-            # Calculate the elevation angle corresponding to aircraft position
-            ac_rng, ac_elev = self.slant_range_and_elev(
-                ac_dist_cos, self.flight_alt['data'][:])
-
             dfield = {}
             # Create 1-D variables to use
             dlon = np.ravel(pr.gate_longitude['data'].copy())
@@ -672,7 +668,7 @@ class RadarMatch(object):
             # instance
             p = Proj(proj='laea', zone=10, ellps='WGS84',
                      lat_0=pr.latitude['data'][0],
-                     lon_0=pr.longitude['data'][0])
+                     lon_0=pr.latitude['data'][0])
 
             rad_x, rad_y = p(dlon, dlat)
 
@@ -747,7 +743,7 @@ class RadarMatch(object):
         return MatchData(self.fldata, prdata,
                          distance_to_point=distance, indices_1d=ind1d[0],
                          start_time=self.start_time, end_time=self.end_time,
-                         ac_rng=ac_rng, ac_az=ac_az, ac_elev=ac_elev)
+                         ac_rng=ac_rng,ac_az=ac_az,ac_elev=ac_elev)
 
     def near_neighbor_tunnel(self, verbose=False):
         '''
@@ -1188,8 +1184,7 @@ class MatchData(object):
     """Class for storing matched flight level data to other observations."""
     def __init__(self, flight, data, distance_to_point=None,
                  indices_1d=None, indices_nd=None,
-                 start_time=None, end_time=None,
-                 ac_rng=None, ac_az=None, ac_elev=None):
+                 start_time=None, end_time=None):
         '''
         Parameters
         ----------
@@ -1213,7 +1208,4 @@ class MatchData(object):
         self.indices_nd = indices_nd
         self.start_time = start_time
         self.end_time = end_time
-        self.ac_rng = ac_rng
-        self.ac_az = ac_az
-        self.ac_elev = ac_elev
         return
