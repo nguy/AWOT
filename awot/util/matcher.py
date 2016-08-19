@@ -1210,7 +1210,8 @@ class RadarMatch(object):
                 ind1d.append(prind1d)
 
                 for field in pr.fields.keys():
-                    prdata[field]['data'][indt[0]] = dfield[field][prind1d]
+                    prdata[field]['data'].flat[[indt[0]]] = \
+                        dfield[field][prind1d]
 
                 if verbose:
                     for ii, ind in enumerate(ind1d[0]):
@@ -1269,7 +1270,7 @@ class RadarMatch(object):
             ac_dist_hav = self.ground_distance_haversine(
                 rlat, rlon, self.flight_lat['data'], self.flight_lon['data'])
             ac_elev2 = np.degrees(np.arctan2(self.flight_alt['data'][:],
-                                            ac_dist_hav))
+                                             ac_dist_hav))
             # Calculate the elevation angle corresponding to aircraft position
 #            ac_rng2, ac_elev2 = self.slant_range_and_elev(
 #                ac_dist_hav, self.flight_alt['data'][:])
