@@ -21,7 +21,7 @@ from ..graph import common as gcommon
 
 
 class TrackMatch(object):
-    """Class for matching flight level data to other observations."""
+    """Class for matching track data to other observations."""
 
     def __init__(self, flight, datavolume,
                  start_time=None, end_time=None,
@@ -1322,11 +1322,11 @@ class RadarMatch(object):
                     if verbose:
                         print("AC/Radar lat/lon/alt: %g/%g, %g/%g, %g/%g" % (
                             self.flight_lat['data'][index],
-                            pr.gate_latitude['data'][azin, rgin],
+                            pr_sweep.gate_latitude['data'][azin, rgin],
                             self.flight_lon['data'][index],
-                            pr.gate_longitude['data'][azin, rgin],
+                            pr_sweep.gate_longitude['data'][azin, rgin],
                             self.flight_alt['data'][index],
-                            pr.gate_altitude['data'][azin, rgin]))
+                            pr_sweep.gate_altitude['data'][azin, rgin]))
 
                     for field in pr_sweep.fields.keys():
                         prdata[field]['data'][index] = pr_sweep.fields[field]['data'][azin, rgin]
@@ -1535,7 +1535,8 @@ class MatchData(object):
     """Class for storing matched flight level data to other observations."""
     def __init__(self, flight, data, distance_to_point=None,
                  indices_1d=None, indices_nd=None,
-                 start_time=None, end_time=None):
+                 start_time=None, end_time=None,
+                 ac_rng=None, ac_az=None, ac_elev=None):
         '''
         Parameters
         ----------
@@ -1559,4 +1560,7 @@ class MatchData(object):
         self.indices_nd = indices_nd
         self.start_time = start_time
         self.end_time = end_time
+        self.ac_rng = ac_rng
+        self.ac_az = ac_az
+        self.ac_elev = ac_elev
         return
