@@ -572,7 +572,7 @@ class RadarUtilityPlot(object):
 
     def fill_between_quantiles(self, field, quantiles=None, height_axis=1,
                                start_time=None, end_time=None,
-                               qcolor='k', qfillcolor='0.75',
+                               qcolor='k', qfillcolor='0.75', qfillalpha=None,
                                qmask_above_height=None,
                                qmask_below_height=None,
                                qmask_between_height=None,
@@ -604,6 +604,8 @@ class RadarUtilityPlot(object):
             Color to use for quantile line plots.
         qfillcolor : str
             Color to use for quantile line file.
+        qfillalpha : float
+            Alpha value for transparency, None uses Matplotlib default.
         qmask_above_height : float
             Mask quantile data above this height.
         qmask_below_height : float
@@ -682,7 +684,8 @@ class RadarUtilityPlot(object):
         l0 = ax.plot(qArr['profiles'][:, 0], qArr['yaxis'][:], color=qcolor)
         l1 = ax.plot(qArr['profiles'][:, 1], qArr['yaxis'][:], color=qcolor)
         ax.fill_betweenx(qArr['yaxis'][:], qArr['profiles'][:, 0],
-                         qArr['profiles'][:, 1], facecolor=qfillcolor)
+                         qArr['profiles'][:, 1],
+                         facecolor=qfillcolor, alpha=qfillalpha)
         return qArr
 
     def add_quantiles_to_axis(self, ax, qArr, qcolor, qlabels_on,
