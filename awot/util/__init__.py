@@ -8,9 +8,9 @@ Probe Subpackage (:mod:'awot.util)
 """
 
 from __future__ import absolute_import
-from .matcher import TrackMatch, RadarMatch
+from .matcher import (TrackMatch, FlightLevelMatch, RadarMatch)
 
-from .convert import (pyart_radar_to_awot, to_awot_flight)
+from .convert import (pyart_radar_to_awot, to_awot_flight, build_vardict)
 from .helper import (time_subset_awot_dict, add_dict_to_awot,
                      add_dict_to_awot_fields)
 from .track_distance import (calc_ground_distance, calc_air_distance,
