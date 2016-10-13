@@ -671,6 +671,26 @@ class RadarUtilityPlot(object):
 #        qArr = self.calc_quantiles(xarr, ht[:, 0], quantiles)
         qArr = self.calc_quantiles(xarr, self.height['data'][:], quantiles)
 
+        # Apply mask to altitudes if indicated
+        apply_height_mask = False
+        if qmask_above_height is not None:
+            condc = (qArr['yaxis'][:] > qmask_above_height)
+            apply_height_mask = True
+        if qmask_below_height is not None:
+            condc = (qArr['yaxis'][:] < qmask_below_height)
+            apply_height_mask = True
+        if ((qmask_between_height is not None) and
+           (len(qmask_between_height) >= 2)):
+            condc = ((qArr['yaxis'][:] > qmask_between_height[0]) &
+                     (qArr['yaxis'][:] < qmask_between_height[1]))
+            apply_height_mask = True
+
+        if apply_height_mask:
+            qArr['profiles'][:, 0] = np.ma.masked_where(
+                condc, qArr['profiles'][:, 0])
+            qArr['profiles'][:, 0] = np.ma.masked_where(
+                condc, qArr['profiles'][:, 1])
+
         # Set the axes
         if setup_axes:
             common._set_axes(ax, x_min=x_min, x_max=x_max,
