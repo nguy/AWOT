@@ -249,6 +249,8 @@ class RadarUtilityPlot(object):
                   discrete_cmap_levels=None,
                   mask_below=None, plot_percent=False,
                   plot_colorbar=True,
+                  mask_above_height=None, mask_below_height=None,
+                  mask_between_height=None,
                   x_min=None, x_max=None,
                   y_min=None, y_max=None,
                   xlab=None, xlabFontSize=None, xpad=None,
@@ -310,6 +312,12 @@ class RadarUtilityPlot(object):
             True to display percentage. Default is to display fraction.
         plot_colorbar : boolean
             True to diaplay colorbar. False does not display colorbar.
+        mask_above_height : float
+            Mask CFAD data above this height.
+        mask_below_height : float
+            Mask CFAD data below this height.
+        mask_between_height : tuple, float
+            Mask CFAD data between this height.
         x_min : float
             Minimum value for X-axis.
         x_max : float
@@ -385,6 +393,23 @@ class RadarUtilityPlot(object):
 
         if mask_below is not None:
             CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
+
+        # Apply mask to altitudes if indicated
+        apply_height_mask = False
+        if mask_above_height is not None:
+            condc = (cfad_dict['height'] > mask_above_height)
+            apply_height_mask = True
+        if mask_below_height is not None:
+            condc = (cfad_dict['height'] < mask_below_height)
+            apply_height_mask = True
+        if ((mask_between_height is not None) and
+           (len(mask_between_height) >= 2)):
+            condc = ((cfad_dict['height'][:] > mask_between_height[0]) &
+                     (cfad_dict['height'][:] < mask_between_height[1]))
+            apply_height_mask = True
+
+        if apply_height_mask:
+            CFAD = np.ma.masked_where(condc, CFAD)
 
         # Set the axes
         common._set_axes(ax, x_min=x_min, x_max=x_max,
@@ -763,11 +788,11 @@ class RadarUtilityPlot(object):
         msize : float
             Marker size.
         mask_above_height : float
-            Mask quantile data above this height.
+            Mask profile data above this height.
         mask_below_height : float
-            Mask quantile data below this height.
+            Mask profile data below this height.
         mask_between_height : tuple, float
-            Mask quantile data between this height.
+            Mask profile data between this height.
         x_min : float
             Minimum value for X-axis.
         x_max : float
@@ -850,7 +875,7 @@ class RadarUtilityPlot(object):
         Create a plot of the difference of two frequency by altitude distribution
         plots, cfad1 - cfad2.
 
-        NOTE: Must have same dimensionality for proper results.
+        NOTE: MUST have same dimensionality for proper results.
 
         Parameters
         ----------
@@ -1072,10 +1097,10 @@ class RadarUtilityPlot(object):
                     array,  bins=binsx, density=False)
             bin_perc[nn, :] = bin_pts[nn, :] / bin_pts[nn, :].sum() * 100.
             del(ptsfrac, array, condition)
-#            CFAD[nn, :], bin_edges = np.histogram(
-#                   xarr[nn, ...], bins=binsx, density=plot_percent)
+
 
         X, Y = np.meshgrid(binsx, height)
+        junk, ht2d = np.meshgrid(binsx[1::], height)
 
         # Mask any invalid or negative numbers
         bin_pts = np.ma.masked_invalid(bin_pts)
@@ -1085,7 +1110,8 @@ class RadarUtilityPlot(object):
         cfad_dict = {'frequency_points': bin_pts,
                      'frequency_percent': bin_perc,
                      'xaxis': X,
-                     'yaxis': Y
+                     'yaxis': Y,
+                     'height': ht2d
                      }
         return cfad_dict
 
