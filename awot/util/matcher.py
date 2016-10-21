@@ -698,24 +698,29 @@ class RadarMatch(object):
 
                     for field in pr.fields.keys():
                         if field == Zfield:
-                            W_d_k2 = np.ma.masked_where(
-                                np.ma.getmask(dfield[field][prind1d]), W_d_k.copy())
-                            w1 = np.ma.sum(
-                                W_d_k2 * 10. **
-                                (dfield[field][prind1d] / 10.),
-                                axis=1)
-                            w2 = np.ma.sum(W_d_k2, axis=1)
-                            prdata[field]['data'][indt[0]] = \
-                                10. * np.ma.log10(w1/w2)
+                            try:
+                                W_d_k2 = np.ma.masked_where(
+                                    np.ma.getmask(dfield[field][prind1d]), W_d_k.copy())
+                                w1 = np.ma.sum(
+                                    W_d_k2 * 10. **
+                                    (dfield[field][prind1d] / 10.),
+                                    axis=1)
+                                w2 = np.ma.sum(W_d_k2, axis=1)
+                                prdata[field]['data'][indt[0]] = \
+                                    10. * np.ma.log10(w1/w2)
                 #            from IPython.core.debugger import Tracer
             #                Tracer()()  # this one triggers the debugger
+                            except:
+                                print('whoa nellie non Zfield, thanks kdtree')
                         else:
-                            W_d_k2 = np.ma.masked_where(
-                                np.ma.getmask(dfield[field][prind1d]), W_d_k)
-                            w1 = np.ma.sum(W_d_k2*dfield[field][prind1d], axis=1)
-                            w2 = np.ma.sum(W_d_k2, axis=1)
-                            prdata[field]['data'][indt[0]] = w1 / w2
-
+                            try:
+                                W_d_k2 = np.ma.masked_where(
+                                    np.ma.getmask(dfield[field][prind1d]), W_d_k.copy())
+                                w1 = np.ma.sum(W_d_k2*dfield[field][prind1d], axis=1)
+                                w2 = np.ma.sum(W_d_k2, axis=1)
+                                prdata[field]['data'][indt[0]] = w1 / w2
+                            except:
+                                print('whoa nellie, thanks kdtree')
                 else:
                     for field in pr.fields.keys():
                         prdata[field]['data'][indt[0]] = dfield[field][prind1d]
