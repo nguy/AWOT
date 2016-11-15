@@ -155,9 +155,24 @@ def to_awot_flight(lon_dict=None, lat_dict=None, alt_dict=None,
     return awot_flight
 
 
-# def _build_dict(flight, key, data, units, longname, stdname):
-#     flight[key] = {'data': data,
-#                    'units': units,
-#                    'long_name': longname,
-#                    'standard_name': stdname}
-#     return flight
+def build_vardict(data=None, units=None, long_name=None,
+                standard_name=None):
+    '''
+    Build a AWOT style variable dictionary.
+
+    Parameters
+    ----------
+    data : float array
+        Array of data values.
+    units : str
+        Units to associate with data.
+    long_name : str
+        Long name to associate with data.
+    standard_name : str
+        Standard name to associate with data.
+    '''
+    newdict = {'data': data,
+               'units': units,
+               'long_name': long_name,
+               'standard_name': standard_name}
+    return newdict

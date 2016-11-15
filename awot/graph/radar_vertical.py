@@ -461,6 +461,7 @@ class RadarVerticalPlot(object):
                            track_min=None, track_max=None,
                            height_min=None, height_max=None,
                            start_time=None, end_time=None,
+                           zero_track_start=False,
                            track_MajTicks=None, track_MinTicks=None,
                            height_MajTicks=None, height_MinTicks=None,
                            fill_surface=False, fill_min=None, fill_color=None,
@@ -514,6 +515,10 @@ class RadarVerticalPlot(object):
         end_time : str
             UTC time to use as an end time for subsetting in datetime format.
             (e.g. 2014-08-20 16:30:00)
+        zero_track_start : bool
+            If True the first element in the track will be forced to zero.
+            Of interest if using start_time keyword.
+            Defaults to False.
         track_MajTicks : float
             Values for major tickmark spacing on track axis.
         track_MinTicks : float
@@ -581,6 +586,9 @@ class RadarVerticalPlot(object):
         if plot_track_km:
             if track['units'] != 'km':
                 trackd = trackd / 1000.
+
+        if zero_track_start:
+            trackd = trackd - trackd[0]
 
         if plot_log10_var:
             Data = np.log10(Data)
