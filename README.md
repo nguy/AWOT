@@ -115,7 +115,7 @@ AWOT was developed on MacOSX 10.9 - 10.10.5 using Python 2.7, though it should b
 
 ##Contributors
 
-Nick Guy (nick.guy@uwyo.edu)
+[Nick Guy](https://github.com/nguy)
 
 Timothy Lang
 
