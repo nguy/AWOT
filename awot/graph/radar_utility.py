@@ -395,21 +395,29 @@ class RadarUtilityPlot(object):
             CFAD = np.ma.masked_where(CFAD < mask_below, CFAD)
 
         # Apply mask to altitudes if indicated
-        apply_height_mask = False
+        apply_above_height_mask = False
+        apply_below_height_mask = False
+        apply_between_height_mask = False
         if mask_above_height is not None:
-            condc = (cfad_dict['height'] > mask_above_height)
-            apply_height_mask = True
+            conda = (cfad_dict['height'] > mask_above_height)
+            apply_above_height_mask = True
         if mask_below_height is not None:
-            condc = (cfad_dict['height'] < mask_below_height)
-            apply_height_mask = True
+            condb = (cfad_dict['height'] < mask_below_height)
+            apply_below_height_mask = True
         if ((mask_between_height is not None) and
            (len(mask_between_height) >= 2)):
             condc = ((cfad_dict['height'][:] > mask_between_height[0]) &
                      (cfad_dict['height'][:] < mask_between_height[1]))
-            apply_height_mask = True
+            apply_between_height_mask = True
 
-        if apply_height_mask:
-            CFAD = np.ma.masked_where(condc, CFAD)
+        if apply_above_height_mask:
+            CFAD = np.ma.masked_where(conda, CFAD)
+
+        if apply_below_height_mask:
+            data = np.ma.masked_where(condb, data)
+
+        if apply_between_height_mask:
+            data = np.ma.masked_where(condc, data)
 
         # Set the axes
         common._set_axes(ax, x_min=x_min, x_max=x_max,
@@ -681,20 +689,34 @@ class RadarUtilityPlot(object):
         qArr = self._get_quantiles(xarr, self.height['data'][:], quantiles)
 
         # Apply mask to altitudes if indicated
-        apply_height_mask = False
+        apply_above_height_mask = False
+        apply_below_height_mask = False
+        apply_between_height_mask = False
         if qmask_above_height is not None:
-            condc = (qArr['yaxis'][:] > qmask_above_height)
-            apply_height_mask = True
+            conda = (qArr['yaxis'][:] > qmask_above_height)
+            apply_above_height_mask = True
         if qmask_below_height is not None:
-            condc = (qArr['yaxis'][:] < qmask_below_height)
-            apply_height_mask = True
+            condb = (qArr['yaxis'][:] < qmask_below_height)
+            apply_below_height_mask = True
         if ((qmask_between_height is not None) and
            (len(qmask_between_height) >= 2)):
             condc = ((qArr['yaxis'][:] > qmask_between_height[0]) &
                      (qArr['yaxis'][:] < qmask_between_height[1]))
-            apply_height_mask = True
+            apply_between_height_mask = True
 
-        if apply_height_mask:
+        if apply_above_height_mask:
+            qArr['profiles'][:, 0] = np.ma.masked_where(
+                conda, qArr['profiles'][:, 0])
+            qArr['profiles'][:, 0] = np.ma.masked_where(
+                conda, qArr['profiles'][:, 1])
+
+        if apply_below_height_mask:
+            qArr['profiles'][:, 0] = np.ma.masked_where(
+                condb, qArr['profiles'][:, 0])
+            qArr['profiles'][:, 0] = np.ma.masked_where(
+                condb, qArr['profiles'][:, 1])
+
+        if apply_between_height_mask:
             qArr['profiles'][:, 0] = np.ma.masked_where(
                 condc, qArr['profiles'][:, 0])
             qArr['profiles'][:, 0] = np.ma.masked_where(
@@ -727,7 +749,7 @@ class RadarUtilityPlot(object):
             qlabel_size = 10
         if qlabel_color is None:
             qlabel_color = 'k'
-        profdata = qArr['profiles'][:]
+        profdata = qArr['profiles'].copy()
 
         # Apply mask to altitudes if indicated
         apply_height_mask = False
@@ -828,20 +850,28 @@ class RadarUtilityPlot(object):
         yarr = vp_dict['yaxis'][:]
 
         # Apply mask to altitudes if indicated
-        apply_height_mask = False
+        apply_above_height_mask = False
+        apply_below_height_mask = False
+        apply_between_height_mask = False
         if mask_above_height is not None:
-            condc = (yarr > mask_above_height)
-            apply_height_mask = True
+            conda = (yarr > mask_above_height)
+            apply_above_height_mask = True
         if mask_below_height is not None:
-            condc = (yarr < mask_below_height)
-            apply_height_mask = True
+            condb = (yarr < mask_below_height)
+            apply_below_height_mask = True
         if ((mask_between_height is not None) and
            (len(mask_between_height) >= 2)):
             condc = ((yarr > mask_between_height[0]) &
                      (yarr < mask_between_height[1]))
-            apply_height_mask = True
+            apply_between_height_mask = True
 
-        if apply_height_mask:
+        if apply_above_height_mask:
+            data = np.ma.masked_where(conda, data)
+
+        if apply_below_height_mask:
+            data = np.ma.masked_where(condb, data)
+
+        if apply_between_height_mask:
             data = np.ma.masked_where(condc, data)
 
         common._set_axes(ax, x_min=x_min, x_max=x_max,
@@ -1149,7 +1179,7 @@ class RadarUtilityPlot(object):
         return quant_dict
 
     def calc_vertical_profile(self, field, height_axis=1,
-                              points_thresh_fraction=0.5,
+                              points_thresh_fraction=0.05,
                               start_time=None, end_time=None,):
         '''
         Calculate vertical profile statistics.
@@ -1162,6 +1192,10 @@ class RadarUtilityPlot(object):
             A list of percentage values for quantile calculations.
         height_axis : int
             The dimension to perform quantile calculation over (non-height).
+        points_thresh_fraction : float
+            The threshold value of the fraction of possible points
+            that must be present at each level in order to
+            perform calculations.
         start_time : str
             UTC time to use as start time for subsetting in datetime format.
             (e.g. 2014-08-20 12:30:00)
