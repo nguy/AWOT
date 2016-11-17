@@ -245,6 +245,7 @@ class RadarUtilityPlot(object):
                   xbinsminmax=None, nbinsx=50,
                   points_thresh_fraction=None,
                   start_time=None, end_time=None,
+                  height_in_km=False,
                   vmin=None, vmax=None, cmap=None,
                   discrete_cmap_levels=None,
                   mask_below=None, plot_percent=False,
@@ -296,6 +297,8 @@ class RadarUtilityPlot(object):
         end_time : str
             UTC time to use as an end time for subsetting in datetime format.
             (e.g. 2014-08-20 16:30:00)
+        height_in_km : bool
+            True to plot the height axis in kilometers.
         vmin : float
             Minimum value to display.
         vmax : float
@@ -313,11 +316,11 @@ class RadarUtilityPlot(object):
         plot_colorbar : boolean
             True to diaplay colorbar. False does not display colorbar.
         mask_above_height : float
-            Mask CFAD data above this height.
+            Mask CFAD data above this height in meters.
         mask_below_height : float
-            Mask CFAD data below this height.
+            Mask CFAD data below this height in meters.
         mask_between_height : tuple, float
-            Mask CFAD data between this height.
+            Mask CFAD data between this height in meters.
         x_min : float
             Minimum value for X-axis.
         x_max : float
@@ -419,6 +422,12 @@ class RadarUtilityPlot(object):
         if apply_between_height_mask:
             data = np.ma.masked_where(condc, data)
 
+        if height_in_km:
+            yarr = cfad_dict['yaxis'] / 1000.
+            ylab = 'Height (km)'
+        else:
+            yarr = cfad_dict['yaxis']
+
         # Set the axes
         common._set_axes(ax, x_min=x_min, x_max=x_max,
                          y_min=y_min, y_max=y_max,
@@ -442,7 +451,7 @@ class RadarUtilityPlot(object):
                 print("Keyword error: 'discrete_cmap_levels' must "
                       "be a list of float or integer")
 
-        p = ax.pcolormesh(cfad_dict['xaxis'], cfad_dict['yaxis'], CFAD,
+        p = ax.pcolormesh(cfad_dict['xaxis'], yarr, CFAD,
                           vmin=vmin, vmax=vmax, norm=norm, cmap=cmap)
 
         if plot_colorbar:
