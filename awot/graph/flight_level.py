@@ -910,6 +910,7 @@ class FlightLevel(object):
                     fontsize=size, color=color)
 
     def plot_trackseries(self, field, track_key=None, plot_km=False,
+                         start_time=None, end_time=None,
                          color=None, lw=None, ls=None,
                          marker=None, msize=None,
                          x_min=None, x_max=None,
@@ -926,6 +927,12 @@ class FlightLevel(object):
             Variable key name to plot as time series.
         track_key : str
             Key name of track distance variable.
+        start_time : str
+            UTC time to use as start time for subsetting in datetime format.
+            (e.g. 2014-08-20 12:30:00)
+        end_time : str
+            UTC time to use as an end time for subsetting in datetime format.
+            (e.g. 2014-08-20 16:30:00)
         plot_km : bool
             True plots track distance in km, False retains meters.
         color : str
@@ -974,11 +981,16 @@ class FlightLevel(object):
         if track_key is None:
             try:
                 track = self.flight_data['track_distance_air']
+                track_key = 'track_distance_air'
             except:
                 import warnings
                 warnings.warn('Did not find suitable track distance variable')
-        else:
-            track = self.flight_data[track_key]
+#        else:
+#            track = self.flight_data[track_key]
+
+        # Get the subsetted data
+        tsub, track = self._get_time_var_time_subset(
+            track_key, start_time=start_time, end_time=end_time)
 
         if plot_km:
             if track['units'] == 'meters':
@@ -989,7 +1001,9 @@ class FlightLevel(object):
             xlab = 'meters'
 
         # Get the data
-        var, data = self._get_var_dict(field)
+#        var, data = self._get_var_dict(field)
+        tsub, data = self._get_time_var_time_subset(
+            field, start_time=start_time, end_time=end_time)
 
         # Plot the time series
         common._set_axes(ax, x_min=x_min, x_max=x_max,
@@ -1005,6 +1019,7 @@ class FlightLevel(object):
         return
 
     def overplot_trackseries(self, field, track_key=None,
+                             start_time=None, end_time=None,
                              color=None, lw=None, ls=None,
                              marker=None, msize=None, ax=None,):
         """
@@ -1016,6 +1031,12 @@ class FlightLevel(object):
             Key name of variable of interest.
         track_key : str
             Key name of track distance variable.
+        start_time : str
+            UTC time to use as start time for subsetting in datetime format.
+            (e.g. 2014-08-20 12:30:00)
+        end_time : str
+            UTC time to use as an end time for subsetting in datetime format.
+            (e.g. 2014-08-20 16:30:00)
         color : str
             Color of marker.
         marker : str
@@ -1042,17 +1063,24 @@ class FlightLevel(object):
         if track_key is None:
             try:
                 track = self.flight_data['track_distance_air']
+                track_key = 'track_distance_air'
             except:
                 ValueError('Did not find suitable track distance variable')
-        else:
-            track = self.flight_data[track_key]
-        trackd = track['data'][:]
+#        else:
+#            track = self.flight_data[track_key]
+#        trackd = track['data'][:]
+
+        # Get the subsetted data
+        tsub, track = self._get_time_var_time_subset(
+            track_key, start_time=start_time, end_time=end_time)
 
         # Get the data
-        var, data = self._get_var_dict(field)
+#        var, data = self._get_var_dict(field)
+        tsub, data = self._get_time_var_time_subset(
+            field, start_time=start_time, end_time=end_time)
 
         # Create the plot
-        p = common.plot_xy(trackd, data,
+        p = common.plot_xy(track, data,
                            color=color, lw=lw, ls=ls,
                            marker=marker, msize=msize, ax=ax)
         return
