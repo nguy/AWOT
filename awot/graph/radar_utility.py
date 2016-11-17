@@ -707,19 +707,19 @@ class RadarUtilityPlot(object):
         if apply_above_height_mask:
             qArr['profiles'][:, 0] = np.ma.masked_where(
                 conda, qArr['profiles'][:, 0])
-            qArr['profiles'][:, 0] = np.ma.masked_where(
+            qArr['profiles'][:, 1] = np.ma.masked_where(
                 conda, qArr['profiles'][:, 1])
 
         if apply_below_height_mask:
             qArr['profiles'][:, 0] = np.ma.masked_where(
                 condb, qArr['profiles'][:, 0])
-            qArr['profiles'][:, 0] = np.ma.masked_where(
+            qArr['profiles'][:, 1] = np.ma.masked_where(
                 condb, qArr['profiles'][:, 1])
 
         if apply_between_height_mask:
             qArr['profiles'][:, 0] = np.ma.masked_where(
                 condc, qArr['profiles'][:, 0])
-            qArr['profiles'][:, 0] = np.ma.masked_where(
+            qArr['profiles'][:, 1] = np.ma.masked_where(
                 condc, qArr['profiles'][:, 1])
 
         # Set the axes
