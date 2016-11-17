@@ -761,20 +761,32 @@ class RadarUtilityPlot(object):
         profdata = qArr['profiles'].copy()
 
         # Apply mask to altitudes if indicated
-        apply_height_mask = False
+        apply_above_height_mask = False
+        apply_below_height_mask = False
+        apply_between_height_mask = False
         if qmask_above_height is not None:
-            condc = (qArr['yaxis'][:] > qmask_above_height)
-            apply_height_mask = True
+            conda = (qArr['yaxis'][:] > qmask_above_height)
+            apply_above_height_mask = True
         if qmask_below_height is not None:
-            condc = (qArr['yaxis'][:] < qmask_below_height)
-            apply_height_mask = True
+            condb = (qArr['yaxis'][:] < qmask_below_height)
+            apply_below_height_mask = True
         if ((qmask_between_height is not None) and
            (len(qmask_between_height) >= 2)):
             condc = ((qArr['yaxis'][:] > qmask_between_height[0]) &
                      (qArr['yaxis'][:] < qmask_between_height[1]))
-            apply_height_mask = True
+            apply_between_height_mask = True
 
-        if apply_height_mask:
+        if apply_above_height_mask:
+            for num in range(len(qArr['quantiles'])):
+                profdata[:, num] = np.ma.masked_where(
+                    conda, profdata[:, num])
+
+        if apply_below_height_mask:
+            for num in range(len(qArr['quantiles'])):
+                profdata[:, num] = np.ma.masked_where(
+                    condb, profdata[:, num])
+
+        if apply_between_height_mask:
             for num in range(len(qArr['quantiles'])):
                 profdata[:, num] = np.ma.masked_where(
                     condc, profdata[:, num])
