@@ -23,6 +23,7 @@ from .read_sonde import (read_sounding_data, read_cls_dropsonde)
 from .read_nasa_hiwrap import read_hiwrap_netcdf, read_hiwrap_h5
 from .write_radar_netcdf import radar2nc
 from .read_hiaper_radar import read_hcr
+from .name_maps_flight import get_name_map
 
 
 

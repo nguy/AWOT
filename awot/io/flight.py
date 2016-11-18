@@ -12,7 +12,7 @@ from datetime import datetime
 from netCDF4 import Dataset, num2date, date2num
 
 from . import common
-from ..io.name_maps_flight import _get_name_map
+from ..io.name_maps_flight import get_name_map
 
 #########################
 #   NetCDF Methods      #
@@ -65,7 +65,7 @@ def read_netcdf(fname, time_var=None, mapping_dict=None, platform=None,
     else:
         # Check to see if platform is specified
         if platform is not None:
-            name_map = _get_name_map(platform)
+            name_map = get_name_map(platform)
         else:
             name_map = _make_name_map_from_varlist(ncFile.variables.keys())
 
@@ -282,7 +282,7 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None, verbose=False):
     else:
         # Check to see if platform is specified
         if platform is not None:
-            name_map = _get_name_map(platform)
+            name_map = get_name_map(platform)
         else:
             name_map = _make_name_map_from_varlist(hdr['VNAME'])
 

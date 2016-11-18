@@ -14,12 +14,14 @@ custom name_map.
 """
 
 from __future__ import print_function
+import warnings
 
 
-def _get_name_map(platform):
+def get_name_map(platform):
     """
-    Retrieve a name_map used to map file variables to
-    AWOT object.
+    Retrieve a default name_map used to map file
+    variables to AWOT object. These were set up for
+    convenience and may not be
     """
     # Set up lists of potential names for various aircraft
     p3_names = ['p3', 'p-3', 'noaap3', 'aoc',
@@ -51,6 +53,8 @@ def _get_name_map(platform):
 
         elif platform.lower().replace(" ", "") in und_citation_names:
             name_map = _und_citation_name_map()
+        else:
+            warnings.warn("This platform may not be supported currently")
     return name_map
 
 
