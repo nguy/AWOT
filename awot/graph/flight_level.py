@@ -1089,7 +1089,8 @@ class FlightLevel(object):
 #  Time Series methods  #
 #########################
 
-    def plot_timeseries(self, field, color='k', marker='o', msize=1.5, lw=2,
+    def plot_timeseries(self, field, color='k', marker='o', msize=1.5,
+                        ls=None, lw=2,
                         date_format='%H:%M', tz=None, xdate=True,
                         date_minor_string='minute',
                         other_major_ticks=None, other_minor_ticks=None,
@@ -1110,8 +1111,10 @@ class FlightLevel(object):
             Marker to display.
         msize : float
             Marker size.
-        lw : float
-            Linewidth to use with line.
+        ls : 'str'
+            Matplotlib linestyle.
+        lw : float or int
+            Matplotlib linewidth to use with line.
         date_format : str
             Format of the time string for x-axis labels.
         tz : str
@@ -1160,7 +1163,8 @@ class FlightLevel(object):
 
         # Plot the time series
         ts = common.plot_date_ts(
-            tsub, varsub, color=color, marker=marker, msize=msize, lw=lw,
+            tsub, varsub, color=color, marker=marker, msize=msize,
+            ls=ls, lw=lw,
             date_format=date_format, tz=tz, xdate=xdate,
             date_minor_string=date_minor_string,
             other_major_ticks=other_major_ticks,
@@ -1171,7 +1175,7 @@ class FlightLevel(object):
         return
 
     def overplot_timeseries(self, field, color='k', marker='o',
-                            msize=1.5, lw=2, ax=None,
+                            msize=1.5, ls=None, lw=2, ax=None,
                             start_time=None, end_time=None,):
         """
         Overplot data onto an already established time series.
@@ -1186,8 +1190,10 @@ class FlightLevel(object):
             Marker to display.
         msize : float
             Marker size.
-        lw : float
-            Linewidth to use with line.
+        ls : 'str'
+            Matplotlib linestyle.
+        lw : float or int
+            Matplotlib linewidth to use with line.
         ax : Axes instance
             Axis on which to plot.
         start_time : string
@@ -1209,7 +1215,7 @@ class FlightLevel(object):
 
         # Create the plot
         ax.plot_date(tsub, varsub, mfc=color, mec=color, marker=marker,
-                     markersize=msize, lw=lw)
+                     markersize=msize, ls=ls, lw=lw)
         return
 
     def contour_timeseries(

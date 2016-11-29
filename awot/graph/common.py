@@ -368,7 +368,8 @@ def image_2d(xvar, yvar, data_var,
     return
 
 
-def plot_date_ts(time, Var, color='k', marker='o', msize=1.5, lw=2,
+def plot_date_ts(time, Var, color='k', marker='o', msize=1.5,
+                 ls=None, lw=2,
                  date_format='%H:%M', tz=None, xdate=True,
                  date_minor_string='minute',
                  other_major_ticks=None, other_minor_ticks=None,
@@ -392,6 +393,10 @@ def plot_date_ts(time, Var, color='k', marker='o', msize=1.5, lw=2,
         Marker to display.
     msize : float
         Marker size.
+    ls : str
+        Matplotlib linestyle.
+    lw : float or int
+        Matplotlit linewidth.
     date_format : str
         Format of the time string for x-axis labels.
     tz : str
@@ -448,7 +453,7 @@ def plot_date_ts(time, Var, color='k', marker='o', msize=1.5, lw=2,
     # Create the plot
     ax.plot_date(time, Var, tz=tz, xdate=xdate, ydate=ydate,
                  mfc=color, mec=color, marker=marker,
-                 markersize=msize, lw=lw)
+                 markersize=msize, ls=ls, lw=lw)
     return
 
 
