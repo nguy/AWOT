@@ -1089,8 +1089,8 @@ class FlightLevel(object):
 #  Time Series methods  #
 #########################
 
-    def plot_timeseries(self, field, color='k', marker='o', msize=1.5,
-                        ls=None, lw=2,
+    def plot_timeseries(self, field, marker='o', mcolor='k', msize=1.5,
+                        color='k', ls=None, lw=2,
                         date_format='%H:%M', tz=None, xdate=True,
                         date_minor_string='minute',
                         other_major_ticks=None, other_minor_ticks=None,
@@ -1105,12 +1105,14 @@ class FlightLevel(object):
         ----------
         field : str
             Variable key name to plot as time series.
-        color : str
-            Color of marker.
         marker : str
             Marker to display.
+        mcolor : str
+            Color of marker.
         msize : float
             Marker size.
+        color : str
+            Line Color.
         ls : 'str'
             Matplotlib linestyle.
         lw : float or int
@@ -1163,8 +1165,8 @@ class FlightLevel(object):
 
         # Plot the time series
         ts = common.plot_date_ts(
-            tsub, varsub, color=color, marker=marker, msize=msize,
-            ls=ls, lw=lw,
+            tsub, varsub, marker=marker, mcolor=mcolor, msize=msize,
+            color=color, ls=ls, lw=lw,
             date_format=date_format, tz=tz, xdate=xdate,
             date_minor_string=date_minor_string,
             other_major_ticks=other_major_ticks,
