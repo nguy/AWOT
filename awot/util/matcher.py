@@ -1271,11 +1271,8 @@ class RadarMatch(object):
                 ind1d.append(prind1d)
 
                 for field in pr.fields.keys():
-<<<<<<< HEAD
-                    prdata[field]['data'].flat[indt[0]] = \
-=======
+#                    prdata[field]['data'].flat[indt[0]] = \
                     prdata[field]['data'].flat[[indt[0]]] = \
->>>>>>> upstream/master
                         dfield[field][prind1d]
 
                 if verbose:
@@ -1428,14 +1425,9 @@ class RadarMatch(object):
             if self.maskhi is not None:
                 prdata[field]['data'] = np.ma.masked_greater(
                     prdata[field]['data'], self.maskhi)
-<<<<<<< HEAD
-        print("--- %s seconds---" % (timer.time() - nnpbegin))  # NG
-        return MatchData(self.fldata, prdata, distance_to_point=distance,
-=======
         if timeit:
             print("--- Elapsed time: %s sec ---" % (timer.time() - opbegin))
         return MatchData(self.fldata, prdata,
->>>>>>> upstream/master
                          start_time=self.start_time, end_time=self.end_time)
 
 #################################

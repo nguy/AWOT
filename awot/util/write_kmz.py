@@ -23,10 +23,7 @@ try:
     import simplekml
 except:
     raise ValueError("This module requires installation of simplekml...")
-<<<<<<< HEAD
 #    return
-=======
->>>>>>> upstream/master
 
 
 def write_track_kmz(awot, field, lat_name=None, lon_name=None,
