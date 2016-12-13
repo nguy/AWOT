@@ -12,14 +12,15 @@ from datetime import datetime
 from netCDF4 import Dataset, num2date, date2num
 
 from . import common
-from ..io.name_maps_flight import _get_name_map
+from ..io.name_maps_flight import get_name_map
 
 #########################
 #   NetCDF Methods      #
 #########################
 
 
-def read_netcdf(fname, time_var=None, mapping_dict=None, platform=None):
+def read_netcdf(fname, time_var=None, mapping_dict=None, platform=None,
+                verbose=False):
     """
     Read in NetCDF formatted flight data.
     Output variable names are controlled by mapping_dict and platform
@@ -42,9 +43,11 @@ def read_netcdf(fname, time_var=None, mapping_dict=None, platform=None):
     mapping_dict : dict
         Dictionary to use for mapping variable names. Use if provided.
         If None, use default.
-    platform: str
+    platform : str
         Platform name. If no mapping dictionary is provided, then
         this can provide an internal default mapping dictionary.
+    verbose : bool
+        If True, a list of variables is output.
     """
     # Read the NetCDF
     ncFile = Dataset(fname, 'r')
@@ -62,12 +65,13 @@ def read_netcdf(fname, time_var=None, mapping_dict=None, platform=None):
     else:
         # Check to see if platform is specified
         if platform is not None:
-            name_map = _get_name_map(platform)
+            name_map = get_name_map(platform)
         else:
             name_map = _make_name_map_from_varlist(ncFile.variables.keys())
 
     # Cycle to through variables in file
-    data = _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=RAFdim)
+    data = _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=RAFdim,
+                                 verbose=False)
 
     # Calculate U,V wind if not present
     if 'Uwind' not in name_map:
@@ -197,17 +201,18 @@ def _get_time(ncFile, isRAF, RAFrate=None, timevar=None):
     return Time
 
 
-def _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=None):
+def _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=None, verbose=False):
     dd = {}
 
     for var in name_map:
-        print(var)
-        matching = [s.lower() for s in ncFile.variables.keys()
-                    if var[0:13].lower() in s]
-        if (len(matching) > 0):
+        if verbose:
+            print(var)
+#        matching = [s.lower() for s in ncFile.variables.keys()
+#                    if var[0:13].lower() in s]
+#        if (len(matching) > 0):
+        if name_map[var] in ncFile.variables.keys():
             dd[var] = common._ncvar_to_dict(ncFile.variables[name_map[var]])
             data = ncFile.variables[name_map[var]]
-#            if (isRAF) & (RAFrate in ncFile.variables[name_map[var]].shape):
             if (isRAF) & (RAFdim in data.dimensions):
                 ndim = len(data.shape)
                 if (ndim > 2):
@@ -228,8 +233,8 @@ def _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=None):
             try:
                 mask = dd[var]['data'].mask
             except:
-                dd[var]['data'] = np.ma.masked_array(dd[var]['data'],
-                                                     mask=False)
+                dd[var]['data'] = np.ma.masked_array(
+                    dd[var]['data'], mask=False)
         else:
             dd[var] = None
     return dd
@@ -277,7 +282,7 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None, verbose=False):
     else:
         # Check to see if platform is specified
         if platform is not None:
-            name_map = _get_name_map(platform)
+            name_map = get_name_map(platform)
         else:
             name_map = _make_name_map_from_varlist(hdr['VNAME'])
 
