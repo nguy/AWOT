@@ -1019,13 +1019,15 @@ class RadarMatch(object):
         ind1d = []
         distance = []
         prdata = {}
-
+        matchinfo = {}
 
         # We assume that all files have the same data field dimensions
         for field in self.rlist[0].fields.keys():
             prdata[field] = self.rlist[0].fields[field].copy()
             prdata[field]['data'] = np.ma.array(
                 np.full_like(self.flight_numtime, np.nan))
+        matchinfo['match_indicies'] = np.ma.array(
+            np.full([len(self.flight_numtime),query_k], np.nan))
 
         # Loop through the list or radar instances
         for num, pr in enumerate(self.rlist):
@@ -1050,6 +1052,12 @@ class RadarMatch(object):
             for field in pr.fields.keys():
                 dfield[field] = np.ravel(pr.fields[field]['data'])
             dshape = pr.fields[field]['data'].shape
+
+#            #create sweep number metadata
+#            if do_index:
+#                sweep_ind = np.zeros(pr.nrays,pr.ngates,dtype=int16)
+#                for i in np.arange(pr.nsweeps+1):
+#                    sweep_ind[pr.sweep_start_ray_index:pr.sweep_end_ray_index+1,:] = i
 
             # Convert the radar time to AWOT epoch
             rtime = common.convert_to_epoch_dict(pr.time.copy())
@@ -1115,6 +1123,10 @@ class RadarMatch(object):
                     # compute Barnes weights
                     W_d_k = np.ma.array(np.exp(-1*prdistance**2./K_d**2.))
 
+                    matchinfo['match_indicies'][indt[0],:] = prind1d
+#                    from IPython.core.debugger import Tracer
+#                    Tracer()()  # this one triggers the debugger
+
                     for field in pr.fields.keys():
                         if field == Zfield:
                             try:
@@ -1138,6 +1150,8 @@ class RadarMatch(object):
                                 w1 = np.ma.sum(W_d_k2*dfield[field][prind1d], axis=1)
                                 w2 = np.ma.sum(W_d_k2, axis=1)
                                 prdata[field]['data'][indt[0]] = w1 / w2
+                    #            from IPython.core.debugger import Tracer
+                    #            Tracer()()  # this one triggers the debugger
                             except:
                                 print('whoa nellie, thanks kdtree')
                 else:
@@ -1172,7 +1186,8 @@ class RadarMatch(object):
         return MatchData(self.fldata, prdata,
                          distance_to_point=distance, indices_1d=ind1d[0],
                          start_time=self.start_time, end_time=self.end_time,
-                         ac_rng=ac_rng, ac_az=ac_az, ac_elev=ac_elev)
+                         ac_rng=ac_rng, ac_az=ac_az, ac_elev=ac_elev,
+                         matchinfo=matchinfo)
 
     def near_neighbor_tunnel(self, verbose=False, timeit=True):
         '''
@@ -1621,7 +1636,7 @@ class MatchData(object):
     def __init__(self, flight, data, distance_to_point=None,
                  indices_1d=None, indices_nd=None,
                  start_time=None, end_time=None,
-                 ac_rng=None, ac_az=None, ac_elev=None):
+                 ac_rng=None, ac_az=None, ac_elev=None, matchinfo=None):
         '''
         Parameters
         ----------
@@ -1648,4 +1663,5 @@ class MatchData(object):
         self.ac_rng = ac_rng
         self.ac_az = ac_az
         self.ac_elev = ac_elev
+        self.matchinfo = matchinfo
         return
