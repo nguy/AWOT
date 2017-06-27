@@ -1028,6 +1028,8 @@ class RadarMatch(object):
                 np.full_like(self.flight_numtime, np.nan))
         matchinfo['match_indicies'] = np.ma.array(
             np.full([len(self.flight_numtime),query_k], np.nan))
+        matchinfo['match_time'] = np.ma.array(
+        	np.full(len(self.flight_numtime), np.nan))
 
         # Loop through the list or radar instances
         for num, pr in enumerate(self.rlist):
@@ -1094,6 +1096,8 @@ class RadarMatch(object):
             tcond = np.logical_and(self.flight_numtime >= np.min(dti),
                                    self.flight_numtime <= np.max(dti))
             indt = np.where(tcond)
+            matchinfo['match_time'][indt[0]] = np.min(rnumtime) # get scan start time
+            #from IPython.core.debugger import Tracer; Tracer()()  # this one triggers the debugger
 
             # set up map projection to calculate distances for this radar
             # instance
@@ -1124,8 +1128,6 @@ class RadarMatch(object):
                     W_d_k = np.ma.array(np.exp(-1*prdistance**2./K_d**2.))
 
                     matchinfo['match_indicies'][indt[0],:] = prind1d
-#                    from IPython.core.debugger import Tracer
-#                    Tracer()()  # this one triggers the debugger
 
                     for field in pr.fields.keys():
                         if field == Zfield:
