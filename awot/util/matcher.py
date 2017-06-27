@@ -1055,6 +1055,12 @@ class RadarMatch(object):
                 dfield[field] = np.ravel(pr.fields[field]['data'])
             dshape = pr.fields[field]['data'].shape
 
+#            #create sweep number metadata
+#            if do_index:
+#                sweep_ind = np.zeros(pr.nrays,pr.ngates,dtype=int16)
+#                for i in np.arange(pr.nsweeps+1):
+#                    sweep_ind[pr.sweep_start_ray_index:pr.sweep_end_ray_index+1,:] = i
+
             # Convert the radar time to AWOT epoch
             rtime = common.convert_to_epoch_dict(pr.time.copy())
             rtime['data'] = (
