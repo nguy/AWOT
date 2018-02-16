@@ -15,6 +15,7 @@ from scipy.spatial import cKDTree
 import datetime
 from netCDF4 import date2num, num2date
 import time as timer
+from pyproj import Proj
 
 from ..io import common
 from ..graph import common as gcommon
@@ -993,7 +994,7 @@ class RadarMatch(object):
                verbose=False, timeit=True,
                query_k=1, query_eps=0, query_p=2,
                query_distance_upper_bound=np.inf,
-               query_n_jobs=1):
+               query_n_jobs=1, Barnes=False, K_d=1e3, Zfield='reflectivity'):
         '''
         Find the closest point using a K-Dimensional Tree method.
         The tree building can take a long time depending on how
@@ -1018,13 +1019,33 @@ class RadarMatch(object):
         ind1d = []
         distance = []
         prdata = {}
+        matchinfo = {}
+
         # We assume that all files have the same data field dimensions
         for field in self.rlist[0].fields.keys():
             prdata[field] = self.rlist[0].fields[field].copy()
-            prdata[field]['data'] = np.full_like(self.flight_numtime, np.nan)
+            prdata[field]['data'] = np.ma.array(
+                np.full_like(self.flight_numtime, np.nan))
+        matchinfo['match_indicies'] = np.ma.array(
+            np.full([len(self.flight_numtime),query_k], np.nan))
+        matchinfo['match_time'] = np.ma.array(
+        	np.full(len(self.flight_numtime), np.nan))
 
         # Loop through the list or radar instances
         for num, pr in enumerate(self.rlist):
+
+            rlat, rlon = pr.latitude['data'][0], pr.longitude['data'][0]
+
+            ac_dist_cos = self.ground_distance_cosines(
+                rlat, rlon, self.flight_lat['data'], self.flight_lon['data'])
+            # Calculate the azimuth angle corresponding to aircraft position
+            ac_az = self.bearing_to_point(
+                rlat, rlon, self.flight_lat['data'],
+                self.flight_lon['data'])
+            # Calculate the elevation angle corresponding to aircraft position
+            ac_rng, ac_elev = self.slant_range_and_elev(
+                ac_dist_cos, self.flight_alt['data'][:])
+
             dfield = {}
             # Create 1-D variables to use
             dlon = np.ravel(pr.gate_longitude['data'].copy())
@@ -1033,6 +1054,12 @@ class RadarMatch(object):
             for field in pr.fields.keys():
                 dfield[field] = np.ravel(pr.fields[field]['data'])
             dshape = pr.fields[field]['data'].shape
+
+#            #create sweep number metadata
+#            if do_index:
+#                sweep_ind = np.zeros(pr.nrays,pr.ngates,dtype=int16)
+#                for i in np.arange(pr.nsweeps+1):
+#                    sweep_ind[pr.sweep_start_ray_index:pr.sweep_end_ray_index+1,:] = i
 
             # Convert the radar time to AWOT epoch
             rtime = common.convert_to_epoch_dict(pr.time.copy())
@@ -1069,23 +1096,72 @@ class RadarMatch(object):
             tcond = np.logical_and(self.flight_numtime >= np.min(dti),
                                    self.flight_numtime <= np.max(dti))
             indt = np.where(tcond)
+            matchinfo['match_time'][indt[0]] = np.min(rnumtime) # get scan start time
+            #from IPython.core.debugger import Tracer; Tracer()()  # this one triggers the debugger
+
+            # set up map projection to calculate distances for this radar
+            # instance
+            p = Proj(proj='laea', zone=10, ellps='WGS84',
+                     lat_0=pr.latitude['data'][0],
+                     lon_0=pr.longitude['data'][0])
+
+            rad_x, rad_y = p(dlon, dlat)
 
             # Build and query kd-tree
-            kdt = cKDTree(zip(dlon, dlat, dht, dti), leafsize=leafsize)
+            kdt = cKDTree(zip(rad_x, rad_y, dht), leafsize=leafsize)
             if np.size(indt[0]) > 0:
+                ac_x, ac_y = p(self.flight_lon['data'][indt[0]],
+                               self.flight_lat['data'][indt[0]])
                 prdistance, prind1d = kdt.query(
-                    zip(self.flight_lon['data'][indt[0]],
-                        self.flight_lat['data'][indt[0]],
-                        self.flight_alt['data'][indt[0]],
-                        self.flight_numtime[indt[0]]),
-                    k=query_k, eps=query_eps, p=query_p,
-                    distance_upper_bound=query_distance_upper_bound,
-                    n_jobs=query_n_jobs)
+                    zip(ac_x,
+                        ac_y,
+                        self.flight_alt['data'][indt[0]]),
+                        k=query_k, eps=query_eps, p=query_p,
+                        distance_upper_bound=query_distance_upper_bound,
+                        n_jobs=query_n_jobs)
+
                 distance.append(prdistance)
                 ind1d.append(prind1d)
 
-                for field in pr.fields.keys():
-                    prdata[field]['data'][indt[0]] = dfield[field][prind1d]
+                if Barnes:
+                    # compute Barnes weights
+                    W_d_k = np.ma.array(np.exp(-1*prdistance**2./K_d**2.))
+
+                    matchinfo['match_indicies'][indt[0],:] = prind1d
+
+                    for field in pr.fields.keys():
+                        if field == Zfield:
+                            try:
+                                W_d_k2 = np.ma.masked_where(
+                                    np.ma.getmask(dfield[field][prind1d]), W_d_k.copy())
+                                w1 = np.ma.sum(
+                                    W_d_k2 * 10. **
+                                    (dfield[field][prind1d] / 10.),
+                                    axis=1)
+                                w2 = np.ma.sum(W_d_k2, axis=1)
+                                prdata[field]['data'][indt[0]] = \
+                                    10. * np.ma.log10(w1/w2)
+                #            from IPython.core.debugger import Tracer
+            #                Tracer()()  # this one triggers the debugger
+                            except:
+                                print('whoa nellie non Zfield, thanks kdtree')
+                        else:
+                            try:
+                                W_d_k2 = np.ma.masked_where(
+                                    np.ma.getmask(dfield[field][prind1d]), W_d_k.copy())
+                                w1 = np.ma.sum(W_d_k2*dfield[field][prind1d], axis=1)
+                                w2 = np.ma.sum(W_d_k2, axis=1)
+                                prdata[field]['data'][indt[0]] = w1 / w2
+                    #            from IPython.core.debugger import Tracer
+                    #            Tracer()()  # this one triggers the debugger
+                            except:
+                                print('whoa nellie, thanks kdtree')
+                else:
+                    for field in pr.fields.keys():
+                        prdata[field]['data'][indt[0]] = dfield[field][prind1d]
+
+
+
 
                 if verbose:
                     for ii, ind in enumerate(ind1d[0]):
@@ -1111,7 +1187,9 @@ class RadarMatch(object):
             print("--- Elapsed time: %s sec ---" % (timer.time() - opbegin))
         return MatchData(self.fldata, prdata,
                          distance_to_point=distance, indices_1d=ind1d[0],
-                         start_time=self.start_time, end_time=self.end_time)
+                         start_time=self.start_time, end_time=self.end_time,
+                         ac_rng=ac_rng, ac_az=ac_az, ac_elev=ac_elev,
+                         matchinfo=matchinfo)
 
     def near_neighbor_tunnel(self, verbose=False, timeit=True):
         '''
@@ -1210,6 +1288,7 @@ class RadarMatch(object):
                 ind1d.append(prind1d)
 
                 for field in pr.fields.keys():
+#                    prdata[field]['data'].flat[indt[0]] = \
                     prdata[field]['data'].flat[[indt[0]]] = \
                         dfield[field][prind1d]
 
@@ -1257,6 +1336,7 @@ class RadarMatch(object):
         indrng = []
         indel = []
         prdata = {}
+        distance = []
         # We assume that all files have the same data field dimensions
         for field in self.rlist[0].fields.keys():
             prdata[field] = self.rlist[0].fields[field].copy()
@@ -1315,11 +1395,32 @@ class RadarMatch(object):
                     elin2 = np.argmin(
                         np.abs(ac_elev2[index] - pr.fixed_angle['data']))
                     pr_sweep2 = pr.extract_sweeps([elin2])
+
                     azin2 = np.argmin(
                         np.abs(ac_az2[index] - pr_sweep2.azimuth['data']))
                     rgin2 = np.argmin(
                         np.abs(ac_dist_hav[index] - pr_sweep2.range['data']))
 
+                    clats0, clons0 = np.cos(self.flight_lat['data'][index]), \
+                        np.cos(self.flight_lon['data'][index])
+                    slons0, slats0 = np.sin(self.flight_lon['data'][index]), \
+                        np.sin(self.flight_lat['data'][index])
+
+                    clat, clon = np.cos(
+                        pr_sweep.gate_latitude['data'][azin, rgin]), \
+                        np.cos(pr_sweep.gate_longitude['data'][azin, rgin])
+                    slon, slat = np.sin(
+                        pr_sweep.gate_longitude['data'][azin, rgin]), \
+                        np.sin(pr_sweep.gate_latitude['data'][azin, rgin])
+
+                    delX = clats0 * clons0 - clat * clon
+                    delY = clats0 * slons0 - clat * slon
+                    delZ = slats0 - slat
+                    # Calculate the distance squared
+                    dist_sq = delX**2 + delY**2 + delZ**2
+                    distance.append(np.sqrt(dist_sq))
+#                    from IPython.core.debugger import Tracer
+#                    Tracer()() #this one triggers the debugger
                     if verbose:
                         print("AC/Radar lat/lon/alt: %g/%g, %g/%g, %g/%g" % (
                             self.flight_lat['data'][index],
@@ -1537,7 +1638,7 @@ class MatchData(object):
     def __init__(self, flight, data, distance_to_point=None,
                  indices_1d=None, indices_nd=None,
                  start_time=None, end_time=None,
-                 ac_rng=None, ac_az=None, ac_elev=None):
+                 ac_rng=None, ac_az=None, ac_elev=None, matchinfo=None):
         '''
         Parameters
         ----------
@@ -1564,4 +1665,5 @@ class MatchData(object):
         self.ac_rng = ac_rng
         self.ac_az = ac_az
         self.ac_elev = ac_elev
+        self.matchinfo = matchinfo
         return
