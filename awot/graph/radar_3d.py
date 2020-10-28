@@ -8,11 +8,11 @@ Note that is experimental and not fully developed.
 
 """
 
-from __future__ import print_function
+
 from mpl_toolkits.mplot3d import axes3d
 import numpy as np
 
-from .common import find_nearest_indices, get_masked_data
+from .common import (find_nearest_indices, get_masked_data, _get_variable_dict, _get_variable_dict_data, _parse_fig)
 
 
 class Radar3DPlot(object):
@@ -42,7 +42,7 @@ class Radar3DPlot(object):
     def DPJgrid_3d(self, surf_field,
                    surf_min=-5., surf_max=5., surf_cmap='RdBu_r',
                    rstride=5, cstride=5,
-                   plot_contour=False, cont_field=None, ppi_height=2.,
+                   plot_contour=False, con_field=None, ppi_height=2.,
                    cminmax=(0., 60.), clevs=25, vmin=15., vmax=60.,
                    cmap='gist_ncar', alpha=0.,
                    zlims=(-5., 5.), dlat=1., dlon=1.,
@@ -55,8 +55,6 @@ class Radar3DPlot(object):
         ----------
         surf_field : str
             Name of field to use for the 3D surface plot.
-        ppi_height : float
-            Height at which to plot the horizontal field.
 
         surf_min : float
             Minimum surface value to display.
@@ -70,6 +68,9 @@ class Radar3DPlot(object):
             Column stride.
         plot_contour : bool
             True to plot a contour along the axes.
+        cond_field (str): Contour field to plot
+        ppi_height : float
+            Height at which to plot the horizontal field.
         cminmax : tuple
             (min,max) values for controur levels.
         clevs : integer
@@ -101,10 +102,10 @@ class Radar3DPlot(object):
             Figure to add the plot to. None will use the current figure.
         """
         # parse parameters
-        fig = self._parse_fig(fig)
+        fig = _parse_fig(fig)
 
         # Get variable
-        Var, Data = self._get_variable_dict_data(surf_field)
+        Var, Data = _get_variable_dict_data(surf_field)
 
         # Create contour level array
         clevels = np.linspace(vmin, vmax, clevs)
@@ -126,17 +127,17 @@ class Radar3DPlot(object):
 #        Lat2D,Lon2D,W,rstride=rstride,cstride=cstride,alpha=alf)
         ax.set_xlim(Lat2D.min(), Lat2D.max())
         ax.set_ylim(Lon2D.min(), Lon2D.max())
-        ax.set_zlim(zlim)
+        ax.set_zlim(zlims)
         ax.set_xlabel('Latitude')
         ax.set_ylabel('Longitude')
         ax.set_zlabel(' Altitude (km)')
 #       ax.view_init(20., cb=fig.colorbar(pS, shrink=0.6)
-        cb.set_label(Var['long_name'] + Var['units'])  # r'(m s$^{-1}$)')
+##        cb.set_label(Var['long_name'] + Var['units'])  # r'(m s$^{-1}$)')
 
         # Plot the horizontal dBZ contour field
         if plot_contour:
             if (con_field is not None):
-                conVar = self._get_variable_dict(con_field)
+                conVar = _get_variable_dict(con_field)
 
                 # Find the closest vertical point
                 Zind = find_nearest_indices(self.height['data'][:], ppi_height)
@@ -145,7 +146,7 @@ class Radar3DPlot(object):
                             vmin=vmin, vmax=vmax, cmap=cmap,
                             zdir='z')  # ,offset=surf_min)
             else:
-                print("Need to set con_field and ppi_height")
+                print("--> Check  `con_field` and `ppi_height` keywords")
 
         if plot_track:
             ax.plot(self.latitude['data'][:], self.longitude['data'][:],

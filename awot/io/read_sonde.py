@@ -45,34 +45,34 @@ def read_sounding_data(filePath):
     fp = open(data, 'r')
     sounding_data = fp
     p, h, T, Td, RH, MIXR, wd, ws = np.genfromtxt(
-        sounding_data, skip_header=8, usecols=range(0, 8),
+        sounding_data, skip_header=8, usecols=list(range(0, 8)),
         dtype=float, delimiter=None, autostrip=True,
         missing_values='-9999.00', unpack=True, usemask=True)
 
-    u = -ws * np.sin(np.radians(wd))
-    v = -ws * np.cos(np.radians(wd))
+    u_wind = -ws * np.sin(np.radians(wd))
+    v_wind = -ws * np.cos(np.radians(wd))
 
     data = dict()
     data['metadata'] = header
     data['temperature'] = _build_dict(T,
                                       'c', 'Temperature of ambient air',
                                       'Temperature')
-    data['dewpoint'] = _build_dict(TD,
+    data['dewpoint'] = _build_dict(Td,
                                    'c', 'Dewpoint temperature of ambient air',
                                    'Dewpoint_Temperature')
-    data['presssure'] = _build_dict(P,
+    data['presssure'] = _build_dict(p,
                                     'hPa', 'Pressure of ambient air',
                                     'Pressure')
     data['relative_humidity'] = _build_dict(RH,
                                             '%', 'Relative Humidity of ambient air',
                                             'Relative_Humidity')
-    data['u_component'] = _build_dict(Uwind,
+    data['u_component'] = _build_dict(u_wind,
                                       'm/s', 'u component of wind',
                                       'U_component')
-    data['v_component'] = _build_dict(Vwind,
+    data['v_component'] = _build_dict(v_wind,
                                       'm/s', 'v component of wind',
                                       'V_component')
-    data['height'] = _build_dict(H,
+    data['height'] = _build_dict(h,
                                  'm', 'Geometric Height in meters',
                                  'Height')
     data['data_format'] = 'radioSonde'
@@ -225,10 +225,9 @@ def read_cls_dropsonde(filename, hdr_num=15):
     data_end.append(nfilelines)
     # Check to see if Header ID string if found
     if nhdr == 0:
-        raise ValueError('No headers found in file')
-        return
+        raise ValueError('No headers found in file')\
 
-    print("%d sonde profiles in file, working to split..." % nhdr)
+    print(f"--> {nhdr} sonde profiles in file, working to split...")
 
     # Create a dictionary to hold the cls data
     cls = {'time': [], }
@@ -241,7 +240,6 @@ def read_cls_dropsonde(filename, hdr_num=15):
         # Open and move to record location
         f = open(filename, 'r')
         f.seek(hdrpos)
-#        print(ii)
         hdrdict = _get_header(f)
         # Reset the header position for next loop
         # Save some data to the profile dictionary

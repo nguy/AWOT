@@ -77,7 +77,7 @@ def radar2nc(radar, Outfile=None):
     htid.long_name = radar['height']['long_name']
 
     # Loop through the fields to create variables for each
-    for variable in radar['fields'].keys():
+    for variable in list(radar['fields'].keys()):
         if radar['fields'][variable] is not None:
             vid = nc_fid.createVariable(variable, np.float32,
                                         ('height', 'lat', 'lon'))

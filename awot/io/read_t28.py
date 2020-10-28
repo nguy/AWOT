@@ -7,9 +7,9 @@ See awot.io.flight.read_netcdf for a generalized version.
 
 """
 
-from __future__ import absolute_import, print_function
+
 import numpy as np
-from netCDF4 import num2date
+from netCDF4 import (num2date, date2num)
 from .flight import _winduv
 from . import common
 
@@ -26,7 +26,7 @@ def read_t28_netcdf(ncFile):
     name_map = _t28_flight_namemap()
     data = _make_data_dictionary(ncFile, name_map)
     data['time'] = _get_time(ncFile)
-    if 'turb' in data.keys():
+    if 'turb' in list(data.keys()):
         CM2M_TWOTHIRDS = 100**0.6666667
         data['turb'] /= CM2M_TWOTHIRDS
 

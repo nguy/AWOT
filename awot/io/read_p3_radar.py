@@ -7,7 +7,7 @@ Supports both tail Doppler and lower fuselage radars.
 
 """
 # Load the needed packages
-from __future__ import print_function
+
 from netCDF4 import Dataset
 import numpy as np
 from datetime import datetime
@@ -124,7 +124,7 @@ def read_windsyn_tdr_netcdf(fname, field_mapping=None):
             fields[varname] = common._ncvar_to_dict(ncvars[name_map[varname]])
         except:
             fields[varname] = None
-            common._var_not_found(varname)
+            common._print_var_status(varname, False)
 
     # Mask bad data values
     # badval = float(ncFile.MissingValue)
@@ -153,7 +153,7 @@ def read_windsyn_tdr_netcdf(fname, field_mapping=None):
     return radar
 
 
-def read_tdr_grid_variable(fname, Rec):
+def read_tdr_grid_variable(fname, var_name):
     """
     Read in a variable from a gridded NetCDF file
     containing NOAA P-3 tail Doppler radar fields.
@@ -162,26 +162,26 @@ def read_tdr_grid_variable(fname, Rec):
     ----------
     fname : str
         Long path filename.
-    VarName : str
+    var_name : str
         Variable name to access.
 
     Output
     ------
-    VarOut : Array
+    var_out : Array
         Numpy array object.
 
     Useage
     ------
-        VarOut = tdr_grid_variable(fname, Rec)
+        var_out = tdr_grid_variable(fname, Rec)
     """
     # Read the NetCDF
     ncFile = Dataset(fname, 'r')
 
     # Get the variable of interest
-    VarOut = ncFile.variables[VarName][:]
+    var_out = ncFile.variables[var_name][:]
 
     ncFile.close()
-    return VarOut
+    return var_out
 
 
 def read_windsyn_binary(fname, platform=None, instrument=None, radar_num=None):
@@ -253,7 +253,7 @@ def read_windsyn_binary(fname, platform=None, instrument=None, radar_num=None):
                       count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)
     Vt = np.fromfile(fi, dtype='>f',
                      count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)
-    Tdif = np.fromfile(fi, dtype='>f',
+    Tdiff = np.fromfile(fi, dtype='>f',
                        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)
     Tave = np.fromfile(fi, dtype='>f',
                        count=(Imax * Jmax * Kmax)).reshape(Kmax, Jmax, Imax)
@@ -608,7 +608,7 @@ def _construct_windsyn_hdr_dict(filename):
         Iw_at_top, I_w_0, Top_Hgt,
     ]
 
-    hdr_dict = dict(zip(names, values))
+    hdr_dict = dict(list(zip(names, values)))
 
     # Loop through the multiple radars if there are more than one
     # Adds up to 319 bytes = ( 4 byte pad front + 311 byte vars + 4 byte pad

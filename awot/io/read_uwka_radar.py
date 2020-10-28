@@ -114,7 +114,7 @@ def read_wcr2(fname, field_mapping=None, file_mapping=None):
                 ncvars[name_map_data[varname]])
         else:
             data[varname] = None
-            common._var_not_found(varname)
+            common._print_var_status(varname, False)
     # Add fields to their own dictionary
     fields = {}
 
@@ -128,7 +128,7 @@ def read_wcr2(fname, field_mapping=None, file_mapping=None):
                 ncvars[name_map_fields[varname]], Good)
         else:
             fields[varname] = None
-            common._var_not_found(varname)
+            common._print_var_status(varname, False)
 
     # Find the surface variable
     # At http://flights.uwyo.edu/uwka/wcr/projects/owles13/

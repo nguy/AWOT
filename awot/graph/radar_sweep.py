@@ -7,7 +7,7 @@ A group of scripts to create vertical radar sweep plots.
 """
 
 # Load the needed packages
-from __future__ import print_function
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter, date2num
@@ -42,7 +42,7 @@ class RadarSweepPlot(object):
         '''
         # Check the instrument to see how to import airborne class
         if radar['data_format'] is not 'tdr_sweep':
-            print("Check file type, procedure may not work!")
+            print("--> Check file type, procedure may not work!")
 
         # Now initialize the RadarHorizontalPlot Class
         self.radar = radar
@@ -173,7 +173,6 @@ class RadarSweepPlot(object):
             ylims = (-10., 30.)
         ax.set_ylim(ylims)
 
-        print(xlims, ylims)
         # Set the axes labels
         if xlab is None:
             pass

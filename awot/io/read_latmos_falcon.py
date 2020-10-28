@@ -122,7 +122,7 @@ def read_rasta_dynamic(fname, field_mapping=None):
                 data[varname] = data[varname] * 1000.
         else:
             data[varname] = None
-            common._var_not_found(varname)
+            common._print_var_status(varname, False)
 
     try:
         data['height'] = common._ncvar_to_dict(ncvars['height'])
@@ -148,11 +148,11 @@ def read_rasta_dynamic(fname, field_mapping=None):
     # Loop through the variables and pull data
     for varname in name_map_fields:
         try:
-            fields[varname] = _ncvar_radar_to_dict(
+            fields[varname] = common._ncvar_to_dict_masked(
                 ncvars[name_map_fields[varname]], Good)
         except:
             fields[varname] = None
-            common._var_not_found(varname)
+            common._print_var_status(varname, False)
 
     # Save to output dictionary
     data['fields'] = fields
@@ -281,11 +281,11 @@ def read_rasta_microphysics(fname, field_mapping=None):
     # Loop through the variables and pull data
     for varname in name_map:
         try:
-            fields[varname] = _ncvar_radar_to_dict(
+            fields[varname] = common._ncvar_to_dict_masked(
                 ncvars[name_map[varname]], Good)
         except:
             fields[varname] = None
-            common._var_not_found(varname)
+            common._print_var_status(varname, False)
 
     if fields['Dm'] is not None:
         fields['Dm']['data'][:] = fields['Dm']['data'][:] * 1000.

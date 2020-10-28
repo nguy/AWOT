@@ -13,7 +13,7 @@ Thse maps may be a good starting point for creating a
 custom name_map.
 """
 
-from __future__ import print_function
+
 import warnings
 
 

@@ -26,7 +26,7 @@ class TrackMatch(object):
     def __init__(self, flight, datavolume,
                  start_time=None, end_time=None,
                  data_lon=None, data_lat=None,
-                 data_time=None,
+                 data_time=None, data_height=None,
                  flight_lon_name=None, flight_lat_name=None,
                  flight_alt_name=None, flight_time_name=None,
                  flight_uwind_name=None, flight_vwind_name=None,
@@ -88,27 +88,27 @@ class TrackMatch(object):
         if flight_lon_name is None:
             lonkey = 'longitude'
         else:
-            lonkey = lon_name
+            lonkey = flight_lon_name
         if flight_lat_name is None:
             latkey = 'latitude'
         else:
-            latkey = lat_name
+            latkey = flight_lat_name
         if flight_alt_name is None:
             altkey = 'altitude'
         else:
-            altkey = alt_name
+            altkey = flight_alt_name
         if flight_time_name is None:
             timekey = 'time'
         else:
-            timekey = time_name
+            timekey = flight_time_name
         if flight_uwind_name is None:
             ukey = 'Uwind'
         else:
-            ukey = uwind_name
+            ukey = flight_uwind_name
         if flight_vwind_name is None:
             vkey = 'Vwind'
         else:
-            vkey = vwind_name
+            vkey = flight_vwind_name
 
         # Set the required flight fields
         self.flight_lon = self._get_var_time_subset(
@@ -149,7 +149,7 @@ class TrackMatch(object):
         self.fldata['altitude'] = self.flight_alt
         self.fldata['time'] = self.flight_time
 
-        for field in flight.keys():
+        for field in list(flight.keys()):
             try:
                 self.fldata[field] = self._get_var_time_subset(
                     flight[field].copy(), start_time, end_time)
@@ -159,13 +159,13 @@ class TrackMatch(object):
         # Create a field to store data field to matching data
         self.data_fields = {}
         if field_match_dict is None:
-            for field in self.datavol['fields'].keys():
+            for field in list(self.datavol['fields'].keys()):
                 self.data_fields[field] = self.datavol['fields'][field].copy()
         else:
             for field in field_match_dict:
                 self.data_fields[field] = self.datavol['fields'][field].copy()
         self.data_shape = self.data_fields[
-            self.data_fields.keys()[0]]['data'].shape
+            list(self.data_fields.keys())[0]]['data'].shape
 
         # Run checks to make sure array lengths are the same
         warntxt = "Check that data is an AWOT style object or specify keyword!"
@@ -173,7 +173,7 @@ class TrackMatch(object):
             try:
                 self.data_lon = self.datavol['longitude']['data']
             except:
-                print("Cannot find longitude, %s" % warntxt)
+                print(f"--> Cannot find longitude, {warntxt}")
         else:
             self.data_lon = np.array(data_lon)
 
@@ -181,14 +181,22 @@ class TrackMatch(object):
             try:
                 self.data_lat = self.datavol['latitude']['data']
             except:
-                print("Cannot find latitude, %s" % warntxt)
+                print(f"--> Cannot find latitude, {warntxt}")
         else:
             self.data_lat = np.array(data_lat)
+
+        if data_height is None:
+            try:
+                self.data_height = self.datavol['height']['data']
+            except:
+                print(f"--> Cannot find height, {warntxt}")
+        else:
+            self.data_height = np.array(data_height)
 
         if data_time is None:
             if self.datavol['time'] is None:
                 self.data_time = None
-                print("Cannot find time, %s" % warntxt)
+                print(f"--> Cannot find time, {warntxt}")
             else:
                 try:
                     self.data_time = common.convert_to_epoch_dict(
@@ -199,7 +207,7 @@ class TrackMatch(object):
                         self.datavol['time']['units'])
                 else:
                     self.data_time = None
-                    print("Cannot find time, %s" % warntxt)
+                    print(f"--> Cannot find time, {warntxt}")
         else:
             try:
                 self.data_time = common.convert_to_epoch_dict(data_time)
@@ -279,7 +287,7 @@ class TrackMatch(object):
                     (dlat <= np.max(self.flight_lat['data'])))
 
         indices = np.where(cond)
-        print(len(indices[0]))
+        print(f"--> Found {len(indices[0])} points for conditional")
 
         if len(indices[0]) > 1:
             dlon = dlon[indices[0]]
@@ -287,23 +295,23 @@ class TrackMatch(object):
             if use_time:
                 dti = dti[indices[0]]
         else:
-            print("No points found for condition")
+            print("--> No points found for condition")
 
         # Build and query kd-tree
         if use_time:
-            kdt = cKDTree(zip(dlon, dlat, dti), leafsize=leafsize)
+            kdt = cKDTree(list(zip(dlon, dlat, dti)), leafsize=leafsize)
         else:
-            kdt = cKDTree(zip(dlon, dlat), leafsize=leafsize)
+            kdt = cKDTree(list(zip(dlon, dlat)), leafsize=leafsize)
         if use_time:
             distance, ind1d = kdt.query(
-                zip(self.flight_lon['data'], self.flight_lat['data'],
-                    self.flight_numtime),
+                list(zip(self.flight_lon['data'], self.flight_lat['data'],
+                    self.flight_numtime)),
                 k=query_k, eps=query_eps, p=query_p,
                 distance_upper_bound=query_distance_upper_bound,
                 n_jobs=query_n_jobs)
         else:
             distance, ind1d = kdt.query(
-                zip(self.flight_lon['data'], self.flight_lat['data']),
+                list(zip(self.flight_lon['data'], self.flight_lat['data'])),
                 k=query_k, eps=query_eps, p=query_p,
                 distance_upper_bound=query_distance_upper_bound,
                 n_jobs=query_n_jobs)
@@ -314,7 +322,7 @@ class TrackMatch(object):
 
         matchdata = self._get_data_by_index(ind1d)
         if timeit:
-            print("--- Elapsed time: %s sec ---" % (timer.time() - opbegin))
+            print(("--- Elapsed time: %s sec ---" % (timer.time() - opbegin)))
         return MatchData(self.fldata, matchdata, distance_to_point=distance,
                          indices_1d=ind1d[0], #indices_nd=indnd,
                          start_time=self.start_time, end_time=self.end_time)
@@ -367,7 +375,7 @@ class TrackMatch(object):
 
         matchdata = self._get_data_by_index(ind1d, )
         if timeit:
-            print("--- Elapsed time: %s sec ---" % (timer.time() - opbegin))
+            print(("--- Elapsed time: %s sec ---" % (timer.time() - opbegin)))
         return MatchData(self.fldata, matchdata, distance_to_point=distance,
                          indices_1d=ind1d[0], indices_nd=indnd,
                          start_time=self.start_time, end_time=self.end_time)
@@ -393,8 +401,7 @@ class TrackMatch(object):
                 dt = datetime.datetime(tInt[0], tInt[1], tInt[2], tInt[3],
                                        tInt[4], tInt[5], tInt[6])
             except:
-                print("Check the format of date string "
-                      "(e.g. '2014-08-20 12:30:00')")
+                print("--> Check the format of date string  (e.g. '2014-08-20 12:30:00')")
                 return
         return dt
 
@@ -411,7 +418,7 @@ class TrackMatch(object):
     def _get_data_by_index(self, indices_1d, orig_indices):
         '''Retrieve data fields using calculated indices.'''
         data_by_ind = {}
-        for field in self.data_fields.keys():
+        for field in list(self.data_fields.keys()):
             dfield = self.data_fields[field]
             indices_nd = np.unravel_index(orig_indices[indices_1d], dfield['data'].shape)
             data_by_ind[field] = dfield.copy()
@@ -421,16 +428,9 @@ class TrackMatch(object):
 
     def _print_pair_by_index(self, ind1d):
         for ii, ind in enumerate(ind1d):
-            print(("AC Lat: %g, Lon: %g, Alt: %g | "
-                   "Rad Lat: %g, Lon: %g, Alt: %g") % (
-                  self.flight_lon['data'][ii],
-                  self.flight_lat['data'][ii],
-                  np.ravel(self.data_lon)[ind],
-                  np.ravel(self.data_lat)[ind],
-                  ))
-            print("AC/Rad Turb: %g / %g" % (
-                self.fldata['turb']['data'][ii],
-                np.ravel(self.data_fields['turbulence']['data'])[ind]))
+            print((f"--> AC Lat: {self.flight_lon['data'][ii]}, Lon: {self.flight_lat['data'][ii]}, Alt: {self.flight_alt['data'][ii]} \n"
+                   f"--> Rad Lat: {np.ravel(self.data_lon)[ind]}, Lon: {np.ravel(self.data_lat)[ind]}, Alt: {np.ravel(self.data_height)[ind]}"))
+            print(f"--> AC/Rad Turb: {self.fldata['turb']['data'][ii]} / {np.ravel(self.data_fields['turbulence']['data'])[ind]}")
 
 
 class FlightLevelMatch(object):
@@ -502,27 +502,27 @@ class FlightLevelMatch(object):
         if flight_lon_name is None:
             lonkey = 'longitude'
         else:
-            lonkey = lon_name
+            lonkey = flight_lon_name
         if flight_lat_name is None:
             latkey = 'latitude'
         else:
-            latkey = lat_name
+            latkey = flight_lat_name
         if flight_alt_name is None:
             altkey = 'altitude'
         else:
-            altkey = alt_name
+            altkey = flight_alt_name
         if flight_time_name is None:
             timekey = 'time'
         else:
-            timekey = time_name
+            timekey = flight_time_name
         if flight_uwind_name is None:
             ukey = 'Uwind'
         else:
-            ukey = uwind_name
+            ukey = flight_uwind_name
         if flight_vwind_name is None:
             vkey = 'Vwind'
         else:
-            vkey = vwind_name
+            vkey = flight_vwind_name
 
         # Set the required flight fields
         self.flight_lon = self._get_var_time_subset(
@@ -559,7 +559,7 @@ class FlightLevelMatch(object):
         self.fldata['altitude'] = self.flight_alt
         self.fldata['time'] = self.flight_time
 
-        for field in flight.keys():
+        for field in list(flight.keys()):
             try:
                 self.fldata[field] = self._get_var_time_subset(
                     flight[field].copy(), start_time, end_time)
@@ -569,13 +569,13 @@ class FlightLevelMatch(object):
         # Create a field to store data field to matching data
         self.data_fields = {}
         if field_match_dict is None:
-            for field in self.datavol['fields'].keys():
+            for field in list(self.datavol['fields'].keys()):
                 self.data_fields[field] = self.datavol['fields'][field].copy()
         else:
             for field in field_match_dict:
                 self.data_fields[field] = self.datavol['fields'][field].copy()
         self.data_shape = self.data_fields[
-            self.data_fields.keys()[0]]['data'].shape
+            list(self.data_fields.keys())[0]]['data'].shape
 
         # Run checks to make sure array lengths are the same
         warntxt = "Check that data is an AWOT style object or specify keyword!"
@@ -583,7 +583,7 @@ class FlightLevelMatch(object):
             try:
                 self.data_lon = self.datavol['longitude']['data']
             except:
-                print("Cannot find longitude, %s" % warntxt)
+                print(f"--> Cannot find longitude, {warntxt}")
         else:
             self.data_lon = np.array(data_lon)
 
@@ -591,7 +591,7 @@ class FlightLevelMatch(object):
             try:
                 self.data_lat = self.datavol['latitude']['data']
             except:
-                print("Cannot find latitude, %s" % warntxt)
+                print(f"--> Cannot find latitude, {warntxt}")
         else:
             self.data_lat = np.array(data_lat)
 
@@ -599,7 +599,7 @@ class FlightLevelMatch(object):
             try:
                 self.data_height = self.datavol['height']['data']
             except:
-                print("Cannot find height, %s" % warntxt)
+                print(f"--> Cannot find height, {warntxt}")
         else:
             self.data_height = np.array(data_height)
 
@@ -612,7 +612,7 @@ class FlightLevelMatch(object):
                     self.datavol['time']['data'],
                     self.datavol['time']['units'])
             else:
-                print("Cannot find time, %s" % warntxt)
+                print(f"--> Cannot find time, {warntxt}")
         else:
             try:
                 self.data_time = common.convert_to_epoch_dict(data_time)
@@ -686,7 +686,7 @@ class FlightLevelMatch(object):
                 (dti >= np.min(self.flight_numtime)) &
                 (dti <= np.max(self.flight_numtime)))
         indices = np.where(cond)
-        print(len(indices[0]))
+        print((len(indices[0])))
 
         if len(indices[0]) > 1:
             dlon = dlon[indices[0]]
@@ -694,24 +694,24 @@ class FlightLevelMatch(object):
             dht = dht[indices[0]]
             dti = dti[indices[0]]
         else:
-            print("No points found for condition")
+            print("--> No points found for condition")
 
         # Build and query kd-tree
         if use_time:
-            kdt = cKDTree(zip(dlon, dlat, dht, dti), leafsize=leafsize)
+            kdt = cKDTree(list(zip(dlon, dlat, dht, dti)), leafsize=leafsize)
         else:
-            kdt = cKDTree(zip(dlon, dlat, dht), leafsize=leafsize)
+            kdt = cKDTree(list(zip(dlon, dlat, dht)), leafsize=leafsize)
         if use_time:
             distance, ind1d = kdt.query(
-                zip(self.flight_lon['data'], self.flight_lat['data'],
-                    self.flight_alt['data'], self.flight_numtime),
+                list(zip(self.flight_lon['data'], self.flight_lat['data'],
+                    self.flight_alt['data'], self.flight_numtime)),
                 k=query_k, eps=query_eps, p=query_p,
                 distance_upper_bound=query_distance_upper_bound,
                 n_jobs=query_n_jobs)
         else:
             distance, ind1d = kdt.query(
-                zip(self.flight_lon['data'], self.flight_lat['data'],
-                    self.flight_alt['data']),
+                list(zip(self.flight_lon['data'], self.flight_lat['data'],
+                    self.flight_alt['data'])),
                 k=query_k, eps=query_eps, p=query_p,
                 distance_upper_bound=query_distance_upper_bound,
                 n_jobs=query_n_jobs)
@@ -722,7 +722,7 @@ class FlightLevelMatch(object):
 
         matchdata = self._get_data_by_index(ind1d)
         if timeit:
-            print("--- Elapsed time: %s sec ---" % (timer.time() - opbegin))
+            print(("--- Elapsed time: %s sec ---" % (timer.time() - opbegin)))
         return MatchData(self.fldata, matchdata, distance_to_point=distance,
                          indices_1d=ind1d[0], indices_nd=indnd,
                          start_time=self.start_time, end_time=self.end_time)
@@ -775,7 +775,7 @@ class FlightLevelMatch(object):
 
         matchdata = self._get_data_by_index(ind1d)
         if timeit:
-            print("--- Elapsed time: %s sec ---" % (timer.time() - opbegin))
+            print(("--- Elapsed time: %s sec ---" % (timer.time() - opbegin)))
         return MatchData(self.fldata, matchdata, distance_to_point=distance,
                          indices_1d=ind1d[0], indices_nd=indnd,
                          start_time=self.start_time, end_time=self.end_time)
@@ -801,8 +801,7 @@ class FlightLevelMatch(object):
                 dt = datetime.datetime(tInt[0], tInt[1], tInt[2], tInt[3],
                                        tInt[4], tInt[5], tInt[6])
             except:
-                print("Check the format of date string "
-                      "(e.g. '2014-08-20 12:30:00')")
+                print("--> Check the format of date string  (e.g. '2014-08-20 12:30:00')")
                 return
         return dt
 
@@ -819,7 +818,7 @@ class FlightLevelMatch(object):
     def _get_data_by_index(self, indices_1d):
         '''Retrieve data fields using calculated indices.'''
         data_by_ind = {}
-        for field in self.data_fields.keys():
+        for field in list(self.data_fields.keys()):
             dfield = self.data_fields[field]
             data_by_ind[field] = dfield.copy()
             data_by_ind[field]['data'] = np.ravel(dfield['data'])[indices_1d]
@@ -827,17 +826,9 @@ class FlightLevelMatch(object):
 
     def _print_pair_by_index(self, ind1d):
         for ii, ind in enumerate(ind1d):
-            print(("AC Lat: %g, Lon: %g, Alt: %g | "
-                   "Rad Lat: %g, Lon: %g, Alt: %g") % (
-                  self.flight_lon['data'][ii],
-                  self.flight_lat['data'][ii],
-                  self.flight_alt['data'][ii],
-                  np.ravel(self.data_lon)[ind],
-                  np.ravel(self.data_lat)[ind],
-                  np.ravel(self.data_height)[ind]))
-            print("AC/Rad Turb: %g / %g" % (
-                self.fldata['turb']['data'][ii],
-                np.ravel(self.data_fields['turbulence']['data'])[ind]))
+            print((f"--> AC Lat: {self.flight_lon['data'][ii]}, Lon: {self.flight_lat['data'][ii]}, Alt: {self.flight_alt['data'][ii]}\n"
+                   f"Rad Lat: {np.ravel(self.data_lon)[ind]}, Lon: {np.ravel(self.data_lat)[ind]}, Alt: {np.ravel(self.data_height)[ind]}"))
+            print(f"--> AC/Rad Turb: {self.fldata['turb']['data'][ii]} / {np.ravel(self.data_fields['turbulence']['data'])[ind]}")
 
 
 class RadarMatch(object):
@@ -912,27 +903,27 @@ class RadarMatch(object):
         if flight_lon_name is None:
             lonkey = 'longitude'
         else:
-            lonkey = lon_name
+            lonkey = flight_lon_name
         if flight_lat_name is None:
             latkey = 'latitude'
         else:
-            latkey = lat_name
+            latkey = flight_lat_name
         if flight_alt_name is None:
             altkey = 'altitude'
         else:
-            altkey = alt_name
+            altkey = flight_alt_name
         if flight_time_name is None:
             timekey = 'time'
         else:
-            timekey = time_name
+            timekey = flight_time_name
         if flight_uwind_name is None:
             ukey = 'Uwind'
         else:
-            ukey = uwind_name
+            ukey = flight_uwind_name
         if flight_vwind_name is None:
             vkey = 'Vwind'
         else:
-            vkey = vwind_name
+            vkey = flight_vwind_name
 
         # Set the required flight fields
         self.flight_lon = self._get_var_time_subset(
@@ -969,7 +960,7 @@ class RadarMatch(object):
         self.fldata['altitude'] = self.flight_alt
         self.fldata['time'] = self.flight_time
 
-        for field in flight.keys():
+        for field in list(flight.keys()):
             try:
                 self.fldata[field] = self._get_var_time_subset(
                     flight[field].copy(), start_time, end_time)
@@ -1019,7 +1010,7 @@ class RadarMatch(object):
         distance = []
         prdata = {}
         # We assume that all files have the same data field dimensions
-        for field in self.rlist[0].fields.keys():
+        for field in list(self.rlist[0].fields.keys()):
             prdata[field] = self.rlist[0].fields[field].copy()
             prdata[field]['data'] = np.full_like(self.flight_numtime, np.nan)
 
@@ -1030,7 +1021,7 @@ class RadarMatch(object):
             dlon = np.ravel(pr.gate_longitude['data'].copy())
             dlat = np.ravel(pr.gate_latitude['data'].copy())
             dht = np.ravel(pr.gate_altitude['data'].copy())
-            for field in pr.fields.keys():
+            for field in list(pr.fields.keys()):
                 dfield[field] = np.ravel(pr.fields[field]['data'])
             dshape = pr.fields[field]['data'].shape
 
@@ -1060,10 +1051,10 @@ class RadarMatch(object):
                 dlat = dlat[indices[0]]
                 dht = dht[indices[0]]
                 dti = dti[indices[0]]
-                for field in pr.fields.keys():
+                for field in list(pr.fields.keys()):
                     dfield[field] = dfield[field][indices[0]]
             else:
-                print("No points found for condition on file %d" % num)
+                print(f"--> No points found for condition on file {num}")
 
             # Subset for matching times
             tcond = np.logical_and(self.flight_numtime >= np.min(dti),
@@ -1071,35 +1062,35 @@ class RadarMatch(object):
             indt = np.where(tcond)
 
             # Build and query kd-tree
-            kdt = cKDTree(zip(dlon, dlat, dht, dti), leafsize=leafsize)
+            kdt = cKDTree(list(zip(dlon, dlat, dht, dti)), leafsize=leafsize)
             if np.size(indt[0]) > 0:
                 prdistance, prind1d = kdt.query(
-                    zip(self.flight_lon['data'][indt[0]],
+                    list(zip(self.flight_lon['data'][indt[0]],
                         self.flight_lat['data'][indt[0]],
                         self.flight_alt['data'][indt[0]],
-                        self.flight_numtime[indt[0]]),
+                        self.flight_numtime[indt[0]])),
                     k=query_k, eps=query_eps, p=query_p,
                     distance_upper_bound=query_distance_upper_bound,
                     n_jobs=query_n_jobs)
                 distance.append(prdistance)
                 ind1d.append(prind1d)
 
-                for field in pr.fields.keys():
+                for field in list(pr.fields.keys()):
                     prdata[field]['data'][indt[0]] = dfield[field][prind1d]
 
                 if verbose:
                     for ii, ind in enumerate(ind1d[0]):
-                        print(("AC Lat: %g, Lon: %g, Alt: %g | "
+                        print((("AC Lat: %g, Lon: %g, Alt: %g | "
                                "Rad Lat: %g, Lon: %g, Alt: %g") % (
                               self.flight_lon['data'][ii],
                               self.flight_lat['data'][ii],
                               self.flight_alt['data'][ii],
                               dlon[ind],
                               dlat[ind],
-                              dht[ind]))
+                              dht[ind])))
 
         # Apply masks to data
-        for field in prdata.keys():
+        for field in list(prdata.keys()):
             prdata[field]['data'] = np.ma.masked_invalid(prdata[field]['data'])
             if self.masklo is not None:
                 prdata[field]['data'] = np.ma.masked_less(
@@ -1108,7 +1099,7 @@ class RadarMatch(object):
                 prdata[field]['data'] = np.ma.masked_greater(
                     prdata[field]['data'], self.maskhi)
         if timeit:
-            print("--- Elapsed time: %s sec ---" % (timer.time() - opbegin))
+            print(("--- Elapsed time: %s sec ---" % (timer.time() - opbegin)))
         return MatchData(self.fldata, prdata,
                          distance_to_point=distance, indices_1d=ind1d[0],
                          start_time=self.start_time, end_time=self.end_time)
@@ -1137,7 +1128,7 @@ class RadarMatch(object):
         distance = []
         prdata = {}
         # We assume that all files have the same data field dimensions
-        for field in self.rlist[0].fields.keys():
+        for field in list(self.rlist[0].fields.keys()):
             prdata[field] = self.rlist[0].fields[field].copy()
             prdata[field]['data'] = np.full_like(self.flight_numtime, np.nan)
 
@@ -1152,7 +1143,7 @@ class RadarMatch(object):
             dlon = np.ravel(pr.gate_longitude['data'].copy())
             dlat = np.ravel(pr.gate_latitude['data'].copy())
             dht = np.ravel(pr.gate_altitude['data'].copy())
-            for field in pr.fields.keys():
+            for field in list(pr.fields.keys()):
                 dfield[field] = np.ravel(pr.fields[field]['data'])
             dshape = pr.fields[field]['data'].shape
 
@@ -1182,10 +1173,10 @@ class RadarMatch(object):
                 dlat = dlat[indices[0]]
                 dht = dht[indices[0]]
                 dti = dti[indices[0]]
-                for field in pr.fields.keys():
+                for field in list(pr.fields.keys()):
                     dfield[field] = dfield[field][indices[0]]
             else:
-                print("No points found for condition on file %d" % num)
+                print(("No points found for condition on file %d" % num))
 
             clat, clon = np.cos(np.radians(dlat)), np.cos(np.radians(dlon))
             slon, slat = np.sin(np.radians(dlat)), np.sin(np.radians(dlon))
@@ -1209,23 +1200,23 @@ class RadarMatch(object):
                     distance.append(np.ma.min(dist_sq))
                 ind1d.append(prind1d)
 
-                for field in pr.fields.keys():
+                for field in list(pr.fields.keys()):
                     prdata[field]['data'].flat[[indt[0]]] = \
                         dfield[field][prind1d]
 
                 if verbose:
                     for ii, ind in enumerate(ind1d[0]):
-                        print(("AC Lat: %g, Lon: %g, Alt: %g | "
+                        print((("AC Lat: %g, Lon: %g, Alt: %g | "
                                "Rad Lat: %g, Lon: %g, Alt: %g") % (
                               self.flight_lon['data'][ii],
                               self.flight_lat['data'][ii],
                               self.flight_alt['data'][ii],
                               dlon[ind],
                               dlat[ind],
-                              dht[ind]))
+                              dht[ind])))
 
         # Apply masks to data
-        for field in prdata.keys():
+        for field in list(prdata.keys()):
             prdata[field]['data'] = np.ma.masked_invalid(prdata[field]['data'])
             if self.masklo is not None:
                 prdata[field]['data'] = np.ma.masked_less(
@@ -1234,7 +1225,7 @@ class RadarMatch(object):
                 prdata[field]['data'] = np.ma.masked_greater(
                     prdata[field]['data'], self.maskhi)
         if timeit:
-            print("--- Elapsed time: %s sec ---" % (timer.time() - opbegin))
+            print(("--- Elapsed time: %s sec ---" % (timer.time() - opbegin)))
         return MatchData(self.fldata, prdata,
                          distance_to_point=distance, indices_1d=ind1d[0],
                          start_time=self.start_time, end_time=self.end_time)
@@ -1258,7 +1249,7 @@ class RadarMatch(object):
         indel = []
         prdata = {}
         # We assume that all files have the same data field dimensions
-        for field in self.rlist[0].fields.keys():
+        for field in list(self.rlist[0].fields.keys()):
             prdata[field] = self.rlist[0].fields[field].copy()
             prdata[field]['data'] = np.full_like(self.flight_numtime, np.nan)
 
@@ -1321,19 +1312,19 @@ class RadarMatch(object):
                         np.abs(ac_dist_hav[index] - pr_sweep2.range['data']))
 
                     if verbose:
-                        print("AC/Radar lat/lon/alt: %g/%g, %g/%g, %g/%g" % (
+                        print(("AC/Radar lat/lon/alt: %g/%g, %g/%g, %g/%g" % (
                             self.flight_lat['data'][index],
                             pr_sweep.gate_latitude['data'][azin, rgin],
                             self.flight_lon['data'][index],
                             pr_sweep.gate_longitude['data'][azin, rgin],
                             self.flight_alt['data'][index],
-                            pr_sweep.gate_altitude['data'][azin, rgin]))
+                            pr_sweep.gate_altitude['data'][azin, rgin])))
 
-                    for field in pr_sweep.fields.keys():
+                    for field in list(pr_sweep.fields.keys()):
                         prdata[field]['data'][index] = pr_sweep.fields[field]['data'][azin, rgin]
 
         # Apply masks to data
-        for field in prdata.keys():
+        for field in list(prdata.keys()):
             prdata[field]['data'] = np.ma.masked_invalid(prdata[field]['data'])
             if self.masklo is not None:
                 prdata[field]['data'] = np.ma.masked_less(
@@ -1342,7 +1333,7 @@ class RadarMatch(object):
                 prdata[field]['data'] = np.ma.masked_greater(
                     prdata[field]['data'], self.maskhi)
         if timeit:
-            print("--- Elapsed time: %s sec ---" % (timer.time() - opbegin))
+            print(("--- Elapsed time: %s sec ---" % (timer.time() - opbegin)))
         return MatchData(self.fldata, prdata,
                          start_time=self.start_time, end_time=self.end_time)
 
@@ -1525,10 +1516,10 @@ class RadarMatch(object):
     def _get_data_by_pyart_index(self, radar, indel, indaz, indrng):
         '''Retrieve data fields using calculated Py-ART indices.'''
         data_by_ind = {}
-        for field in radar.fields.keys():
+        for field in list(radar.fields.keys()):
             rfield = radar.fields[field]
             data_by_ind[field] = rfield.copy()
-            data_by_ind[field]['data'] = rfield['data'][azin, rgin]
+            data_by_ind[field]['data'] = rfield['data'][indaz, indrng]
         return data_by_ind
 
 

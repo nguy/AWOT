@@ -7,7 +7,7 @@ Probe Subpackage (:mod:'awot.io)
 .. currentmodule:: awot.io
 """
 
-from __future__ import absolute_import
+
 from .flight import read_netcdf, read_netcdf_variable, read_nasa_ames
 
 from .read_ground_radar import read_ground_radar

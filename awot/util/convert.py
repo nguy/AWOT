@@ -136,7 +136,7 @@ def to_awot_flight(lon_dict=None, lat_dict=None, alt_dict=None,
     if lon_dict is not None:
         awot_flight['longitude'] = lon_dict
 
-    for d in other_dict.keys():
+    for d in list(other_dict.keys()):
         awot_flight[d] = other_dict[d]
 
     # Attempt to build AWOT dictionaries if arrays are provided

@@ -14,7 +14,7 @@ A group of scripts to create vertical radar plots.
 # sweep_earth_relative - Polar coord data transformed to earth-relative frame
 
 # Load the needed packages
-from __future__ import print_function
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter, date2num
@@ -238,7 +238,7 @@ class RadarVerticalPlot(object):
                 cmap, norm = from_levels_and_colors(
                     discrete_cmap_levels, cm(levpos), extend='max')
             except:
-                print("Keyword error: 'discrete_cmap_levels' must "
+                print("--> Keyword error: 'discrete_cmap_levels' must "
                       "be a list of float or integer")
 
         p = ax.pcolormesh(Dist2D, Ht2D,
@@ -418,7 +418,7 @@ class RadarVerticalPlot(object):
                 cmap, norm = from_levels_and_colors(
                     discrete_cmap_levels, cm(levpos), extend='max')
             except:
-                print("Keyword error: 'discrete_cmap_levels' must "
+                print("--> Keyword error: 'discrete_cmap_levels' must "
                       "be a list of float or integer")
 
         # Plot the time series
@@ -449,7 +449,7 @@ class RadarVerticalPlot(object):
                 ft = common.plot_fill_surface(tsub, sfc, ymin=fill_min,
                                               color=fill_color, ax=ax)
             else:
-                print("No surface height information, cannot fill...")
+                print("--> No surface height information, cannot fill...")
         return
 
     def track_height_image(self, field, track_key=None,
@@ -596,8 +596,7 @@ class RadarVerticalPlot(object):
                 cb_label = r'log$_{10}$[' + cb_label + ']'
 
         # Print out min and max values to screen
-        print("Minimum value of %s = %g" % (field, np.ma.min(Data)))
-        print("Maximum value of %s = %g" % (field, np.ma.max(Data)))
+        print(f"--> Minimum/Maximum value of {field} = {np.ma.min(Data)}/{np.ma.max(Data)}")
 
         # Get vmin/vmax if not given
         if vmin is None:
@@ -609,9 +608,8 @@ class RadarVerticalPlot(object):
         clevels = np.linspace(cminmax[0], cminmax[1], clevs)
 
         if len(self.height['data'].shape) == 2:
-            track2D, junk = np.meshgrid(trackd, self.height['data'][0, :])
-            Ht2D = Height.T
-            del junk
+            track2D, _ = np.meshgrid(trackd, self.height['data'][0, :])
+            Ht2D = self.height['data'][:].T
         else:
             track2D, Ht2D = np.meshgrid(trackd, self.height['data'][:])
 
@@ -630,7 +628,7 @@ class RadarVerticalPlot(object):
                 cmap, norm = from_levels_and_colors(
                     discrete_cmap_levels, cm(levpos), extend='max')
             except:
-                print("Keyword error: 'discrete_cmap_levels' must "
+                print("--> Keyword error: 'discrete_cmap_levels' must "
                       "be a list of float or integer")
 
         # Plot the time series
@@ -661,7 +659,7 @@ class RadarVerticalPlot(object):
                 ft = common.plot_fill_surface(trackd, sfc, ymin=fill_min,
                                               color=fill_color, ax=ax)
             else:
-                print("No surface height information, cannot fill...")
+                print("--> No surface height information, cannot fill...")
         return
 
 ###################
