@@ -6,7 +6,7 @@ Common IO routines.
 
 """
 
-from __future__ import print_function
+import matplotlib.pyplot as plt
 import numpy as np
 from netCDF4 import num2date, date2num
 
@@ -107,14 +107,16 @@ def _h5var_to_dict(dataset, units=None, long_name=None, standard_name=None):
     return d
 
 
-def _var_found(var):
-    '''Print variable found message.'''
-    print("Found %s" % var)
-
-
-def _var_not_found(var):
-    '''Print variable not found message.'''
-    print("%s does not exist in file..." % var)
+def _print_var_status(var, found):
+    """Print variable found message.
+    Args:
+        var (str): Variable for message status
+        found (bool): Whether that variable is found
+    """
+    if found:
+        print(f"--> Found {var}")
+    else:
+        print(f"--> {var} cannot be found...")
 
 ##################
 #  time methods  #
@@ -181,7 +183,7 @@ def save_figure(self, figName='awot_plot', figType='png', **kwargs):
     plt.gca()
     plt.gcf()
     plt.savefig(figName+'.'+figType, format=figType)
-    print("Saved figure: %s.%s" % (figName, figType))
+    print(f"--> Saved figure: {figName}.{figType}")
 
     # Now close the plot to make sure matplotlib is happy
     plt.close()

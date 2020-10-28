@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import numpy as np
 
 
@@ -86,8 +86,6 @@ class ShearCalcs:
         U1km = np.interp(index1km, Height, U)
         V1km = np.interp(index1km, Height, V)
 
-        print('test at 800 mb recorded 30 knot')
-
         u800 = np.interp(index1km, Height, U)
         v800 = np.interp(index1km, Height, U)
 
@@ -98,13 +96,6 @@ class ShearCalcs:
         Hsfc = Height[sfcindex]
         Usfc = U[sfcindex]
         Vsfc = V[sfcindex]
-
-        '''
-        print(U)
-        print(V)
-        print(U1km)
-        print(V1km)
-        '''
 
         shear = np.sqrt(((U1km - Usfc)**2 + (V1km - Vsfc)**2)/(index1km))
         return shear
@@ -126,7 +117,6 @@ class ShearCalcs:
 
         bulk_shear = np.sqrt((U1km-USFC)**2 + (V1km-VSFC)**2)
 
-        print(np.sqrt((U1km)**2 + (V1km)**2))
         return bulk_shear
 
     def _bulkshear_sfc_3km(self, Height, U, V):
@@ -161,8 +151,6 @@ class ShearCalcs:
         HSFC = Height[sfcindex]
         USFC = U[sfcindex]
         VSFC = V[sfcindex]
-
-        print(np.sqrt((U6km)**2 + (V6km)**2))
 
         bulk_shear = np.sqrt((U6km - USFC)**2+(V6km - VSFC)**2)
         return bulk_shear

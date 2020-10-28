@@ -21,8 +21,8 @@ v1.1 Major Changes:
    an argument to make_kml().
 
 """
-from __future__ import absolute_import
-from __future__ import print_function
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 try:
@@ -70,9 +70,7 @@ def make_kml(llcrnrlon, llcrnrlat, urcrnrlon, urcrnrlat,
 
     """
     if not SIMPLEKML_FLAG:
-        print('***ERROR!***')
-        print('simplekml not installed, download from',
-              'https://pypi.python.org/pypi/simplekml/')
+        raise ModuleNotFoundError("simplekml is required:  https://pypi.python.org/pypi/simplekml/")
         return
     kml = Kml()
     altitude = kw.pop('altitude', 2e7)

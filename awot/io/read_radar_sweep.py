@@ -35,14 +35,13 @@ def read_tdr_sweep(fname, map_to_awot=True,
         If set this supersedes the platform key in AWOT dictionary.
     """
     if not _PYART_AVAILABLE:
-        raise MissingOptionalDependency(
-            "pyart is required to use read_tdr_sweep but is not installed")
+        raise ModuleNotFoundError("Py-ART is required to use read_tdr_sweep but is not installed")
     rad = pyart.io.read(fname)
 
     if map_to_awot:
         # build the fields dictionary
         fields = {}
-        for fldName in rad.fields.keys():
+        for fldName in list(rad.fields.keys()):
             fields[fldName] = rad.fields[fldName]
 
         # Create a dictionary to transfer the data
@@ -95,14 +94,13 @@ def read_lf_sweep(fname, map_to_awot=True,
         If set this supersedes the platform key in AWOT dictionary.
     """
     if not _PYART_AVAILABLE:
-        raise MissingOptionalDependency(
-            "pyart is required to use read_lf_sweep but is not installed")
+        raise ModuleNotFoundError("Py-ART is required to use read_tdr_sweep but is not installed")
     rad = pyart.io.read(fname)
 
     if map_to_awot:
         # build the fields dictionary
         fields = {}
-        for fldName in rad.fields.keys():
+        for fldName in list(rad.fields.keys()):
             fields[fldName] = rad.fields[fldName]
 
         # Create a dictionary to transfer the data

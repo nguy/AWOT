@@ -10,8 +10,9 @@ https://github.com/nasa/PyAMPR/blob/master/pyampr/pyampr.py
 
 This present method is proof of concept and is expected to expand over time.
 """
-from __future__ import absolute_import
-from __future__ import print_function
+
+
+from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -30,7 +31,7 @@ def write_track_kmz(awot, field, lat_name=None, lon_name=None,
                     latrange=None, lonrange=None,
                     cmap=None, track_color='k', track_lw=2.5,
                     file_path=None, file_name=None,
-                    show_legend=True, legend_label=None):
+                    show_legend=True, legend_label=None, verbose=False):
     """
     This method plots geolocated AWOT track data as a filled color Google Earth
     kmz.
@@ -82,10 +83,11 @@ def write_track_kmz(awot, field, lat_name=None, lon_name=None,
     legend_label : str
         Label to display in legend. If None, AWOT attempts to build
         using field dictionary information.
+    verbose (bool): Print additional information
     """
     plt.close()  # mpl seems buggy if multiple windows are left open
     _method_printout()
-    print('Writing AWOT track KMZ file:')
+    print('--> Writing AWOT track KMZ file:')
 
     # Check to see if field exists
     gcommon._check_field(awot, field)
@@ -140,8 +142,9 @@ def write_track_kmz(awot, field, lat_name=None, lon_name=None,
     if cmap is None:
         cmap = plt.get_cmap()
 
-    print(lonrange)
-    print(latrange)
+    if verbose:
+        print(f"--> Lonrange: {lonrange}, Latrange: {latrange}")
+
     fig, ax = gearth_fig(np.min(lonrange), np.min(latrange),
                          np.max(lonrange), np.max(latrange))
 
@@ -175,7 +178,7 @@ def write_track_kmz(awot, field, lat_name=None, lon_name=None,
                  kmzfile=longname, times=times)
         os.remove('overlay.png')
 
-    print('Google Earth image saved to: %s' % longname)
+    print(f"--> Google Earth image saved to: {longname}")
     _method_printout()
     return
 
@@ -234,7 +237,7 @@ def write_line_kml(awot, field, lat_name=None, lon_name=None,
     """
     plt.close()  # mpl seems buggy if multiple windows are left open
     _method_printout()
-    print('Writing AWOT track KML file:')
+    print('--> Writing AWOT track KML file:')
 
     # Check to see if field exists
     gcommon._check_field(awot, field)
@@ -290,7 +293,7 @@ def write_line_kml(awot, field, lat_name=None, lon_name=None,
     # Now we convert to KMZ
     kml = simplekml.Kml()
     linestr = kml.newlinestring(name=line_name)
-    linestr.coords = zip(lond, latd)
+    linestr.coords = list(zip(lond, latd))
 
     # Set properties according to keywords
     if lw is not None:
@@ -303,7 +306,7 @@ def write_line_kml(awot, field, lat_name=None, lon_name=None,
 
     # Save the file
     kml.save(longname)
-    print('KML file saved to: %s' % longname)
+    print(f"--> KML file saved to: {longname}")
     _method_printout()
     return
 
@@ -386,7 +389,7 @@ def write_poly_kml(name="Polygon", innerboundary=None, outerboundary=None,
 
 def write_kmz(fig, ax, plot, lonrange, latrange, times,
               file_path=None, file_name=None,
-              show_legend=True, legend_label=None):
+              show_legend=True, legend_label=None, verbose=False):
     """
     This method plots geolocated AWOT track data as a filled color Google Earth
     kmz.
@@ -410,15 +413,17 @@ def write_kmz(fig, ax, plot, lonrange, latrange, times,
     legend_label : str
         Label to display in legend. If None, AWOT attempts to build
         using field dictionary information.
+    verbose (bool): Print further information
     """
     plt.close()  # mpl seems buggy if multiple windows are left open
     _method_printout()
-    print('Writing AWOT track KMZ file:')
+    print('--> Writing AWOT track KMZ file:')
 
     longname = os.path.join(file_path, file_name)
 
-    print(lonrange)
-    print(latrange)
+    if verbose:
+        print(f"--> Lonrange: {lonrange}, Latrange: {latrange}")
+
     ax.set_axis_off()
     fig.savefig('overlay.png', transparent=True, format='png')
 
@@ -444,7 +449,7 @@ def write_kmz(fig, ax, plot, lonrange, latrange, times,
                  kmzfile=longname, times=times)
         os.remove('overlay.png')
 
-    print('Google Earth image saved to: %s' % longname)
+    print(f"--> Google Earth image saved to: {longname}")
     _method_printout()
     return
 
@@ -479,7 +484,7 @@ def _filter_bad_geolocations(lats, lons, data, time):
     condition = np.logical_or(cond1, cond2)
     indices = np.where(condition)
     if np.shape(indices)[1] > 0:
-        print("Removing bad data")
+        print("--> Removing bad data")
         data = np.delete(data, indices[0], axis=0)
         lons = np.delete(lons, indices[0], axis=0)
         lats = np.delete(lats, indices[0], axis=0)

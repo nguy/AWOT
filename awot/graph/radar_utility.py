@@ -6,7 +6,7 @@ A group of scripts to create various radar utility plots.
 """
 
 # Load the needed packages
-from __future__ import print_function
+
 import numpy as np
 import matplotlib.pyplot as plt
 from netCDF4 import date2num, num2date
@@ -52,7 +52,7 @@ class RadarUtilityPlot(object):
 
         # See what the field shape looks like for inspection
         # of time and height arrays later
-        fieldshape = self.radar['fields'][self.radar['fields'].keys()[0]]['data'].shape
+        fieldshape = self.radar['fields'][list(self.radar['fields'].keys())[0]]['data'].shape
 
         if lon_name is None:
             self.longitude = self.radar['longitude']
@@ -448,7 +448,7 @@ class RadarUtilityPlot(object):
                 cmap, norm = from_levels_and_colors(
                     discrete_cmap_levels, cm(levpos), extend='max')
             except:
-                print("Keyword error: 'discrete_cmap_levels' must "
+                print("--> Keyword error: 'discrete_cmap_levels' must "
                       "be a list of float or integer")
 
         p = ax.pcolormesh(cfad_dict['xaxis'], yarr, CFAD,
@@ -1029,7 +1029,7 @@ class RadarUtilityPlot(object):
                 cmap, norm = from_levels_and_colors(
                     discrete_cmap_levels, cm(levpos), extend='max')
             except:
-                print("Keyword error: 'discrete_cmap_levels' must "
+                print("--> Keyword error: 'discrete_cmap_levels' must "
                       "be a list of float or integer")
 
         p = ax.pcolormesh(cfad_dict1['xaxis'], cfad_dict1['yaxis'], (CFAD1 - CFAD2),
@@ -1303,7 +1303,7 @@ class RadarUtilityPlot(object):
         else:
             datasub = data
         if ~np.any(np.isfinite(datasub)):
-            print("WARNING: No data found in time subset!")
+            print("--> WARNING: No data found in time subset!")
         return datasub
 
     def _get_variable_dict_data_time_subset(self, field, start_time, end_time):

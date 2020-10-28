@@ -176,7 +176,7 @@ def plot_hodograph(data, instance):
 
     if data['Type'] == 'radioSonde':
 
-        for unew, vnew, hnew in zip(U, V, H):
+        for unew, vnew, hnew in zip(Uwind, Vwind, Height):
             if hnew <= 3001.0:
                 u_3km.append(unew)
                 v_3km.append(vnew)
@@ -190,8 +190,6 @@ def plot_hodograph(data, instance):
                 u_12km.append(unew)
                 v_12km.append(vnew)
 
-    # print(len(u_3km))
-    # print(len(v_3km))
     # =============================================================#
     # take the first point of the next height level and attach it
     # to the last point of the previous line segment to
@@ -429,7 +427,7 @@ def plot_wind_barbs(data, instance, **kwargs):
 
     if data['Type'] == 'radioSonde':
 
-        mask = U.mask
+        mask = Uwind.mask
         Uwind = Uwind[~mask]
         Vwind = Vwind[~mask]
         P = P[~mask]

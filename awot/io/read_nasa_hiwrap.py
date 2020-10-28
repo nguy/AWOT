@@ -128,7 +128,7 @@ def read_hiwrap_netcdf(fname, mapping_dict=None, field_mapping=None):
 #                data[varname]['units'] = 'meters'
         else:
             data[varname] = None
-            common._var_not_found(varname)
+            common._print_var_status(varname, False)
 
     # Replace negative range gates - used for calibration purposes
     # This likely has no affect given data tested from GRIP campaign
@@ -174,7 +174,7 @@ def read_hiwrap_netcdf(fname, mapping_dict=None, field_mapping=None):
             fields[varname]['data'][:, gate_mask] = np.nan
         except:
             fields[varname] = None
-            common._var_not_found(varname)
+            common._print_var_status(varname, False)
     # Save to output dictionary
     data['fields'] = fields
 
@@ -292,8 +292,8 @@ def read_hiwrap_h5(fname, mapping_dict=None, field_mapping=None):
 
     # check that h5py is available
     if not _H5PY_AVAILABLE:
-        raise MissingOptionalDependency(
-            "h5py is required to use read_hiwrap_h5 but is not installed")
+        raise ModuleNotFoundError("h5py is required to use read_hiwrap_h5 but is not installed")
+    
     # Read the NetCDF
     h5File = h5py.File(fname, 'r')
 
@@ -323,12 +323,12 @@ def read_hiwrap_h5(fname, mapping_dict=None, field_mapping=None):
     # Loop through the variables and pull data
     # Adjust altitude to meters from kilometers
     for varname in name_map_flightdata:
-        if name_map_flightdata[varname] in h5File.keys():
+        if name_map_flightdata[varname] in list(h5File.keys()):
             data[varname] = common._h5var_to_dict(
                 h5File[name_map_flightdata[varname]])
         else:
             data[varname] = None
-            common._var_not_found(varname)
+            common._print_var_status(varname, False)
     # Replace negative range gates - used for calibration purposes
     gate_mask = np.ma.less(h5File['rangevec'][:], 0.)
     data['range']['data'][gate_mask] = np.nan
@@ -372,7 +372,7 @@ def read_hiwrap_h5(fname, mapping_dict=None, field_mapping=None):
             fields[varname]['data'][:, gate_mask] = np.nan
         except:
             fields[varname] = None
-            common._var_not_found(varname)
+            common._print_var_status(varname, False)
     # Save to output dictionary
     data['fields'] = fields
 
@@ -531,7 +531,7 @@ def _get_old_hiwrap_time(fname, ncFile, Good_Indices):
         ncFile.variables['time'][0], 24 * 3600)[0])
     if datetime.date(ncFile.variables['year'][:],
                      int(yyyymmdd[4:6]), startday).weekday() != 6:
-        print("Time could be incorrect, check file to see if time units "
+        print("--> Time could be incorrect, check file to see if time units "
               "are 'computer time (sec from last Sunday at 12 am)'")
 
     StartDate = yyyymmdd[0:4] + '-' + yyyymmdd[4:6] + '-' + str(startday)

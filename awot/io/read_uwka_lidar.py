@@ -9,7 +9,7 @@ King Air Research Aircraft facility.
 
 """
 # Load the needed packages
-from __future__ import print_function
+
 from netCDF4 import Dataset, num2date, date2num
 import datetime
 import numpy as np
@@ -83,7 +83,7 @@ def read_wcl(fname):
                 ncFile, name_map_data[varname], Good)
         else:
             data[varname] = None
-            common._var_not_found(name_map_data[varname])
+            common._print_var_status(name_map_data[varname], False)
 
     # Add fields to their own dictionary
     fields = {}
@@ -96,10 +96,10 @@ def read_wcl(fname):
         if name_map_fields[varname] in ncvars:
             fields[varname] = common._ncvar_subset_to_dict(
                 ncvars[name_map_fields[varname]], Good)
-            common._var_found(name_map_fields[varname])
+            common._print_var_status(name_map_fields[varname], True)
         else:
             fields[varname] = None
-            common._var_not_found(name_map_fields[varname])
+            common._print_var_status(name_map_fields[varname], False)
 
     # Save to output dictionary
     data['fields'] = fields

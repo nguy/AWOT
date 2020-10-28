@@ -4,7 +4,7 @@ awot.io.flight
 
 Routines for reading flight data from file
 """
-from __future__ import absolute_import, print_function
+
 import os
 import numpy as np
 
@@ -12,7 +12,7 @@ from datetime import datetime
 from netCDF4 import Dataset, num2date, date2num
 
 from . import common
-from ..io.name_maps_flight import get_name_map
+from .io.name_maps_flight import get_name_map
 
 #########################
 #   NetCDF Methods      #
@@ -67,7 +67,7 @@ def read_netcdf(fname, time_var=None, mapping_dict=None, platform=None,
         if platform is not None:
             name_map = get_name_map(platform)
         else:
-            name_map = _make_name_map_from_varlist(ncFile.variables.keys())
+            name_map = _make_name_map_from_varlist(list(ncFile.variables.keys()))
 
     # Cycle to through variables in file
     data = _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=RAFdim,
@@ -87,7 +87,7 @@ def read_netcdf(fname, time_var=None, mapping_dict=None, platform=None,
         data['time'] = _get_time(
             ncFile, isRAF, RAFrate=RAFrate, timevar=time_var)
     else:
-        if 'time' in data.keys():
+        if 'time' in list(data.keys()):
             data['time'] = _get_time(
                 ncFile, isRAF, RAFrate=RAFrate, timevar=name_map['time'])
         else:
@@ -153,11 +153,11 @@ def _get_time(ncFile, isRAF, RAFrate=None, timevar=None):
     # Pull out the start time
     if timevar is not None:
         varname = timevar
-    elif (timevar is None) & ('base_time' in ncFile.variables.keys()):
+    elif (timevar is None) & ('base_time' in list(ncFile.variables.keys())):
         varname = 'base_time'
-    elif (timevar is None) & ('time' in ncFile.variables.keys()):
+    elif (timevar is None) & ('time' in list(ncFile.variables.keys())):
         varname = 'time'
-    elif (timevar is None) & ('Time' in ncFile.variables.keys()):
+    elif (timevar is None) & ('Time' in list(ncFile.variables.keys())):
         varname = 'Time'
 
     # Sanity check on the time variable in case a dummy time variable
@@ -167,7 +167,7 @@ def _get_time(ncFile, isRAF, RAFrate=None, timevar=None):
             varname = None
 
     if varname is not None:
-        print("Using '%s' to make AWOT time variable" % varname)
+        print(f"--> Using '{varname}' to make AWOT time variable")
         TimeSec = np.array(ncFile.variables[varname][:]).ravel()
 
         # Check if it is a high rate file and 2D - yep instances of this
@@ -178,8 +178,7 @@ def _get_time(ncFile, isRAF, RAFrate=None, timevar=None):
                 TimeSec[0], TimeSec[-1], len(TimeSec) * RAFrate)
             TimeSec = Timehirate
     else:
-        print("No time variable found, using StarTime "
-              "to make AWOT time variable")
+        print("--> No time variable found, using StartTime to make AWOT time variable")
         StartTime = ncFile.StartTime
         length = len(ncFile.dimensions['Time'])
         # Create a time array
@@ -206,11 +205,11 @@ def _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=None, verbose=False):
 
     for var in name_map:
         if verbose:
-            print(var)
+            print(f"--> Processing {var}")
 #        matching = [s.lower() for s in ncFile.variables.keys()
 #                    if var[0:13].lower() in s]
 #        if (len(matching) > 0):
-        if name_map[var] in ncFile.variables.keys():
+        if name_map[var] in list(ncFile.variables.keys()):
             dd[var] = common._ncvar_to_dict(ncFile.variables[name_map[var]])
             data = ncFile.variables[name_map[var]]
             if (isRAF) & (RAFdim in data.dimensions):
@@ -219,7 +218,7 @@ def _make_data_dictionary(ncFile, name_map, isRAF, RAFdim=None, verbose=False):
                     # Find the dimension to remove
                     popdim = data.dimensions.index(RAFdim)
                     # Create new indices and remove RAFdim
-                    reindex = range(ndim)
+                    reindex = list(range(ndim))
                     reindex.pop(popdim)
                     # Get the original shape
                     origshape = ncFile.variables[name_map[var]].shape
@@ -290,9 +289,8 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None, verbose=False):
     readfile = {}
 
     if len(hdr['VNAME']) != len(hdr['VSCAL']):
-        print("ALL variables must be read in this type of file, "
-              "please check name_map to make sure it is the "
-              "correct length.")
+        print("--> ALL variables must be read in this type of file, "
+              "please check name_map to make sure it is the correct length.")
         return
 
     for jj, name in enumerate(hdr['VNAME']):
@@ -316,7 +314,7 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None, verbose=False):
     readfile['time'] = Time
 
     data = {}
-    sht_var = [elem[:37].lower() for elem in readfile.keys()]
+    sht_var = [elem[:37].lower() for elem in list(readfile.keys())]
     for varname in name_map:
         try:
             matching = sht_var.index(name_map[varname][:37].lower())
@@ -324,13 +322,12 @@ def read_nasa_ames(filename, mapping_dict=None, platform=None, verbose=False):
                 readfile[list(readfile.keys())[matching]],
                 varname, name_map[varname])
             if verbose:
-                print('{} -> {}'.format(varname,
-                      list(readfile.keys())[matching]))
+                print(f"--> {varname} -> {list(readfile.keys())[matching]}")
 
         except:
             data[varname] = None
             if verbose:
-                print('{} -> NO MATCH'.format(varname))
+                print(f"--> {varname} -> NO MATCH")
 
     # Calculate U,V wind if not present
     if 'Uwind' not in name_map:
@@ -384,7 +381,7 @@ def _get_ames_header(f):
 
     # Check that the file is indeed NASA AMES 1001
     if hdr['FFI'] != '1001':
-        print("Check file type, looks like it's not FFI 1001")
+        print("--> FATAL: Check file type, looks like it's not FFI 1001")
         return
 
     hdr['ONAME'] = f.readline().rstrip('\n')

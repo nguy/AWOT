@@ -6,7 +6,7 @@ Common graphing routines.
 
 """
 
-from __future__ import print_function
+
 import numpy as np
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
@@ -909,19 +909,19 @@ def create_polar_fig_ax(nrows=1, ncols=1, figsize=(5, 5)):
 ##################
 
 
-def save_figure(name='awot_plot', type="png", dpi=300):
+def save_figure(name='awot_plot', fig_type="png", dpi=300):
     '''Save the current plot.
 
     Parameters
     ------------
     name : str
         Figure name.
-    type : str
+    fig_type : str
         Figure format, default to .png file type.
     dpi : int
         Resolution in dots per inch.
     '''
-    plt.savefig(name+'.'+type, format=figType, dpi=dpi)
+    plt.savefig(f"{name}.{fig_type}", format=fig_type, dpi=dpi)
 
 #################
 #  Get methods  #
@@ -954,7 +954,7 @@ def get_masked_data(data, mask_procedure, mask_tuple):
         vmax = mask_tuple[2]
         data = np.ma.masked_outside(data, vmin, vmax)
     else:
-        print("Check the mask_procedure operation string!")
+        print("--> Check the mask_procedure operation string!")
     return data
 
 
@@ -974,7 +974,7 @@ def _get_start_datetime(time, start_time):
                 startInt[4], startInt[5], startInt[6])
         except:
             import warnings
-            warnings.warn(common.DATE_STRING_FORMAT)
+            warnings.warn(DATE_STRING_FORMAT)
             return
 
     # Check to see if date time specified is beyond start
@@ -1000,7 +1000,7 @@ def _get_end_datetime(time, end_time):
                               endInt[4], endInt[5], endInt[6])
         except:
             import warnings
-            warnings.warn(common.DATE_STRING_FORMAT)
+            warnings.warn(DATE_STRING_FORMAT)
             return
 
     # Check to see if date time specified is beyond start
@@ -1072,9 +1072,8 @@ def _check_basemap(instance, strong=True):
     if instance.basemap is None:
         if strong:
             raise ValueError('Please supply basemap instance')
-            return None
         else:
-            print("WARNING: A basemap instance may be required for some plots")
+            print("--> WARNING: A basemap instance may be required for some plots")
             return False
 
 
@@ -1089,5 +1088,5 @@ def _check_field(instance, field):
         The key name of the field to check
     """
     if instance[field] is None:
-        print("This field has no value!!")
+        print(f"--> {field} field has no value!!")
         return

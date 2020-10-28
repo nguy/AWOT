@@ -19,17 +19,17 @@ Created: 15 Apr 2014 - Nick Guy NOAA/NSSL/WRDD, NRC
 """
 
 # Load the needed packages
-from __future__ import print_function
+
 from mpl_toolkits.basemap import Basemap, cm
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 from matplotlib import ticker
 import numpy as np
 
-import awot.graph.common as common
+import awot.graph.common as gp
 
 
-def polar_sweep(Var, rot, range, nlevs=30,
+def polar_sweep(data, rot, ranges, nlevs=30,
                 vmin=None, vmax=None, cmap=None, mask_outside=True,
                 rng_rings=None, rot_angs=None,
                 title=None, cb_flag=True, cb_orient='horizontal', cb_lab=None):
@@ -38,9 +38,9 @@ def polar_sweep(Var, rot, range, nlevs=30,
 
     Parameters
     ----------
-    Var : float array
+    data : float array
         Data values to plot.
-    range : float array
+    ranges : float array
         Range along ray.
     rot : float array
         Rotation angle with respect to instrument [degrees].
@@ -74,11 +74,11 @@ def polar_sweep(Var, rot, range, nlevs=30,
     """
     # Plot the polar coordinate radar data
     fig, ax, p = gp.plot_polar_contour(
-        Var, rot, range, nlevs=nlevs,
-        vmin=vmin, vmax=vmax, cmap=cmap, mask_outside=True)
+        data, rot, ranges, nlevs=nlevs,
+        vmin=vmin, vmax=vmax, cmap=cmap)
 
     # Set the range and turn grid on
-    ax.set_rmax(1.05 * range.max())
+    ax.set_rmax(1.05 * ranges.max())
     ax.grid(True)
 
     # Set the title
@@ -206,7 +206,7 @@ def plot_sweep_grid(Xcoord, Ycoord, Values, ax=None, title=None,
     return p
 
 
-def sweep_to_Cart(Var, range, rot, tilt, ax=None, data_proj='fore',
+def sweep_to_Cart(Var, ranges, rot, tilt, ax=None, data_proj='fore',
                   title=None, vmin=-24., vmax=64., cmap=None,
                   mask_outside=True, grid_on=True, xlims=None, ylims=None,
                   xlab=None, ylab=None, cb_flag=True, cb_orient='horizontal',
@@ -222,7 +222,7 @@ def sweep_to_Cart(Var, range, rot, tilt, ax=None, data_proj='fore',
     ----------
     Var : float array
         Data values to plot.
-    range : float array
+    ranges : float array
         Range along ray.
     rot : float array
         Rotation angle with respect to instrument [degrees].
@@ -280,18 +280,18 @@ def sweep_to_Cart(Var, range, rot, tilt, ax=None, data_proj='fore',
               "either 'fore' or 'aft', assuming 'fore'")
         Fact = 1.
 
-    range = np.array(range)  # Make sure that the data is numpy array
+    ranges = np.array(ranges)  # Make sure that the data is numpy array
 
     values = np.array(Var)  # Make sure that the data is numpy array
-    values = values.reshape(len(rot), len(range))  # Resize it to work
+    values = values.reshape(len(rot), len(ranges))  # Resize it to work
 
     # mask the data where outside the limits
     if mask_outside:
         Var = np.ma.masked_outside(Var, vmin, vmax)
 
     # Create 2D variables to plot contour against
-    r, Rot = np.meshgrid(range, np.radians(rot))
-    r2, Tilt = np.meshgrid(range, np.radians(tilt))
+    r, Rot = np.meshgrid(ranges, np.radians(rot))
+    r2, Tilt = np.meshgrid(ranges, np.radians(tilt))
 
     # Convert r, Rot to Cartesian (x,z)
     X = Fact * r * np.sin(Rot) * np.sin(Tilt)
@@ -299,7 +299,7 @@ def sweep_to_Cart(Var, range, rot, tilt, ax=None, data_proj='fore',
 
     # Set axis limits if passed
     if xlims is None:
-        xlims = (-1.05 * range.max(), 1.05 * range.max())
+        xlims = (-1.05 * ranges.max(), 1.05 * ranges.max())
     else:
         xlims = xlims
     if ylims is None:
@@ -316,7 +316,7 @@ def sweep_to_Cart(Var, range, rot, tilt, ax=None, data_proj='fore',
     return p
 
 
-def sweep_aircraft_relative(Var, range, tilt, rot, ax=None, title=None,
+def sweep_aircraft_relative(Var, ranges, tilt, rot, ax=None, title=None,
                             vmin=-24., vmax=64., cmap=None, mask_outside=True,
                             grid_on=True, xlims=None, ylims=None, xlab=None,
                             ylab=None, cb_flag=True, cb_orient='horizontal',
@@ -332,7 +332,7 @@ def sweep_aircraft_relative(Var, range, tilt, rot, ax=None, title=None,
     ----------
     Var : float array
         Data values to plot.
-    range : float array
+    ranges : float array
         Range along ray.
     tilt : float array
         Radar ray Tilt angle with respect to platform [degrees].
@@ -377,18 +377,18 @@ def sweep_aircraft_relative(Var, range, tilt, rot, ax=None, title=None,
     This mapping does NOT take into account corrections for roll,
     pitch, or drift of the aircraft.
     """
-    range = np.array(range)  # Make sure that the data is numpy array
+    ranges = np.array(ranges)  # Make sure that the data is numpy array
 
     values = np.array(Var)  # Make sure that the data is numpy array
-    values = values.reshape(len(rot), len(range))  # Resize it to work
+    values = values.reshape(len(rot), len(ranges))  # Resize it to work
 
     # mask the data where outside the limits
     if mask_outside:
         Var = np.ma.masked_outside(Var, vmin, vmax)
 
     # Create 2D variables to plot contour against
-    r, Rot = np.meshgrid(range, np.radians(rot))
-    r2, Tilt = np.meshgrid(range, np.radians(tilt))
+    r, Rot = np.meshgrid(ranges, np.radians(rot))
+    r2, Tilt = np.meshgrid(ranges, np.radians(tilt))
 
     # Convert polar (r,Rot,Tilt) to Cartesian (x,y,z)
     X = r * np.cos(Tilt) * np.sin(Rot)
@@ -397,7 +397,7 @@ def sweep_aircraft_relative(Var, range, tilt, rot, ax=None, title=None,
 
     # Set axis limits if passed
     if xlims is None:
-        xlims = (-1.05 * range.max(), 1.05 * range.max())
+        xlims = (-1.05 * ranges.max(), 1.05 * ranges.max())
     else:
         xlims = xlims
     if ylims is None:
@@ -415,7 +415,7 @@ def sweep_aircraft_relative(Var, range, tilt, rot, ax=None, title=None,
 
 
 def sweep_track_relative(
-        Var, range, tilt, rot, roll, drift, pitch, ax=None, title=None,
+        Var, ranges, tilt, rot, roll, drift, pitch, ax=None, title=None,
         vmin=-24., vmax=64., cmap=None, mask_outside=True, grid_on=True,
         xlims=None, ylims=None, xlab=None, ylab=None,
         cb_flag=True, cb_orient='horizontal', cb_lab=None):
@@ -428,7 +428,7 @@ def sweep_track_relative(
     ----------
     Var : float array
         Data values to plot.
-    range : float array
+    ranges : float array
         Range along ray.
     tilt : float array
         Radar ray Tilt angle with respect to platform [degrees].
@@ -480,21 +480,21 @@ def sweep_track_relative(
     This mapping corrects for roll, pitch, and drift of the aircraft.
     This is considered a leveled, heading-relative coordinate system.
     """
-    range = np.array(range)  # Make sure that the data is numpy array
+    ranges = np.array(ranges)  # Make sure that the data is numpy array
 
     values = np.array(Var)  # Make sure that the data is numpy array
-    values = values.reshape(len(rot), len(range))  # Resize it to work
+    values = values.reshape(len(rot), len(ranges))  # Resize it to work
 
     # mask the data where outside the limits
     if mask_outside:
         Var = np.ma.masked_outside(Var, vmin, vmax)
 
     # Create 2D variables to plot contour against
-    r, Rot = np.meshgrid(range, np.radians(rot))
-    r2, Tilt = np.meshgrid(range, np.radians(tilt))
-    r3, Roll = np.meshgrid(range, np.radians(roll))
-    r4, Pitch = np.meshgrid(range, np.radians(pitch))
-    r5, Drift = np.meshgrid(range, np.radians(drift))
+    r, Rot = np.meshgrid(ranges, np.radians(rot))
+    r2, Tilt = np.meshgrid(ranges, np.radians(tilt))
+    r3, Roll = np.meshgrid(ranges, np.radians(roll))
+    r4, Pitch = np.meshgrid(ranges, np.radians(pitch))
+    r5, Drift = np.meshgrid(ranges, np.radians(drift))
     del r2, r3, r4, r5
 
     # Convert r, Rot to Cartesian (x,y)
@@ -509,7 +509,7 @@ def sweep_track_relative(
 
     # Set axis limits if passed
     if xlims is None:
-        xlims = (-1.05 * range.max(), 1.05 * range.max())
+        xlims = (-1.05 * ranges.max(), 1.05 * ranges.max())
     else:
         xlims = xlims
     if ylims is None:
@@ -526,7 +526,7 @@ def sweep_track_relative(
     return p
 
 
-def sweep_earth_relative(Var, range, tilt, rot, roll, heading, pitch,
+def sweep_earth_relative(Var, ranges, tilt, rot, roll, heading, pitch,
                          ax=None, title=None, vmin=-24., vmax=64.,
                          cmap=None, mask_outside=True, grid_on=True,
                          xlims=None, ylims=None, xlab=None, ylab=None,
@@ -542,7 +542,7 @@ def sweep_earth_relative(Var, range, tilt, rot, roll, heading, pitch,
     ----------
     Var : float array
         Data values to plot.
-    range : float array
+    ranges : float array
         Range along ray.
     tilt : float array
         Radar ray Tilt angle with respect to platform [degrees].
@@ -595,21 +595,21 @@ def sweep_earth_relative(Var, range, tilt, rot, roll, heading, pitch,
 
     This is considered a leveled, heading-relative coordinate system.
     """
-    range = np.array(range)  # Make sure that the data is numpy array
+    ranges = np.array(ranges)  # Make sure that the data is numpy array
 
     values = np.array(Var)  # Make sure that the data is numpy array
-    values = values.reshape(len(rot), len(range))  # Resize it to work
+    values = values.reshape(len(rot), len(ranges))  # Resize it to work
 
     # mask the data where outside the limits
     if mask_outside:
         Var = np.ma.masked_outside(Var, vmin, vmax)
 
     # Create 2D variables to plot contour against
-    r, Rot = np.meshgrid(range, np.radians(rot))
-    r2, Tilt = np.meshgrid(range, np.radians(tilt))
-    r3, Roll = np.meshgrid(range, np.radians(roll))
-    r4, Pitch = np.meshgrid(range, np.radians(pitch))
-    r5, Heading = np.meshgrid(range, np.radians(heading))
+    r, Rot = np.meshgrid(ranges, np.radians(rot))
+    r2, Tilt = np.meshgrid(ranges, np.radians(tilt))
+    r3, Roll = np.meshgrid(ranges, np.radians(roll))
+    r4, Pitch = np.meshgrid(ranges, np.radians(pitch))
+    r5, Heading = np.meshgrid(ranges, np.radians(heading))
     del r2, r3, r4, r5
 
     # Convert r, Rot to Cartesian (x,y)
@@ -624,7 +624,7 @@ def sweep_earth_relative(Var, range, tilt, rot, roll, heading, pitch,
 
     # Set axis limits if passed
     if xlims is None:
-        xlims = (-1.05 * range.max(), 1.05 * range.max())
+        xlims = (-1.05 * ranges.max(), 1.05 * ranges.max())
     else:
         xlims = xlims
     if ylims is None:

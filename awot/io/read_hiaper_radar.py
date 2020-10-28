@@ -109,7 +109,7 @@ def read_hcr(fname, field_mapping=None, file_mapping=None):
                 ncvars[name_map_data[varname]])
         else:
             data[varname] = None
-            common._var_not_found(varname)
+            common._print_var_status(varname, False)
     # Add fields to their own dictionary
     fields = {}
 
@@ -123,7 +123,7 @@ def read_hcr(fname, field_mapping=None, file_mapping=None):
                 ncvars[name_map_fields[varname]], Good)
         else:
             fields[varname] = None
-            common._var_not_found(varname)
+            common._print_var_status(varname, False)
 
     #cant remember do we need this SURFACE DATA?
 

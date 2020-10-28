@@ -9,6 +9,7 @@ data collected by the NOAA P-3 tail Doppler radar.
 
 from mpl_toolkits.basemap import Basemap, cm
 import matplotlib.pyplot as plt
+from matplotlib.colors import from_levels_and_colors
 from mpl_toolkits.mplot3d import axes3d
 from matplotlib import ticker
 import numpy as np
@@ -163,7 +164,7 @@ class RadarHorizontalPlot(object):
             levelht = self.height['data'][Zind] / 1000.
         else:
             levelht = self.height['data'][Zind]
-        print("Closest level: %4.1f" % levelht)
+        print(f"--> Closest level: {levelht:4.1f}")
 
         # Convert lats/lons to 2D grid
         Lon2D, Lat2D = np.meshgrid(self.longitude['data'][:],
@@ -183,7 +184,7 @@ class RadarHorizontalPlot(object):
                 cmap, norm = from_levels_and_colors(
                     discrete_cmap_levels, cm(levpos), extend='max')
             except:
-                print("Keyword error: 'discrete_cmap_levels' must "
+                print("--> Keyword error: 'discrete_cmap_levels' must "
                       "be a list of float or integer")
 
         # Plot the data
@@ -416,7 +417,7 @@ class RadarHorizontalPlot(object):
                 cmap, norm = from_levels_and_colors(
                     discrete_cmap_levels, cm(levpos), extend='max')
             except:
-                print("Keyword error: 'discrete_cmap_levels' must "
+                print("--> Keyword error: 'discrete_cmap_levels' must "
                       "be a list of float or integer")
 
         p = self.basemap.pcolormesh(x, y, Data, vmin=vmin, vmax=vmax,
@@ -534,7 +535,7 @@ class RadarHorizontalPlot(object):
         """
         r3d = Radar3DPlot(self.radar, basemap=self.basemap)
 
-        r3d.DPJgrid_3d(self.airborne, surf_field, surf_min=surf_min,
+        r3d.DPJgrid_3d(self.radar, surf_field, surf_min=surf_min,
                        surf_max=surf_max, surf_cmap=surf_cmap,
                        rstride=rstride, cstride=cstride,
                        plot_contour=plot_contour, cont_field=cont_field,

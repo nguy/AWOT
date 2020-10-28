@@ -25,7 +25,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
-from __future__ import division
+
 
 from netCDF4 import date2num
 import numpy as np
@@ -103,8 +103,7 @@ def calc_ground_distance(awot, method='great circle',
         try:
             lon = awot['longitude']['data'][:]
         except:
-            print("WARNING: Cannot find suitable longitude variable in file")
-            return
+            _error_missing_var("longitude")
     else:
         lon = awot[lon_key]['data'][:]
 
@@ -112,8 +111,7 @@ def calc_ground_distance(awot, method='great circle',
         try:
             lat = awot['latitude']['data'][:]
         except:
-            print("WARNING: Cannot find suitable latitude variable in file")
-            return
+            _error_missing_var("latitude")
     else:
         lat = awot[lat_key]['data'][:]
 
@@ -177,8 +175,7 @@ def calc_air_distance(awot, airspeed_key=None, time_key=None,
         try:
             airspeed = awot['tas']['data'][:]
         except:
-            print("WARNING: Cannot find suitable air speed variable in file")
-            return
+            _error_missing_var("air speed")
     else:
         airspeed = awot[airspeed_key]['data'][:]
 
@@ -186,8 +183,7 @@ def calc_air_distance(awot, airspeed_key=None, time_key=None,
         try:
             timesec = date2num(awot['time']['data'][:], awot['time']['units'])
         except:
-            print("WARNING: Cannot find suitable time variable in file")
-            return
+            _error_missing_var("time")
     else:
         timesec = date2num(awot[time_key]['data'][:], awot[time_key]['units'])
     time_elapsed = timesec[1:] - timesec[:-1]
@@ -337,7 +333,7 @@ def vincentry(latitude, longitude, ellipsoid_key=None, iterations=None):
                                    cos_lam_lon) ** 2)
 
                 if sin_sig == 0:
-                    print("WARNING: Coincident points found")
+                    print("--> WARNING: Coincident points found")
                     return 0
 
                 cos_sig = (sin_red1[nn] * sin_red2[nn] + cos_red1[nn] *
@@ -382,3 +378,8 @@ def vincentry(latitude, longitude, ellipsoid_key=None, iterations=None):
         else:
             dist[nn] = np.nan
     return dist
+
+
+def _error_missing_var(var):
+    err = f"--> WARNING: Cannot find suitable {var} variable in file"
+    raise ValueError(err)
